@@ -4,11 +4,16 @@ include(GNUInstallDirs)
 set(PROJ KanoopGit)
 project(${PROJ})
 
+find_package(Qt6 REQUIRED COMPONENTS Network Xml Gui Widgets)
 qt_standard_project_setup()
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(KANOOP_COMMON_VERSION "1.1.9")
+set(KANOOPGIT_VERSION "0.0.9")
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 file(GLOB_RECURSE KANOOPGIT_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
@@ -17,18 +22,18 @@ file(GLOB_RECURSE KANOOPGIT_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.qrc"
 )
 
+message("All files are ${KANOOPGIT_SOURCES}")
 qt_add_executable(${PROJ} ${KANOOPGIT_SOURCES} ${KANOOPGIT_HEADERS})
 
 target_compile_options(${PROJ} PRIVATE -Wextra -Wall -Werror)
 
-set_target_properties(${PROJ} PROPERTIES VERSION "${KANOOP_COMMON_VERSION}")
+set_target_properties(${PROJ} PROPERTIES VERSION "${KANOOPGIT_VERSION}")
 set_target_properties(${PROJ} PROPERTIES SOVERSION 1)
 
 target_include_directories(${PROJ} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Kanoop)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-find_package(Qt6 REQUIRED COMPONENTS Network Xml Gui Widgets)
 target_link_libraries(${PROJ} PRIVATE Qt6::Network Qt6::Xml Qt6::Gui Qt6::Widgets KanoopCommon KanoopQtGui git2qt)
 
 add_compile_definitions(QT_DEPRECATED_WARNINGS)

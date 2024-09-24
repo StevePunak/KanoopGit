@@ -22,7 +22,6 @@ public:
     GIT::Repository* repository() const { return _repo; }
 
 private:
-    void refreshWidgets();
     void updateCommitShaWidget(const GIT::ObjectId& objectId);
     void updateParentsShaWidget(const GIT::ObjectId& objectId);
     void updateParentsShaWidget(const GIT::ObjectId::List& objectIds);
@@ -39,10 +38,14 @@ private:
     enum StageType { StageTypeInvalid, StageFile, UnstageFile };
 
 private slots:
+    void refreshWidgets();
     void maybeEnableButtons();
     void onRepositoryFileSystemChanged();
     void switchToDiffView();
     void switchToCommitView();
+
+    // Refresh
+    void onRefreshWidgets();
 
     // Widget overrides
     virtual void keyPressEvent(QKeyEvent* event) override;
@@ -54,6 +57,7 @@ private slots:
     void onStashCommitClicked(const GIT::Stash& stash);
     void onWorkInProgressClicked();
     void onReferenceClicked(const GIT::Reference& reference);
+    void onLocalReferenceDoubleClicked(const GIT::Reference& reference);
     void onCommitShaClicked(const GIT::ObjectId& objectId);
     void onStagedStatusEntryClicked(const GIT::StatusEntry& statusEntry);
     void onUnstagedStatusEntryClicked(const GIT::StatusEntry& statusEntry);
@@ -87,6 +91,7 @@ private slots:
     void onDebugClicked();
 
     // Debug
+    void onLocalBranchTreeDoubleClicked(const QModelIndex& index);
     void drawDebugArc();
 };
 

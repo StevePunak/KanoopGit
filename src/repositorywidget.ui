@@ -79,7 +79,7 @@
            <item>
             <spacer name="horizontalSpacer_6">
              <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
+              <enum>Qt::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -314,7 +314,7 @@
            <item>
             <spacer name="horizontalSpacer_5">
              <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
+              <enum>Qt::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -348,7 +348,7 @@
            <item>
             <spacer name="horizontalSpacer_8">
              <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
+              <enum>Qt::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -383,7 +383,7 @@
            <item>
             <spacer name="horizontalSpacer_7">
              <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
+              <enum>Qt::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -511,7 +511,7 @@
              <item row="12" column="1">
               <spacer name="verticalSpacer">
                <property name="orientation">
-                <enum>Qt::Orientation::Vertical</enum>
+                <enum>Qt::Vertical</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -575,7 +575,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="pageBlank"/>
        <widget class="QWidget" name="pageIndexEntry">
@@ -635,7 +635,7 @@
            <item>
             <spacer name="horizontalSpacer_4">
              <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
+              <enum>Qt::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -666,7 +666,7 @@
            <item>
             <spacer name="horizontalSpacer_3">
              <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
+              <enum>Qt::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -777,7 +777,7 @@
                <item>
                 <spacer name="horizontalSpacer">
                  <property name="orientation">
-                  <enum>Qt::Orientation::Horizontal</enum>
+                  <enum>Qt::Horizontal</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -822,7 +822,7 @@
                <item>
                 <spacer name="horizontalSpacer_2">
                  <property name="orientation">
-                  <enum>Qt::Orientation::Horizontal</enum>
+                  <enum>Qt::Horizontal</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -966,32 +966,32 @@
   <customwidget>
    <class>GitFileSystemTreeView</class>
    <extends>QTreeView</extends>
-   <header>gitfilesystemtreeview.h</header>
+   <header>modelview/gitfilesystemtreeview.h</header>
   </customwidget>
   <customwidget>
    <class>GitCommitTableView</class>
    <extends>QTableView</extends>
-   <header>gitcommittableview.h</header>
+   <header>modelview/gitcommittableview.h</header>
   </customwidget>
   <customwidget>
    <class>GitTreeEntryTableView</class>
    <extends>QTableView</extends>
-   <header>gittreeentrytableview.h</header>
+   <header>modelview/gittreeentrytableview.h</header>
   </customwidget>
   <customwidget>
    <class>GitBranchTreeView</class>
    <extends>QTreeView</extends>
-   <header>gitbranchtreeview.h</header>
+   <header>modelview/gitbranchtreeview.h</header>
   </customwidget>
   <customwidget>
    <class>StatusEntryTableView</class>
    <extends>QTableView</extends>
-   <header>statusentrytableview.h</header>
+   <header>modelview/statusentrytableview.h</header>
   </customwidget>
   <customwidget>
    <class>GitDiffTableView</class>
    <extends>QTableView</extends>
-   <header>gitdifftableview.h</header>
+   <header>modelview/gitdifftableview.h</header>
   </customwidget>
  </customwidgets>
  <resources>

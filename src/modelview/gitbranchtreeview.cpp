@@ -15,6 +15,7 @@ GitBranchTreeView::GitBranchTreeView(QWidget *parent) :
 {
     header()->setVisible(true);
     setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, &GitBranchTreeView::doubleClicked, this, &GitBranchTreeView::onDoubleClicked);
 }
 
 void GitBranchTreeView::createModel(Repository* repo, BranchType typeToShow)
@@ -46,6 +47,20 @@ void GitBranchTreeView::onCurrentIndexChanged(const QModelIndex& current, const 
             Reference reference = Reference::fromVariant(current.data(ReferenceRole));
             if(reference.isNull() == false) {
                 emit referenceClicked(reference);
+            }
+        }
+    }
+}
+
+void GitBranchTreeView::onDoubleClicked(const QModelIndex &index)
+{
+    if(index.isValid()) {
+        GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
+        if(type == GitEntities::Reference) {
+            Reference reference = Reference::fromVariant(index.data(ReferenceRole));
+            logText(LVL_DEBUG, QString("DblClick: %1").arg(reference.canonicalName()));
+            if(reference.isNull() == false) {
+                emit referenceDoubleClicked(reference);
             }
         }
     }

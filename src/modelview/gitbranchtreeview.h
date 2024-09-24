@@ -18,10 +18,12 @@ public:
 signals:
     void folderClicked(const QString& folderPath);
     void referenceClicked(const GIT::Reference& reference);
+    void referenceDoubleClicked(const GIT::Reference& reference);
     void refresh();
 
 private slots:
     void onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous);
+    void onDoubleClicked(const QModelIndex& index);
 };
 
 #endif // GITBRANCHTREEVIEW_H

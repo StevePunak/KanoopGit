@@ -48,6 +48,8 @@ RepositoryWidget::RepositoryWidget(const QString& path, QWidget *parent) :
     connect(ui->tableCommits, &GitCommitTableView::workInProgressClicked, this, &RepositoryWidget::onWorkInProgressClicked);
     connect(ui->tableCommits, &GitCommitTableView::selectionChanged, this, &RepositoryWidget::maybeEnableButtons);
     connect(ui->treeLocalBranches, &GitBranchTreeView::referenceClicked, this, &RepositoryWidget::onReferenceClicked);
+    connect(ui->treeLocalBranches, &GitBranchTreeView::referenceDoubleClicked, this, &RepositoryWidget::onLocalReferenceDoubleClicked);
+connect(ui->treeLocalBranches, &GitBranchTreeView::doubleClicked, this, &RepositoryWidget::onLocalBranchTreeDoubleClicked);
     connect(ui->treeRemoteBranches, &GitBranchTreeView::referenceClicked, this, &RepositoryWidget::onReferenceClicked);
     connect(ui->tableStagedFiles, &StatusEntryTableView::statusEntryClicked, this, &RepositoryWidget::onStagedStatusEntryClicked);
     connect(ui->tableUnstagedFiles, &StatusEntryTableView::statusEntryClicked, this, &RepositoryWidget::onUnstagedStatusEntryClicked);
@@ -117,29 +119,7 @@ RepositoryWidget::~RepositoryWidget()
 
 void RepositoryWidget::refreshWidgets()
 {
-    GIT::RepositoryStatus status = _repo->status();
-    {
-        GIT::StatusEntry::List entries;
-        entries.appendIfNotPresent(status.modified());
-        entries.appendIfNotPresent(status.added());
-        entries.appendIfNotPresent(status.untracked());
-        entries.appendIfNotPresent(status.removed());
-        entries.appendIfNotPresent(status.renamedInWorkDir());
-        ui->tableUnstagedFiles->createModel(_repo, entries);
-    }
-    {
-        GIT::StatusEntry::List entries;
-        entries.appendIfNotPresent(status.staged());
-        entries.appendIfNotPresent(status.renamedInIndex());
-        ui->tableStagedFiles->createModel(_repo, entries);
-    }
-
-    ui->treeGitTree->createModel(_repo);
-    ui->tableCommits->createModel(_repo);
-    ui->treeLocalBranches->createModel(_repo, LocalBranch);
-    ui->treeRemoteBranches->createModel(_repo, RemoteBranch);
-
-    maybeEnableButtons();
+    QTimer::singleShot(0, this, &RepositoryWidget::onRefreshWidgets);
 }
 
 void RepositoryWidget::updateCommitShaWidget(const GIT::ObjectId& objectId)
@@ -197,6 +177,34 @@ void RepositoryWidget::switchToCommitView()
 {
     ui->tabWidget->setCurrentWidget(ui->tabCommits);
     ui->frameBranches->setVisible(true);
+    maybeEnableButtons();
+}
+
+void RepositoryWidget::onRefreshWidgets()
+{
+    logText(LVL_DEBUG, __FUNCTION__);
+    GIT::RepositoryStatus status = _repo->status();
+    {
+        GIT::StatusEntry::List entries;
+        entries.appendIfNotPresent(status.modified());
+        entries.appendIfNotPresent(status.added());
+        entries.appendIfNotPresent(status.untracked());
+        entries.appendIfNotPresent(status.removed());
+        entries.appendIfNotPresent(status.renamedInWorkDir());
+        ui->tableUnstagedFiles->createModel(_repo, entries);
+    }
+    {
+        GIT::StatusEntry::List entries;
+        entries.appendIfNotPresent(status.staged());
+        entries.appendIfNotPresent(status.renamedInIndex());
+        ui->tableStagedFiles->createModel(_repo, entries);
+    }
+
+    ui->treeGitTree->createModel(_repo);
+    ui->tableCommits->createModel(_repo);
+    ui->treeLocalBranches->createModel(_repo, LocalBranch);
+    ui->treeRemoteBranches->createModel(_repo, RemoteBranch);
+
     maybeEnableButtons();
 }
 
@@ -285,6 +293,27 @@ void RepositoryWidget::onWorkInProgressClicked()
 void RepositoryWidget::onReferenceClicked(const GIT::Reference& reference)
 {
     ui->tableCommits->selectCommit(reference.objectId());
+}
+
+void RepositoryWidget::onLocalReferenceDoubleClicked(const GIT::Reference &reference)
+{
+    try
+    {
+        RepositoryStatus status = _repo->status();
+        if(status.entries().count() == 0) {
+            if(_repo->checkoutLocalBranch(reference.friendlyName()) == false) {
+                throw CommonException(_repo->errorText());
+            }
+            refreshWidgets();
+        }
+        else {
+            throw CommonException("You have uncomitted changes that would be overwritten.\nCheck in / stash your changes and try again.");
+        }
+    }
+    catch(const CommonException& e)
+    {
+        QMessageBox::warning(this, "Error", e.message());
+    }
 }
 
 void RepositoryWidget::onCommitShaClicked(const GIT::ObjectId& objectId)
@@ -671,6 +700,16 @@ void RepositoryWidget::onDebugClicked()
     QString result = output.toString();
     QTextStream(stdout) << result << Qt::endl;
 #endif
+}
+
+void RepositoryWidget::onLocalBranchTreeDoubleClicked(const QModelIndex &index)
+{
+return;
+    if(index.isValid()) {
+        GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
+        logText(LVL_DEBUG, QString("Got index type %1").arg(type));
+        refreshWidgets();
+    }
 }
 
 void RepositoryWidget::drawDebugArc()
