@@ -33,8 +33,9 @@ target_include_directories(${PROJ} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Kanoop)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-# For Windoze
-target_include_directories(${PROJ} PRIVATE "C:/Program Files (x86)/libgit2/lib/")
+get_directory_property(PARENT_DIR PARENT_DIRECTORY)
+target_include_directories(${PROJ} PRIVATE ${PARENT_DIR}/libgit2/include)
+target_link_directories(${PROJ} PRIVATE ${CMAKE_BINARY_DIR}/libgit2)
 
 target_link_libraries(${PROJ} PRIVATE Qt6::Network Qt6::Xml Qt6::Gui Qt6::Widgets KanoopCommon KanoopQtGui git2qt)
 
