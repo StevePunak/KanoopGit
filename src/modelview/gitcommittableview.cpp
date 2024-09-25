@@ -478,3 +478,29 @@ void GitCommitGraphStyledItemDelegate::drawHorizontal(QPainter* painter, const S
     painter->drawLine(line.toQLine());
     painter->restore();
 }
+
+
+// ------------------------------- GitBranchTagStyledItemDelegate -------------------------------
+
+
+void GitBranchTagStyledItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    Rectangle drawRect = option.rect;
+
+    GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
+    painter->save();
+    if(type == GitEntities::Commit) {
+        GraphedCommit commit = GraphedCommit::fromVariant(index.data(CommitRole));
+        if(commit.isValid() == false) {
+            return;
+        }
+        QPixmap pixmap = createCommitPixmap(commit, drawRect.size());
+        painter->drawPixmap(drawRect.x(), drawRect.y(), pixmap);
+        break;
+    }
+    else {
+
+    }
+
+    painter->restore();
+}

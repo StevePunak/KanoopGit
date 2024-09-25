@@ -75,4 +75,17 @@ public:
     static const int StashRadius = 6;
 };
 
+class GitBranchTagStyledItemDelegate : public QStyledItemDelegate
+{
+public:
+    GitBranchTagStyledItemDelegate(GitCommitTableView* parent = nullptr) :
+        QStyledItemDelegate(parent),
+        _tableView(parent) {}
+
+    virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+
+private:
+    GitCommitTableView* _tableView;
+};
+
 #endif // GITCOMMITTABLEVIEW_H
