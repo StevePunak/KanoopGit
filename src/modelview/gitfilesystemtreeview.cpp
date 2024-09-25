@@ -27,7 +27,7 @@ void GitFileSystemTreeView::createModel(Repository* repo)
     GitFileSystemTreeModel* treeModel = new GitFileSystemTreeModel(repo, this);
     connect(this, &GitFileSystemTreeView::refresh, treeModel, &GitFileSystemTreeModel::refresh);
 
-    setModel(treeModel);
+    setSourceModel(treeModel);
 
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &GitFileSystemTreeView::onCurrentIndexChanged);
 }

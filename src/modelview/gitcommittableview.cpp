@@ -485,10 +485,13 @@ void GitCommitGraphStyledItemDelegate::drawHorizontal(QPainter* painter, const S
 
 void GitBranchTagStyledItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
+    painter->save();
+
+    Q_UNUSED(option) Q_UNUSED(index)
+#if 0
     Rectangle drawRect = option.rect;
 
     GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
-    painter->save();
     if(type == GitEntities::Commit) {
         GraphedCommit commit = GraphedCommit::fromVariant(index.data(CommitRole));
         if(commit.isValid() == false) {
@@ -501,6 +504,6 @@ void GitBranchTagStyledItemDelegate::paint(QPainter *painter, const QStyleOption
     else {
 
     }
-
+#endif
     painter->restore();
 }

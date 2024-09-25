@@ -46,7 +46,7 @@ RepositoryWidget::RepositoryWidget(const QString& path, QWidget *parent) :
     connect(ui->tableCommits, &GitCommitTableView::commitClicked, this, &RepositoryWidget::onCommitClicked);
     connect(ui->tableCommits, &GitCommitTableView::stashClicked, this, &RepositoryWidget::onStashCommitClicked);
     connect(ui->tableCommits, &GitCommitTableView::workInProgressClicked, this, &RepositoryWidget::onWorkInProgressClicked);
-    connect(ui->tableCommits, &GitCommitTableView::selectionChanged, this, &RepositoryWidget::maybeEnableButtons);
+    connect(ui->tableCommits, &GitCommitTableView::currentSelectionChanged, this, &RepositoryWidget::maybeEnableButtons);
     connect(ui->treeLocalBranches, &GitBranchTreeView::referenceClicked, this, &RepositoryWidget::onReferenceClicked);
     connect(ui->treeLocalBranches, &GitBranchTreeView::referenceDoubleClicked, this, &RepositoryWidget::onLocalReferenceDoubleClicked);
 connect(ui->treeLocalBranches, &GitBranchTreeView::doubleClicked, this, &RepositoryWidget::onLocalBranchTreeDoubleClicked);
