@@ -22,7 +22,6 @@ file(GLOB_RECURSE KANOOPGIT_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.qrc"
 )
 
-message("All files are ${KANOOPGIT_SOURCES}")
 qt_add_executable(${PROJ} ${KANOOPGIT_SOURCES} ${KANOOPGIT_HEADERS})
 
 target_compile_options(${PROJ} PRIVATE -Wextra -Wall -Werror)
@@ -33,6 +32,9 @@ set_target_properties(${PROJ} PROPERTIES SOVERSION 1)
 target_include_directories(${PROJ} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Kanoop)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+# For Windoze
+target_include_directories(${PROJ} PRIVATE "C:/Program Files (x86)/libgit2/lib/")
 
 target_link_libraries(${PROJ} PRIVATE Qt6::Network Qt6::Xml Qt6::Gui Qt6::Widgets KanoopCommon KanoopQtGui git2qt)
 

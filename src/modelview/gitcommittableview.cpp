@@ -31,7 +31,7 @@ void GitCommitTableView::createModel(Repository* repo)
     _commits = repo->commitGraph();
     _workInProgress = repo->status().entries();
     GitCommitTableModel* tableModel = new GitCommitTableModel(repo, _commits, this);
-    setModel(tableModel);
+    setSourceModel(tableModel);
 
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &GitCommitTableView::onCurrentIndexChanged);
 

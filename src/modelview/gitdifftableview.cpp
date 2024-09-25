@@ -29,7 +29,7 @@ void GitDiffTableView::createModelTreeToTree(Repository* repo, const Tree& oldTr
     _lastDeltaRow = -1;
 
     GitDiffTableModel* tableModel = new GitDiffTableModel(repo, oldTree, newTree, delta, this);
-    setModel(tableModel);
+    setSourceModel(tableModel);
 
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &GitDiffTableView::onCurrentIndexChanged);
 
@@ -46,7 +46,7 @@ void GitDiffTableView::createModelIndexToWorkDir(GIT::Repository* repo, const GI
     _lastDeltaRow = -1;
 
     GitDiffTableModel* tableModel = new GitDiffTableModel(repo, delta, this);
-    setModel(tableModel);
+    setSourceModel(tableModel);
 
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &GitDiffTableView::onCurrentIndexChanged);
 

@@ -20,7 +20,7 @@ void GitTreeEntryTableView::createModel(Repository* repo, const ObjectId& commit
     }
 
     GitTreeEntryTableModel* tableModel = new GitTreeEntryTableModel(repo, commitId, this);
-    setModel(tableModel);
+    setSourceModel(tableModel);
 
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &GitTreeEntryTableView::onCurrentIndexChanged);
 }
