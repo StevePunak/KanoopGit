@@ -15,7 +15,7 @@ void RecentReposTableView::createModel(const QStringList& repoPaths)
     }
 
     RecentReposTableModel* tableModel = new RecentReposTableModel(repoPaths, this);
-    setSourceModel(tableModel);
+    setModel(tableModel);
 
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &RecentReposTableView::onCurrentIndexChanged);
 }

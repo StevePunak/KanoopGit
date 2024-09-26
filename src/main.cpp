@@ -4,18 +4,21 @@
 
 #include <QApplication>
 
-#include "testwidgetsettings.h"
+#include "kanoopgitsettings.h"
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
 
-    GuiSettings::setGlobalInstance(TestWidgetSettings::instance());
+    app.setOrganizationName("Kanoop");
+    app.setApplicationDisplayName("Kanoop Git");
+
+    GuiSettings::setGlobalInstance(KanoopGitSettings::instance());
 
     GitAssets::registerAssets();
     GitEntities::registerEntityTypes();
 
     GitMainWindow w;
     w.show();
-    return a.exec();
+    return app.exec();
 }

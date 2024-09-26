@@ -14,6 +14,8 @@ public:
 
         Branch,
         CheckGreen,
+        Cloud,
+        Computer,
         Copy,
         DashBlueOnWhite,
         DashWhiteOnGrey,
@@ -42,6 +44,8 @@ private:
         {
             insert(Branch,              "branch.png");
             insert(CheckGreen,          "check-green.png");
+            insert(Cloud,               "cloud.png");
+            insert(Computer,            "computer.png");
             insert(Copy,                "copy.png");
             insert(DashBlueOnWhite,     "dash-blue-on-white.png");
             insert(DashWhiteOnGrey,     "dash-white-on-grey.png");

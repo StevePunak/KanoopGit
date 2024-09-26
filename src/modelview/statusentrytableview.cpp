@@ -28,7 +28,7 @@ void StatusEntryTableView::createModel(Repository* repo, const StatusEntry::List
     }
 
     StatusEntryTableModel* tableModel = new StatusEntryTableModel(repo, entries, this);
-    setSourceModel(tableModel);
+    setModel(tableModel);
 
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &StatusEntryTableView::onCurrentSelectionChanged);
 

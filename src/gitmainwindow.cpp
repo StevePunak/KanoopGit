@@ -3,7 +3,7 @@
 #include "ui_gitmainwindow.h"
 
 #include <QFileDialog>
-#include <testwidgetsettings.h>
+#include <kanoopgitsettings.h>
 
 #include <QMessageBox>
 #include <git2qt.h>
@@ -40,7 +40,7 @@ GitMainWindow::GitMainWindow(QWidget *parent) :
     connect(ui->tabWidgetRepos->tabBar(), &QTabBar::tabBarClicked, this, &GitMainWindow::onTabBarClicked);
 
     // Load models
-    ui->tableRecentRepos->createModel(TestWidgetSettings::instance()->recentFiles());
+    ui->tableRecentRepos->createModel(KanoopGitSettings::instance()->recentFiles());
     ui->stackedMain->setCurrentWidget(ui->pageRepos);
     ui->tabWidgetRepos->setMovable(true);
 
@@ -59,8 +59,8 @@ void GitMainWindow::openRecentRepos()
 {
     // open persisted repos
     RepositoryWidget* firstWidget = nullptr;
-    for(int i = 0;i < TestWidgetSettings::instance()->openRepos().count();i++) {
-        QString repoPath = TestWidgetSettings::instance()->openRepos().at(i);
+    for(int i = 0;i < KanoopGitSettings::instance()->openRepos().count();i++) {
+        QString repoPath = KanoopGitSettings::instance()->openRepos().at(i);
         if(Repository::isRepository(repoPath)) {
             RepositoryWidget* widget = openRepository(repoPath);
             if(firstWidget == nullptr) {
@@ -69,7 +69,7 @@ void GitMainWindow::openRecentRepos()
         }
         else {
             logText(LVL_WARNING, QString("Removing invalid repo %1 from list").arg(repoPath));
-            TestWidgetSettings::instance()->removeOpenRepo(repoPath);
+            KanoopGitSettings::instance()->removeOpenRepo(repoPath);
         }
     }
 
@@ -94,9 +94,9 @@ RepositoryWidget* GitMainWindow::openRepository(const QString& path)
     connect(closeButton, &QPushButton::clicked, this, &GitMainWindow::onCloseTabClicked);
     ui->tabWidgetRepos->tabBar()->setTabButton(index, QTabBar::RightSide, closeButton);
 
-    ui->tableRecentRepos->createModel(TestWidgetSettings::instance()->recentFiles());
+    ui->tableRecentRepos->createModel(KanoopGitSettings::instance()->recentFiles());
 
-    TestWidgetSettings::instance()->saveOpenRepo(path);
+    KanoopGitSettings::instance()->saveOpenRepo(path);
 
     return repoWidget;
 }
@@ -105,7 +105,7 @@ void GitMainWindow::closeRepository(int tabIndex)
 {
     RepositoryWidget* repoWidget = dynamic_cast<RepositoryWidget*>(ui->tabWidgetRepos->widget(tabIndex));
     if(repoWidget != nullptr) {
-        TestWidgetSettings::instance()->removeOpenRepo(repoWidget->repository()->localPath());
+        KanoopGitSettings::instance()->removeOpenRepo(repoWidget->repository()->localPath());
     }
     ui->tabWidgetRepos->removeTab(tabIndex);
 }
@@ -119,14 +119,14 @@ void GitMainWindow::onOpenRepoClicked()
 {
     try
     {
-        QString dirName = QFileDialog::getExistingDirectory(this, "Open Existing Repository", TestWidgetSettings::instance()->lastDirectory("repo"));
+        QString dirName = QFileDialog::getExistingDirectory(this, "Open Existing Repository", KanoopGitSettings::instance()->lastDirectory("repo"));
         if(dirName.isEmpty() == false) {
             if(Repository::isRepository(dirName) == false) {
                 throw CommonException("No repository found at give path");
             }
             // save settings
-            TestWidgetSettings::instance()->pushRecentFile(dirName);
-            TestWidgetSettings::instance()->saveLastDirectory("repo", dirName);
+            KanoopGitSettings::instance()->pushRecentFile(dirName);
+            KanoopGitSettings::instance()->saveLastDirectory("repo", dirName);
 
             openRepository(dirName);
         }

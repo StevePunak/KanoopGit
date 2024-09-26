@@ -4,22 +4,29 @@
 #include "gitassets.h"
 
 #include <QHeaderView>
+#include <QLabel>
+#include <QLineEdit>
 #include <QPainter>
 #include <git2qt.h>
 
 #include <Kanoop/geometry/rectangle.h>
 
 #include <Kanoop/gui/resources.h>
+#include <Kanoop/gui/stylesheets.h>
 
 using namespace GIT;
 namespace Colors = QColorConstants::Svg;
 
 GitCommitTableView::GitCommitTableView(QWidget *parent) :
-    TableViewBase(parent)
+    TableViewBase(parent),
+    _repo(nullptr)
 {
     setContextMenuPolicy(Qt::CustomContextMenu);
     setSelectionMode(SingleSelection);
-    verticalHeader()->setDefaultSectionSize(GitCommitGraphStyledItemDelegate::RowHeight);
+    verticalHeader()->setDefaultSectionSize(RowHeight);
+
+    createPixmaps();
+    setEditTriggers(NoEditTriggers);
 }
 
 void GitCommitTableView::createModel(Repository* repo)
@@ -28,16 +35,29 @@ void GitCommitTableView::createModel(Repository* repo)
         delete model();
     }
 
+    _repo = repo;
     _commits = repo->commitGraph();
     _workInProgress = repo->status().entries();
     GitCommitTableModel* tableModel = new GitCommitTableModel(repo, _commits, this);
-    setSourceModel(tableModel);
+    setModel(tableModel);
 
+    connect(tableModel, &GitCommitTableModel::createBranch, this, &GitCommitTableView::createBranch);
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &GitCommitTableView::onCurrentIndexChanged);
 
     int column = tableModel->columnForHeader(CH_Graph);
     if(column >= 0) {
         setItemDelegateForColumn(column, new GitCommitGraphStyledItemDelegate(this));
+    }
+    column = tableModel->columnForHeader(CH_BranchOrTag);
+    if(column >= 0) {
+        setItemDelegateForColumn(column, new GitBranchTagStyledItemDelegate(this));
+    }
+
+    // Create branch/tag widgets
+    for(const GraphedCommit& commit : _commits) {
+        if(commit.isHead() == false) {
+            continue;
+        }
     }
 
     restoreHeaderStates();
@@ -76,6 +96,12 @@ GraphedCommit GitCommitTableView::currentSelectedCommit() const
     return commit;
 }
 
+int GitCommitTableView::selectedCount() const
+{
+    int result = selectedIndexes().count();
+    return result;
+}
+
 GitEntities::Type GitCommitTableView::currentMetadataType() const
 {
     GitEntities::Type type = GitEntities::InvalidEntity;
@@ -84,6 +110,15 @@ GitEntities::Type GitCommitTableView::currentMetadataType() const
         type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
     }
     return type;
+}
+
+void GitCommitTableView::createPixmaps()
+{
+    _cloudPixmap = Resources::getPixmap(GitAssets::Cloud);
+    _computerPixmap = Resources::getPixmap(GitAssets::Computer);
+    Size pixmapSize(RowHeight / 2, RowHeight / 2);
+    _cloudPixmap = _cloudPixmap.scaled(pixmapSize.toSize());
+    _computerPixmap = _computerPixmap.scaled(pixmapSize.toSize());
 }
 
 void GitCommitTableView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)
@@ -131,7 +166,10 @@ void GitCommitGraphStyledItemDelegate::paint(QPainter* painter, const QStyleOpti
     drawRect.grow(1);
 
     GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
+
     painter->save();
+
+    bool isRepoHead = index.data(IsRepoHeadCommitRole).toBool();
     switch(type) {
     case GitEntities::Commit:
     case GitEntities::Stash:
@@ -140,7 +178,7 @@ void GitCommitGraphStyledItemDelegate::paint(QPainter* painter, const QStyleOpti
         if(commit.isValid() == false) {
             return;
         }
-        QPixmap pixmap = createCommitPixmap(commit, drawRect.size());
+        QPixmap pixmap = createCommitPixmap(commit, drawRect.size(), isRepoHead);
         painter->drawPixmap(drawRect.x(), drawRect.y(), pixmap);
         break;
     }
@@ -158,7 +196,7 @@ void GitCommitGraphStyledItemDelegate::paint(QPainter* painter, const QStyleOpti
     painter->restore();
 }
 
-QPixmap GitCommitGraphStyledItemDelegate::createArc(int width, int height, GIT::GraphItemType type)
+QPixmap GitCommitGraphStyledItemDelegate::createArc(int width, int height, GIT::GraphItemType type, const GitGraphPalette &palette)
 {
 
     QPixmap pixmap(width * 2, height);
@@ -166,7 +204,7 @@ QPixmap GitCommitGraphStyledItemDelegate::createArc(int width, int height, GIT::
 
     QPainter painter(&pixmap);
 
-    painter.setPen(QPen(Colors::blue, 3));
+    painter.setPen(QPen(palette.graphLineColor(), 2));
 
     Rectangle rect = pixmap.rect();
     painter.drawArc(rect, 0, 360*16);
@@ -199,62 +237,20 @@ QPixmap GitCommitGraphStyledItemDelegate::createArc(int width, int height, GIT::
     return result;
 }
 
-QPixmap GitCommitGraphStyledItemDelegate::createArc_DEP(int width, int height, GIT::GraphItemType type)
-{
-    QPixmap pixmap(width, height);
-    pixmap.fill(Qt::transparent);
-
-    QPainter painter(&pixmap);
-
-    Rectangle levelRect(0, 0, width, height);
-    Point dotPos = levelRect.centerPoint();
-
-    Size arcRectSize(width * 2, height);
-
-    int startAngle = 0;
-    int spanAngle = 0;
-
-    Rectangle arcRect;
-    switch(type) {
-    case DownToLeft:
-        arcRect = Rectangle(Point(levelRect.x() - (width / 2), dotPos.y()), arcRectSize);
-        startAngle = -(270 * 16);
-        spanAngle = (90 * 16);
-        break;
-    case DownToRight:
-        arcRect = Rectangle(Point(levelRect.x() - (width / 2), dotPos.y()), arcRectSize);
-        startAngle = -(270 * 16);
-        spanAngle = -(90 * 16);
-        break;
-    case UpToLeft:
-        arcRect = Rectangle(Point(levelRect.x() - (width / 2), dotPos.y() - height), arcRectSize);
-        startAngle = (270 * 16);
-        spanAngle = -(90 * 16);
-        break;
-    case UpToRight:
-        arcRect = Rectangle(Point(levelRect.x() - (width / 2), dotPos.y() - height), arcRectSize);
-        startAngle = (270 * 16);
-        spanAngle = (90 * 16);
-        break;
-    default:
-        break;
-    }
-
-    // painter.setPen(Colors::red);
-    // painter.drawRect(arcRect);
-
-    painter.setPen(Colors::blue);
-    painter.drawArc(arcRect, startAngle, spanAngle);
-
-    return pixmap;
-}
-
-QPixmap GitCommitGraphStyledItemDelegate::createCommitPixmap(const GIT::GraphedCommit& commit, const Size& size) const
+QPixmap GitCommitGraphStyledItemDelegate::createCommitPixmap(const GIT::GraphedCommit& commit, const Size& size, bool isRepoHead) const
 {
     QPixmap pixmap(size.toSize());
     pixmap.fill();
 
     QPainter painter(&pixmap);
+
+    if(isRepoHead) {
+        Rectangle rect = pixmap.rect();
+        Point begin(rect.left(), rect.rightEdge().midpoint().y());
+        Point end(rect.width(), begin.y());
+        painter.setPen(QPen(_palette.headCommitLineColor(), _palette.headCommitLineWidth()));
+        painter.drawLine(begin, end);
+    }
 
     GraphLine graphLine = commit.graphLine();
     QList<int> levels = graphLine.graphItems().keys();
@@ -334,8 +330,8 @@ void GitCommitGraphStyledItemDelegate::drawCommitDot(QPainter* painter, const Si
 
     painter->save();
     if(commit.isStash()) {
-        painter->setBrush(QBrush(Qt::white));
-        QPen pen(Colors::darkmagenta);
+        painter->setBrush(QBrush(_palette.stashFillColor()));
+        QPen pen(_palette.stashBorderColor());
         pen.setStyle(Qt::DotLine);
         pen.setWidth(2);
         painter->setPen(pen);
@@ -343,11 +339,9 @@ void GitCommitGraphStyledItemDelegate::drawCommitDot(QPainter* painter, const Si
         painter->drawRect(rect);
     }
     else  {
-        painter->setPen(QPen(Colors::green, 2));
-        painter->setBrush(QBrush(Colors::yellow));
+        painter->setPen(QPen(_palette.commitDotBorderColor(), 2));
+        painter->setBrush(QBrush(_palette.commitDotFillColor()));
         painter->drawEllipse(dotPos, DotRadius, DotRadius);
-painter->setPen(Colors::red);
-painter->drawPoint(dotPos);
     }
     painter->restore();
 }
@@ -357,10 +351,8 @@ void GitCommitGraphStyledItemDelegate::drawMergeDot(QPainter *painter, const Siz
     Point dotPos(centerXForLevel(commit.level()), size.height() / 2);
 
     painter->save();
-    painter->setBrush(QBrush(Colors::blue));
+    painter->setBrush(QBrush(_palette.mergeDotColor()));
     painter->drawEllipse(dotPos, MergeRadius, MergeRadius);
-painter->setPen(Colors::red);
-painter->drawPoint(dotPos);
     painter->restore();
 }
 
@@ -370,7 +362,7 @@ void GitCommitGraphStyledItemDelegate::drawCurvedConnector(QPainter* painter, co
 
     Point dotPos(centerXForLevel(level), pixmapSize.height() / 2);
 
-    QPixmap arc = createArc(LevelWidth, pixmapSize.height(), type);
+    QPixmap arc = createArc(LevelWidth, pixmapSize.height(), type, _palette);
 
     int drawX = 0;
     int drawY = 0;
@@ -387,46 +379,21 @@ void GitCommitGraphStyledItemDelegate::drawCurvedConnector(QPainter* painter, co
     case DownToLeft:
     case LeftThenUp:
         drawX = dotPos.x() - LevelWidth;
-        drawY = dotPos.y() - (RowHeight / 2);
+        drawY = dotPos.y() - (GitCommitTableView::RowHeight / 2);
         break;
     case UpToRight:
     case DownToRight:
     case RightThenUp:
         drawX = dotPos.x();
-        drawY = dotPos.y() - (RowHeight / 2);
+        drawY = dotPos.y() - (GitCommitTableView::RowHeight / 2);
         break;
     default:
         break;
     }
 
     painter->save();
-    painter->setPen(QPen(QBrush(Colors::purple), 2));
+    // painter->setPen(QPen(QBrush(Colors::purple), 2));
     painter->drawPixmap(drawX, drawY, arc);
-    painter->restore();
-}
-
-void GitCommitGraphStyledItemDelegate::drawCurvedConnector_DEP(QPainter* painter, const Size& pixmapSize, int fromLevel, int toLevel, bool descending) const
-{
-    Point dotPos(centerXForLevel(fromLevel), pixmapSize.height() / 2);
-
-    Point hlineEnd(centerXForLevel(toLevel) - (LevelWidth / 2), dotPos.y());
-    Line hline(dotPos, hlineEnd);
-    painter->save();
-    painter->setPen(QPen(QBrush(Colors::purple), 2));
-    painter->drawLine(hline.toQLine());
-
-    if(descending) {
-        Rectangle arcRect(hlineEnd.x() - (LevelWidth / 2), hlineEnd.y(), LevelWidth, pixmapSize.height() / 2);
-        painter->drawArc(arcRect, -(270*16), -(90*16));
-        Line remaining(arcRect.rightEdge().midpoint(), arcRect.bottomRight());
-        painter->drawLine(remaining.toQLine());
-    }
-    else {
-        Rectangle arcRect(hlineEnd.x() - (LevelWidth / 2), 0, LevelWidth, pixmapSize.height() / 2);
-        painter->drawArc(arcRect, -(0*16), -(90*16));
-        Line remaining(arcRect.rightEdge().midpoint(), arcRect.topRight());
-        painter->drawLine(remaining.toQLine());
-    }
     painter->restore();
 }
 
@@ -485,25 +452,79 @@ void GitCommitGraphStyledItemDelegate::drawHorizontal(QPainter* painter, const S
 
 void GitBranchTagStyledItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
+
+    // Draw the label
+    QString text = index.data(Qt::DisplayRole).toString();
+    if(text.isEmpty() == true) {
+        return;
+    }
+
     painter->save();
 
-    Q_UNUSED(option) Q_UNUSED(index)
-#if 0
-    Rectangle drawRect = option.rect;
+    QPixmap pixmap = createPixmap(option.rect.size(), text, index);
+    painter->drawPixmap(option.rect, pixmap);
 
-    GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
-    if(type == GitEntities::Commit) {
-        GraphedCommit commit = GraphedCommit::fromVariant(index.data(CommitRole));
-        if(commit.isValid() == false) {
-            return;
-        }
-        QPixmap pixmap = createCommitPixmap(commit, drawRect.size());
-        painter->drawPixmap(drawRect.x(), drawRect.y(), pixmap);
-        break;
-    }
-    else {
-
-    }
-#endif
     painter->restore();
+}
+
+QWidget *GitBranchTagStyledItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    Q_UNUSED(option)
+
+    bool isHeadCommit = index.data(IsRepoHeadCommitRole).toBool();
+    if(isHeadCommit == false) {
+        return nullptr;     // shouldn't happen
+    }
+
+    QLineEdit* editor = new QLineEdit(parent);
+    editor->setPlaceholderText("-- enter new branch name --");
+    return editor;
+}
+
+void GitBranchTagStyledItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    Q_UNUSED(model) Q_UNUSED(index)
+    QLineEdit* lineEdit = dynamic_cast<QLineEdit*>(editor);
+    if(lineEdit == nullptr) {
+        return;     // shouldn't happen
+    }
+
+    if(lineEdit->text().isEmpty() == false) {
+        model->setData(index, lineEdit->text(), CreateBranchRole);
+    }
+}
+
+QPixmap GitBranchTagStyledItemDelegate::createPixmap(const Size &size, const QString &text, const QModelIndex& index) const
+{
+    Q_UNUSED(index)
+
+    QFont font;
+    QFontMetrics fm(font);
+
+    double textHeight = fm.height();
+    double textTop = (size.height() / 2) - (textHeight / 2);
+
+    Rectangle textRect(0, textTop, fm.horizontalAdvance(text), textHeight);
+
+    QPixmap pixmap(size.toSize());
+    pixmap.fill(Qt::transparent);
+
+    GraphedCommit commit = GraphedCommit::fromVariant(index.data(CommitRole));
+    QPixmap indicatorPixmap = commit.isRemote() ? _tableView->cloudPixmap() : _tableView->computerPixmap();
+    Rectangle fillRect(0, 0, textRect.width() + indicatorPixmap.width() + 10, size.height());
+
+    QPainter painter(&pixmap);
+    painter.fillRect(fillRect, _palette.branchOrTagColor());
+    painter.drawText(pixmap.rect(), Qt::AlignVCenter, text);
+    double pixmapY = (size.height() / 2) - (indicatorPixmap.height() / 2);
+    painter.drawPixmap(fillRect.width() - (indicatorPixmap.width() + 5), pixmapY, indicatorPixmap);
+
+    bool isHeadCommit = index.data(IsRepoHeadCommitRole).toBool();
+    if(isHeadCommit) {
+        Point begin(fillRect.right(), fillRect.rightEdge().midpoint().y());
+        Point end(size.width(), begin.y());
+        painter.setPen(QPen(_palette.headCommitLineColor(), _palette.headCommitLineWidth()));
+        painter.drawLine(begin, end);
+    }
+    return pixmap;
 }

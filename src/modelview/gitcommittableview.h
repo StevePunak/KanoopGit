@@ -6,6 +6,7 @@
 #include <Kanoop/geometry/point.h>
 #include <Kanoop/geometry/size.h>
 #include "gitentities.h"
+#include "gitgraphpalette.h"
 #include "gitroles.h"
 
 class GitCommitTableView : public TableViewBase
@@ -22,21 +23,38 @@ public:
     GIT::Stash currentSelectedStash() const;
     GIT::GraphedCommit currentSelectedCommit() const;
 
+    int selectedCount() const;
+
     GitEntities::Type currentMetadataType() const;
 
     const GIT::GraphedCommit::List commitsRef() { return _commits; }
     const GIT::GraphedCommit::Map commitIndexRef() { return _commitIndex; }
     const GIT::StatusEntry::List workInProgressRef() { return _workInProgress; }
 
+    QPixmap cloudPixmap() const { return _cloudPixmap; }
+    QPixmap computerPixmap() const { return _computerPixmap; }
+
+    static const int RowHeight = 30;
+
 private:
+    void createPixmaps();
+
+    GIT::Repository* _repo;
+
     GIT::GraphedCommit::List _commits;
     GIT::GraphedCommit::Map _commitIndex;
     GIT::StatusEntry::List _workInProgress;
+
+    QPixmap _cloudPixmap;
+    QPixmap _computerPixmap;
+
+    GitGraphPalette _graphPalette;
 
 signals:
     void commitClicked(const GIT::GraphedCommit& commit);
     void workInProgressClicked();
     void stashClicked(const GIT::Stash& stash);
+    void createBranch(const QString& branchName);
 
 private slots:
     void onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous);
@@ -48,27 +66,25 @@ public:
     GitCommitGraphStyledItemDelegate(GitCommitTableView* parent = nullptr);
 
     virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
-    static QPixmap createArc(int width, int height, GIT::GraphItemType type);
-    static QPixmap createArc_DEP(int width, int height, GIT::GraphItemType type);
+    static QPixmap createArc(int width, int height, GIT::GraphItemType type, const GitGraphPalette& palette);
 
 private:
-    QPixmap createCommitPixmap(const GIT::GraphedCommit& commit, const Size& size) const;
+    QPixmap createCommitPixmap(const GIT::GraphedCommit& commit, const Size& size, bool isRepoHead) const;
     QPixmap createWorkInProgressPixmap(const Size& size) const;
     void drawCommitDot(QPainter* painter, const Size& size, const GIT::GraphedCommit& commit) const;
     void drawMergeDot(QPainter* painter, const Size& size, const GIT::GraphedCommit& commit) const;
     void drawCurvedConnector(QPainter* painter, const Size& pixmapSize, int level, GIT::GraphItemType type, const GIT::GraphedCommit& commit) const;
-    void drawCurvedConnector_DEP(QPainter* painter, const Size& pixmapSize, int fromLevel, int toLevel, bool descending) const;
     void drawVerticals(QPainter* painter, const Size& pixmapSize, int level, int index, bool forceFinal = false) const;
     void drawVertical(QPainter* painter, const Size& pixmapSize, int level, Geo::Direction direction) const;
     void drawHorizontal(QPainter* painter, const Size& pixmapSize, int level, Geo::Direction direction) const;
 
     static double centerXForLevel(int level) { return (LevelWidth / 2) + (LevelWidth * (level - 1)); }
-    static Point centerPointForLevel(int level) { return Point(centerXForLevel(level), RowHeight / 2); }
+    static Point centerPointForLevel(int level) { return Point(centerXForLevel(level), GitCommitTableView::RowHeight / 2); }
 
     GitCommitTableView* _tableView;
+    GitGraphPalette _palette;
 
 public:
-    static const int RowHeight = 30;
     static const int LevelWidth = 16;
     static const int DotRadius = 6;
     static const int MergeRadius = 4;
@@ -77,15 +93,21 @@ public:
 
 class GitBranchTagStyledItemDelegate : public QStyledItemDelegate
 {
+    Q_OBJECT
 public:
     GitBranchTagStyledItemDelegate(GitCommitTableView* parent = nullptr) :
         QStyledItemDelegate(parent),
         _tableView(parent) {}
 
     virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    virtual void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
 
 private:
+    QPixmap createPixmap(const Size &size, const QString& text, const QModelIndex &index) const;
+
     GitCommitTableView* _tableView;
+    GitGraphPalette _palette;
 };
 
 #endif // GITCOMMITTABLEVIEW_H

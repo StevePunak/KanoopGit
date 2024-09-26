@@ -51,7 +51,34 @@ QModelIndex GitCommitTableModel::findCommitIndex(const GIT::ObjectId& objectId) 
     return result;
 }
 
+Qt::ItemFlags GitCommitTableModel::flags(const QModelIndex &index) const
+{
+    Qt::ItemFlags result = AbstractTableModel::flags(index);
+    TableHeader headerInfo = columnHeader(index.column());
 
+    if(headerInfo.type() == ColHeaders::CH_BranchOrTag) {
+        result |= Qt::ItemIsEditable;
+    }
+    return result;
+}
+
+bool GitCommitTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    Q_UNUSED(index)
+    if(role == CreateBranchRole) {
+        emit createBranch(value.toString());
+    }
+    return false;
+}
+
+GitCommitTableModel::CommitItem::CommitItem(const GIT::GraphedCommit &commit, GitCommitTableModel *model) :
+    TableBaseItem(EntityMetadata(GitEntities::Commit), model),
+    _commit(commit), _isHeadCommit(false)
+{
+    if(commit.objectId() == repo()->headCommit().objectId()) {
+        _isHeadCommit = true;
+    }
+}
 
 QVariant GitCommitTableModel::CommitItem::data(const QModelIndex &index, int role) const
 {
@@ -82,6 +109,9 @@ QVariant GitCommitTableModel::CommitItem::data(const QModelIndex &index, int rol
     }
     case ObjectIdRole:
         result = _commit.objectId().toVariant();
+        break;
+    case IsRepoHeadCommitRole:
+        result = _isHeadCommit;
         break;
     case CommitRole:
         result = _commit.toVariant();

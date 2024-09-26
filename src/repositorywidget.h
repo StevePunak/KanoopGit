@@ -31,9 +31,8 @@ private:
     Ui::RepositoryWidget *ui;
     GIT::Repository* _repo;
 
-    QWidget* _contextMenuWidget = nullptr;
-
     static const QString StageUnstageProperty;
+    static const QString ReferenceProperty;
 
     enum StageType { StageTypeInvalid, StageFile, UnstageFile };
 
@@ -46,6 +45,9 @@ private slots:
 
     // Refresh
     void onRefreshWidgets();
+
+    // Slots for views
+    void createBranch(const QString& branchName);
 
     // Widget overrides
     virtual void keyPressEvent(QKeyEvent* event) override;
@@ -67,6 +69,7 @@ private slots:
     void onStagedFilesContextMenuRequested();
     void onUnstagedFilesContextMenuRequested();
     void onCommitTableContextMenuRequested(const QPoint &pos);
+    void onLocalBranchesCustomContextMenuRequested(const QPoint &pos);
 
     // Actions
     void onStageFilesClicked();
@@ -77,6 +80,8 @@ private slots:
     void onApplyStashClicked();
     void onDeleteStashClicked();
     void onPopStashClicked();
+    void onDeleteLocalBranchClicked();
+    void onRenameLocalBranchClicked();
 
     // Pushbuttons
     void onStageAllChangesClicked();
@@ -91,7 +96,6 @@ private slots:
     void onDebugClicked();
 
     // Debug
-    void onLocalBranchTreeDoubleClicked(const QModelIndex& index);
     void drawDebugArc();
 };
 

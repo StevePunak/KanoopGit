@@ -19,5 +19,7 @@
         <file>assets/debug.png</file>
         <file>assets/pull.png</file>
         <file>assets/push.png</file>
+        <file>assets/computer.png</file>
+        <file>assets/cloud.png</file>
     </qresource>
 </RCC>

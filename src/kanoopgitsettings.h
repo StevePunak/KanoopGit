@@ -1,15 +1,15 @@
-#ifndef TESTWIDGETSETTINGS_H
-#define TESTWIDGETSETTINGS_H
+#ifndef KANOOPGITSETTINGS_H
+#define KANOOPGITSETTINGS_H
 
 #include <Kanoop/gui/guisettings.h>
 
 
-class TestWidgetSettings : public GuiSettings
+class KanoopGitSettings : public GuiSettings
 {
 public:
-    static TestWidgetSettings* instance();
+    static KanoopGitSettings* instance();
 
-    TestWidgetSettings();
+    KanoopGitSettings();
 
     QStringList openRepos() const { return _settings.value(KEY_OPEN_REPOS).toStringList(); }
     void saveOpenRepo(const QString& value);
@@ -19,8 +19,10 @@ public:
     void pushRecentFile(const QString& value);
 
 private:
+    virtual void ensureValidDefaults() override;
+
     static const QString KEY_OPEN_REPOS;
     static const QString KEY_RECENT_FILES;
 };
 
-#endif // TESTWIDGETSETTINGS_H
+#endif // KANOOPGITSETTINGS_H

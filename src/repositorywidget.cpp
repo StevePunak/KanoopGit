@@ -17,7 +17,8 @@
 using namespace GIT;
 namespace Colors = QColorConstants::Svg;
 
-const QString RepositoryWidget::StageUnstageProperty     = "stage_unstage";
+const QString RepositoryWidget::StageUnstageProperty    = "stage_unstage";
+const QString RepositoryWidget::ReferenceProperty       = "reference";
 
 RepositoryWidget::RepositoryWidget(const QString& path, QWidget *parent) :
     MainWindowBase("gittree", parent),
@@ -47,9 +48,9 @@ RepositoryWidget::RepositoryWidget(const QString& path, QWidget *parent) :
     connect(ui->tableCommits, &GitCommitTableView::stashClicked, this, &RepositoryWidget::onStashCommitClicked);
     connect(ui->tableCommits, &GitCommitTableView::workInProgressClicked, this, &RepositoryWidget::onWorkInProgressClicked);
     connect(ui->tableCommits, &GitCommitTableView::currentSelectionChanged, this, &RepositoryWidget::maybeEnableButtons);
+    connect(ui->tableCommits, &GitCommitTableView::createBranch, this, &RepositoryWidget::createBranch);
     connect(ui->treeLocalBranches, &GitBranchTreeView::referenceClicked, this, &RepositoryWidget::onReferenceClicked);
     connect(ui->treeLocalBranches, &GitBranchTreeView::referenceDoubleClicked, this, &RepositoryWidget::onLocalReferenceDoubleClicked);
-connect(ui->treeLocalBranches, &GitBranchTreeView::doubleClicked, this, &RepositoryWidget::onLocalBranchTreeDoubleClicked);
     connect(ui->treeRemoteBranches, &GitBranchTreeView::referenceClicked, this, &RepositoryWidget::onReferenceClicked);
     connect(ui->tableStagedFiles, &StatusEntryTableView::statusEntryClicked, this, &RepositoryWidget::onStagedStatusEntryClicked);
     connect(ui->tableUnstagedFiles, &StatusEntryTableView::statusEntryClicked, this, &RepositoryWidget::onUnstagedStatusEntryClicked);
@@ -59,6 +60,7 @@ connect(ui->treeLocalBranches, &GitBranchTreeView::doubleClicked, this, &Reposit
     connect(ui->tableStagedFiles, &StatusEntryTableView::customContextMenuRequested, this, &RepositoryWidget::onStagedFilesContextMenuRequested);
     connect(ui->tableUnstagedFiles, &StatusEntryTableView::customContextMenuRequested, this, &RepositoryWidget::onUnstagedFilesContextMenuRequested);
     connect(ui->tableCommits, &GitCommitTableView::customContextMenuRequested, this, &RepositoryWidget::onCommitTableContextMenuRequested);
+    connect(ui->treeLocalBranches, &GitBranchTreeView::customContextMenuRequested, this, &RepositoryWidget::onLocalBranchesCustomContextMenuRequested);
 
     // Actions
     connect(ui->actionStageFiles, &QAction::triggered, this, &RepositoryWidget::onStageFilesClicked);
@@ -69,6 +71,8 @@ connect(ui->treeLocalBranches, &GitBranchTreeView::doubleClicked, this, &Reposit
     connect(ui->actionApplyStash, &QAction::triggered, this, &RepositoryWidget::onApplyStashClicked);
     connect(ui->actionDeleteStash, &QAction::triggered, this, &RepositoryWidget::onDeleteStashClicked);
     connect(ui->actionPopStash, &QAction::triggered, this, &RepositoryWidget::onPopStashClicked);
+    connect(ui->actionDeleteLocalBranch, &QAction::triggered, this, &RepositoryWidget::onDeleteLocalBranchClicked);
+    connect(ui->actionRenameLocalBranch, &QAction::triggered, this, &RepositoryWidget::onRenameLocalBranchClicked);
 
     // Pushbuttons
     connect(ui->pushStageAll, &QPushButton::clicked, this, &RepositoryWidget::onStageAllChangesClicked);
@@ -208,6 +212,15 @@ void RepositoryWidget::onRefreshWidgets()
     maybeEnableButtons();
 }
 
+void RepositoryWidget::createBranch(const QString &branchName)
+{
+    Branch branch = _repo->createBranch(branchName, true);
+    if(branch.isNull()) {
+        QMessageBox::warning(this, "Failed to create branch", _repo->errorText());
+    }
+    refreshWidgets();
+}
+
 void RepositoryWidget::keyPressEvent(QKeyEvent* event)
 {
     MainWindowBase::keyPressEvent(event);
@@ -230,6 +243,7 @@ void RepositoryWidget::maybeEnableButtons()
     ui->pushNextDiff->setEnabled(ui->tableDiffs->hasNextDelta());
     ui->pushPreviousDiff->setEnabled(ui->tableDiffs->hasPreviousDelta());
     ui->pushStageDiffFile->setVisible(ui->pushStageDiffFile->property(StageUnstageProperty.toUtf8().constData()) != StageTypeInvalid);
+    ui->pushCreateBranch->setEnabled(_repo->headCommit().isNull() == false);
 
     // Potentially change the text of some widgets
     if(stagedFileCount > 0 && ui->textStageCommitMessage->toPlainText().length() == 0) {
@@ -299,6 +313,11 @@ void RepositoryWidget::onLocalReferenceDoubleClicked(const GIT::Reference &refer
 {
     try
     {
+        if(_repo->checkoutLocalBranch(reference.friendlyName()) == false) {
+            throw CommonException(_repo->errorText());
+        }
+        refreshWidgets();
+#if 0
         RepositoryStatus status = _repo->status();
         if(status.entries().count() == 0) {
             if(_repo->checkoutLocalBranch(reference.friendlyName()) == false) {
@@ -309,6 +328,7 @@ void RepositoryWidget::onLocalReferenceDoubleClicked(const GIT::Reference &refer
         else {
             throw CommonException("You have uncomitted changes that would be overwritten.\nCheck in / stash your changes and try again.");
         }
+#endif
     }
     catch(const CommonException& e)
     {
@@ -431,8 +451,6 @@ void RepositoryWidget::onStagedFilesContextMenuRequested()
         ui->actionStash->setText(QString("Stash"));
     }
 
-    _contextMenuWidget = ui->tableStagedFiles;
-
     menu.exec(QCursor::pos());
 }
 
@@ -461,8 +479,6 @@ void RepositoryWidget::onUnstagedFilesContextMenuRequested()
         ui->actionStash->setText(QString("Stash"));
     }
 
-    _contextMenuWidget = ui->tableStagedFiles;
-
     menu.exec(QCursor::pos());
 }
 
@@ -485,7 +501,35 @@ void RepositoryWidget::onCommitTableContextMenuRequested(const QPoint& pos)
     ui->actionPopStash->setEnabled(type == GitEntities::Stash);
     ui->actionDeleteStash->setEnabled(type == GitEntities::Stash);
 
-    _contextMenuWidget = ui->tableCommits;
+    menu.exec(QCursor::pos());
+}
+
+void RepositoryWidget::onLocalBranchesCustomContextMenuRequested(const QPoint &pos)
+{
+    QModelIndex index = ui->treeLocalBranches->indexAt(pos);
+    if(index.isValid() == false) {
+        return;
+    }
+
+    GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
+    if(type != GitEntities::Reference) {
+        return;
+    }
+
+    Reference reference = Reference::fromVariant(index.data(ReferenceRole));
+    if(reference.isNull()) {
+        return;
+    }
+
+    ui->actionDeleteLocalBranch->setText(QString("Delete %1").arg(reference.friendlyName()));
+    ui->actionRenameLocalBranch->setText(QString("Rename %1").arg(reference.friendlyName()));
+
+    ui->actionDeleteLocalBranch->setProperty(ReferenceProperty.toUtf8().constData(), reference.toVariant());
+    ui->actionRenameLocalBranch->setProperty(ReferenceProperty.toUtf8().constData(), reference.toVariant());
+
+    QMenu menu(this);
+    menu.addAction(ui->actionDeleteLocalBranch);
+    menu.addAction(ui->actionRenameLocalBranch);
 
     menu.exec(QCursor::pos());
 }
@@ -576,6 +620,24 @@ void RepositoryWidget::onPopStashClicked()
     }
 }
 
+void RepositoryWidget::onDeleteLocalBranchClicked()
+{
+    Reference reference  = Reference::fromVariant(static_cast<QAction*>(sender())->property(ReferenceProperty.toUtf8().constData()));
+    if(reference.isNull()) {
+        return;
+    }
+
+    if(_repo->deleteLocalBranch(reference) == false) {
+        QMessageBox::warning(this, "Failed to delete branch", _repo->errorText());
+    }
+    refreshWidgets();
+}
+
+void RepositoryWidget::onRenameLocalBranchClicked()
+{
+
+}
+
 void RepositoryWidget::onStageAllChangesClicked()
 {
     StatusEntry::List entries = ui->tableUnstagedFiles->entries();
@@ -643,7 +705,18 @@ void RepositoryWidget::onPushToRemoteClicked()
 
 void RepositoryWidget::onCreateBranchClicked()
 {
-    UNIMPLEMENTED
+    GraphedCommit commit = _repo->headCommit();
+    if(commit.isNull()) {
+        return;
+    }
+
+    ui->tableCommits->selectCommit(commit.objectId());
+    QModelIndex index = ui->tableCommits->findCommit(commit.objectId());
+    if(index.isValid() == false) {
+        return;
+    }
+
+    ui->tableCommits->edit(index);
 }
 
 void RepositoryWidget::onNextDiffClicked()
@@ -700,16 +773,6 @@ void RepositoryWidget::onDebugClicked()
     QString result = output.toString();
     QTextStream(stdout) << result << Qt::endl;
 #endif
-}
-
-void RepositoryWidget::onLocalBranchTreeDoubleClicked(const QModelIndex &index)
-{
-return;
-    if(index.isValid()) {
-        GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
-        logText(LVL_DEBUG, QString("Got index type %1").arg(type));
-        refreshWidgets();
-    }
 }
 
 void RepositoryWidget::drawDebugArc()
@@ -816,7 +879,7 @@ void RepositoryWidget::drawDebugArc()
     int x = (LevelWidth * 3) - (LevelWidth / 2); //(ui->labelGraphic->width() - LevelWidth) - 1;
     int y = RowHeight / 2;
     for(GraphItemType type : types) {
-        QPixmap arc = GitCommitGraphStyledItemDelegate::createArc(LevelWidth, RowHeight, type);
+        QPixmap arc = GitCommitGraphStyledItemDelegate::createArc(LevelWidth, RowHeight, type, GitGraphPalette());
 
         int drawX = 0;
         int drawY = 0;

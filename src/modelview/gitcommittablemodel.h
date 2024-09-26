@@ -15,6 +15,13 @@ public:
     QModelIndex findCommitIndex(const GIT::ObjectId& objectId) const;
 
 
+protected:
+    virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
+    virtual bool setData(const QModelIndex &index, const QVariant &value, int role) override;
+
+signals:
+    void createBranch(const QString& branchName);
+
 private:
     GIT::Repository* _repo;
 
@@ -31,20 +38,19 @@ private:
     class CommitItem : public TableBaseItem
     {
     public:
-        explicit CommitItem(const GIT::GraphedCommit& commit, GitCommitTableModel* model) :
-            TableBaseItem(EntityMetadata(GitEntities::Commit), model),
-            _commit(commit) {}
+        explicit CommitItem(const GIT::GraphedCommit& commit, GitCommitTableModel* model);
 
     protected:
         explicit CommitItem(const EntityMetadata& metadata, const GIT::GraphedCommit& commit, GitCommitTableModel* model) :
             TableBaseItem(metadata, model),
-            _commit(commit) {}
+            _commit(commit), _isHeadCommit(false) {}
 
 
         virtual QVariant data(const QModelIndex &index, int role) const override;
 
     private:
         GIT::GraphedCommit _commit;
+        bool _isHeadCommit;
     };
 
     class WorkInProgressItem : public TableBaseItem
