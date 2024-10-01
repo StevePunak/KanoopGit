@@ -36,6 +36,10 @@ void LeftSidebarTreeView::createModel(GIT::Repository* repo)
     if(config.remoteBranchesVisible()) {
         expandRecursively(tableModel->remoteBranchesIndex());
     }
+
+    if(config.submodulesVisible()) {
+        expandRecursively(tableModel->submodulesIndex());
+    }
 }
 
 void LeftSidebarTreeView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)
@@ -85,6 +89,10 @@ void LeftSidebarTreeView::onExpanded(const QModelIndex& index)
             config.setRemoteBranchesVisible(true);
             Settings::instance()->saveRepoConfig(config);
             break;
+        case Submodules:
+            config.setSubmodulesVisible(true);
+            Settings::instance()->saveRepoConfig(config);
+            break;
         default:
             break;
         }
@@ -104,6 +112,10 @@ void LeftSidebarTreeView::onCollapsed(const QModelIndex& index)
             break;
         case RemoteBranches:
             config.setRemoteBranchesVisible(false);
+            Settings::instance()->saveRepoConfig(config);
+            break;
+        case Submodules:
+            config.setSubmodulesVisible(false);
             Settings::instance()->saveRepoConfig(config);
             break;
         default:

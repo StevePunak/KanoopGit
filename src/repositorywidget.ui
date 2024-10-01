@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1082</width>
-    <height>840</height>
+    <height>1288</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,305 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_8">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="RepositoryPathWidget" name="pathWidget" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>0</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_6">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QToolButton" name="pushPullFromRemote">
+        <property name="minimumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Pull</string>
+        </property>
+        <property name="icon">
+         <iconset resource="gitassets.qrc">
+          <normaloff>:/assets/pull.png</normaloff>:/assets/pull.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>28</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="pushPushToRemote">
+        <property name="minimumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Push</string>
+        </property>
+        <property name="icon">
+         <iconset resource="gitassets.qrc">
+          <normaloff>:/assets/push.png</normaloff>:/assets/push.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>28</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="pushStashChanges">
+        <property name="minimumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Stash</string>
+        </property>
+        <property name="icon">
+         <iconset resource="gitassets.qrc">
+          <normaloff>:/assets/stash.png</normaloff>:/assets/stash.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>28</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="pushCreateBranch">
+        <property name="minimumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Branch</string>
+        </property>
+        <property name="icon">
+         <iconset resource="gitassets.qrc">
+          <normaloff>:/assets/branch.png</normaloff>:/assets/branch.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>28</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="pushPopStash">
+        <property name="minimumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Pop</string>
+        </property>
+        <property name="icon">
+         <iconset resource="gitassets.qrc">
+          <normaloff>:/assets/stash-pop.png</normaloff>:/assets/stash-pop.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>28</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="pushDebug">
+        <property name="minimumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Debug</string>
+        </property>
+        <property name="icon">
+         <iconset resource="gitassets.qrc">
+          <normaloff>:/assets/debug.png</normaloff>:/assets/debug.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>28</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_5">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QToolButton" name="pushRepoOptions">
+        <property name="minimumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Settings</string>
+        </property>
+        <property name="icon">
+         <iconset resource="gitassets.qrc">
+          <normaloff>:/assets/settings.png</normaloff>:/assets/settings.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>28</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
     <item>
      <widget class="QSplitter" name="splitter_2">
       <property name="orientation">
@@ -54,295 +353,6 @@
          <string>Commits</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout">
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <item>
-            <spacer name="horizontalSpacer_6">
-             <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QToolButton" name="pushPullFromRemote">
-             <property name="minimumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Pull</string>
-             </property>
-             <property name="icon">
-              <iconset resource="gitassets.qrc">
-               <normaloff>:/assets/pull.png</normaloff>:/assets/pull.png</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>28</width>
-               <height>28</height>
-              </size>
-             </property>
-             <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QToolButton" name="pushPushToRemote">
-             <property name="minimumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Push</string>
-             </property>
-             <property name="icon">
-              <iconset resource="gitassets.qrc">
-               <normaloff>:/assets/push.png</normaloff>:/assets/push.png</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>28</width>
-               <height>28</height>
-              </size>
-             </property>
-             <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QToolButton" name="pushStashChanges">
-             <property name="minimumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Stash</string>
-             </property>
-             <property name="icon">
-              <iconset resource="gitassets.qrc">
-               <normaloff>:/assets/stash.png</normaloff>:/assets/stash.png</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>28</width>
-               <height>28</height>
-              </size>
-             </property>
-             <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QToolButton" name="pushCreateBranch">
-             <property name="minimumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Branch</string>
-             </property>
-             <property name="icon">
-              <iconset resource="gitassets.qrc">
-               <normaloff>:/assets/branch.png</normaloff>:/assets/branch.png</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>28</width>
-               <height>28</height>
-              </size>
-             </property>
-             <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QToolButton" name="pushPopStash">
-             <property name="minimumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Pop</string>
-             </property>
-             <property name="icon">
-              <iconset resource="gitassets.qrc">
-               <normaloff>:/assets/stash-pop.png</normaloff>:/assets/stash-pop.png</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>28</width>
-               <height>28</height>
-              </size>
-             </property>
-             <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QToolButton" name="pushDebug">
-             <property name="minimumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Debug</string>
-             </property>
-             <property name="icon">
-              <iconset resource="gitassets.qrc">
-               <normaloff>:/assets/debug.png</normaloff>:/assets/debug.png</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>28</width>
-               <height>28</height>
-              </size>
-             </property>
-             <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_5">
-             <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QToolButton" name="pushRepoOptions">
-             <property name="minimumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>48</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Settings</string>
-             </property>
-             <property name="icon">
-              <iconset resource="gitassets.qrc">
-               <normaloff>:/assets/settings.png</normaloff>:/assets/settings.png</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>28</width>
-               <height>28</height>
-              </size>
-             </property>
-             <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
          <item>
           <widget class="GitCommitTableView" name="tableCommits"/>
          </item>
@@ -1046,6 +1056,12 @@
    <class>LeftSidebarTreeView</class>
    <extends>QTreeView</extends>
    <header>modelview/leftsidebartreeview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>RepositoryPathWidget</class>
+   <extends>QWidget</extends>
+   <header>widgets/repositorypathwidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

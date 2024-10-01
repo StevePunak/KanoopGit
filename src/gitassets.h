@@ -1,6 +1,7 @@
 #ifndef GITASSETS_H
 #define GITASSETS_H
 #include <Kanoop/kanoopcommon.h>
+#include <Kanoop/gui/resources.h>
 #include "gitentities.h"
 
 class GitAssets
@@ -10,7 +11,7 @@ public:
 
     enum AssetType
     {
-        InvalidAsset = 0,
+        InvalidAsset = Resources::FirstUserResource,
 
         Branch,
         CheckGreen,

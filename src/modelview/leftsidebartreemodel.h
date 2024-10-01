@@ -15,6 +15,7 @@ public:
 
     QModelIndex localBranchesIndex() const;
     QModelIndex remoteBranchesIndex() const;
+    QModelIndex submodulesIndex() const;
 
 private:
     void createLocalBranchesLeaf();

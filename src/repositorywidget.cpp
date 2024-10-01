@@ -44,6 +44,7 @@ RepositoryWidget::RepositoryWidget(const QString& path, QWidget *parent) :
 
     // Some initial values
     ui->textDiffFileName->clear();
+    ui->pathWidget->setRepo(_repo);
 
     // Wire up views to this widget
     connect(ui->treeGitTree, &GitFileSystemTreeView::indexEntryClicked, this, &RepositoryWidget::onIndexEntryClicked);

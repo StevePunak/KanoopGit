@@ -4,9 +4,10 @@
 void RepoConfig::fromDataStream(QDataStream& in)
 {
     in >> _repoPath
-       >> _localBranchesVisible
-       >> _remoteBranchesVisible
-       >> _credentials;
+            >> _localBranchesVisible
+            >> _remoteBranchesVisible
+            >> _submodulesVisible
+            >> _credentials;
 }
 
 void RepoConfig::toDataStream(QDataStream& out) const
@@ -14,6 +15,7 @@ void RepoConfig::toDataStream(QDataStream& out) const
     out << _repoPath
         << _localBranchesVisible
         << _remoteBranchesVisible
+        << _submodulesVisible
         << _credentials;
 }
 

@@ -18,6 +18,9 @@ public:
     bool remoteBranchesVisible() const { return _remoteBranchesVisible; }
     void setRemoteBranchesVisible(bool value) { _remoteBranchesVisible = value; }
 
+    bool submodulesVisible() const { return _submodulesVisible; }
+    void setSubmodulesVisible(bool value) { _submodulesVisible = value; }
+
     CredentialSet& credentialsRef() { return _credentials; }
     void setCredentials(CredentialSet value) { _credentials = value; }
 
@@ -33,6 +36,7 @@ private:
     QString _repoPath;
     bool _localBranchesVisible = false;
     bool _remoteBranchesVisible = false;
+    bool _submodulesVisible = false;
     CredentialSet _credentials;
 };
 

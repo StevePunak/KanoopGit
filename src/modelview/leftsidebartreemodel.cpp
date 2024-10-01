@@ -24,22 +24,17 @@ LeftSidebarTreeModel::LeftSidebarTreeModel(GIT::Repository* repo, QObject *paren
 
 QModelIndex LeftSidebarTreeModel::localBranchesIndex() const
 {
-    QModelIndex result;
-    QModelIndexList found = match(index(0, 0, QModelIndex()), ControlTypeRole, LocalBranches, 1, Qt::MatchRecursive | Qt::MatchWrap);
-    if(found.count() > 0) {
-        result = found.first();
-    }
-    return result;
+    return firstMatch(index(0, 0, QModelIndex()), ControlTypeRole, LocalBranches, Qt::MatchRecursive | Qt::MatchWrap);
 }
 
 QModelIndex LeftSidebarTreeModel::remoteBranchesIndex() const
 {
-    QModelIndex result;
-    QModelIndexList found = match(index(0, 0, QModelIndex()), ControlTypeRole, RemoteBranches, 1, Qt::MatchRecursive | Qt::MatchWrap);
-    if(found.count() > 0) {
-        result = found.first();
-    }
-    return result;
+    return firstMatch(index(0, 0, QModelIndex()), ControlTypeRole, RemoteBranches, Qt::MatchRecursive | Qt::MatchWrap);
+}
+
+QModelIndex LeftSidebarTreeModel::submodulesIndex() const
+{
+    return firstMatch(index(0, 0, QModelIndex()), ControlTypeRole, Submodules, Qt::MatchRecursive | Qt::MatchWrap);
 }
 
 void LeftSidebarTreeModel::createLocalBranchesLeaf()
