@@ -1,11 +1,10 @@
 #include "settings.h"
 
+#include "repoconfig.h"
+
 #include <QMutex>
 
 const QString Settings::KEY_CREDENTIALS                 = "creds";
-const QString Settings::KEY_LOCAL_BRANCHES_VISIBLE      = "local_branches_visible";
-const QString Settings::KEY_REMOTE_BRANCHES_VISIBLE     = "remote_branches_visible";
-const QString Settings::KEY_SUBMODULES_VISIBLE          = "submodules_visible";
 const QString Settings::KEY_OPEN_REPOS                  = "open_repos";
 const QString Settings::KEY_RECENT_FILES                = "recent_files";
 
@@ -75,10 +74,33 @@ CredentialSet Settings::defaultCredentials() const
     return credentials(CredentialSet::DefaultName);
 }
 
+void Settings::saveRepoConfig(const RepoConfig& config)
+{
+    _settings.setValue(makeRepoConfigKey(config.repoPath()), config.toVariant());
+    _settings.sync();
+}
+
+RepoConfig Settings::repoConfig(const QString& repoPath) const
+{
+    RepoConfig config = RepoConfig::fromVariant(_settings.value(makeRepoConfigKey(repoPath)));
+    if(config.isValid() == false) {
+        config.setRepoPath(repoPath);
+    }
+    return config;
+}
+
 void Settings::ensureValidDefaults()
 {
     int points = fontSize();
     if(points == 0) {
         setFontSize(11);
     }
+}
+
+QString Settings::makeRepoConfigKey(const QString& name)
+{
+    QString squashed = name;
+    squashed.replace("/", "");
+    squashed.replace("\\", "");
+    return QString("repo_config/%1").arg(squashed);
 }

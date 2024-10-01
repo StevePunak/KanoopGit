@@ -5,6 +5,7 @@
 
 #include <credentialset.h>
 
+class RepoConfig;
 
 class Settings : public GuiSettings
 {
@@ -24,23 +25,15 @@ public:
     CredentialSet credentials(const QString& name) const;
     CredentialSet defaultCredentials() const;
 
-    bool areLocalBranchesVisible() const { return _settings.value(KEY_LOCAL_BRANCHES_VISIBLE).toBool(); }
-    void setLocalBranchesVisible(bool value) { _settings.setValue(KEY_LOCAL_BRANCHES_VISIBLE, value); }
-
-    bool areRemoteBranchesVisible() const { return _settings.value(KEY_REMOTE_BRANCHES_VISIBLE).toBool(); }
-    void setRemoteBranchesVisible(bool value) { _settings.setValue(KEY_REMOTE_BRANCHES_VISIBLE, value); }
-
-    bool areSubmodulesVisible() const { return _settings.value(KEY_SUBMODULES_VISIBLE).toBool(); }
-    void setSubmodulesVisible(bool value) { _settings.setValue(KEY_SUBMODULES_VISIBLE, value); }
-
+    void saveRepoConfig(const RepoConfig& config);
+    RepoConfig repoConfig(const QString& repoPath) const;
 
 private:
     virtual void ensureValidDefaults() override;
 
+    static QString makeRepoConfigKey(const QString& name);
+
     static const QString KEY_CREDENTIALS;
-    static const QString KEY_LOCAL_BRANCHES_VISIBLE;
-    static const QString KEY_REMOTE_BRANCHES_VISIBLE;
-    static const QString KEY_SUBMODULES_VISIBLE;
     static const QString KEY_OPEN_REPOS;
     static const QString KEY_RECENT_FILES;
 };

@@ -1,6 +1,8 @@
 #ifndef REPOSITORY_WIDGET_H
 #define REPOSITORY_WIDGET_H
 
+#include "repoconfig.h"
+
 #include <Kanoop/gui/mainwindowbase.h>
 #include <git2qt.h>
 #include <gitcredentialresolver.h>
@@ -34,6 +36,7 @@ private:
     Ui::RepositoryWidget *ui;
     GIT::Repository* _repo;
     GitCredentialResolver _credentialResolver;
+    RepoConfig _config;
 
     static const QString StageUnstageProperty;
     static const QString ReferenceProperty;
@@ -46,8 +49,6 @@ private slots:
     void onRepositoryFileSystemChanged();
     void switchToDiffView();
     void switchToCommitView();
-    void toggleLocalBranchVisibility();
-    void toggleRemoteBranchVisibility();
 
     // Refresh
     void onRefreshWidgets();

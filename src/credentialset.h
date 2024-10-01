@@ -28,6 +28,9 @@ public:
 
     bool isValid() const { return _name.isEmpty() == false; }
 
+    void fromDataStream(QDataStream& in);
+    void toDataStream(QDataStream& out) const;
+
     class List : public SerializableJsonList<CredentialSet>,
                  public ISerializableToJson,
                  public IDeserializableFromJson
@@ -67,5 +70,10 @@ private:
     QString _publicKeyFilename;
     QString _privateKeyFilename;
 };
+
+QDataStream &operator<<(QDataStream &out, const CredentialSet &config);
+QDataStream &operator>>(QDataStream &in, CredentialSet &config);
+
+Q_DECLARE_METATYPE(CredentialSet)
 
 #endif // CREDENTIALSET_H

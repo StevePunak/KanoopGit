@@ -24,6 +24,24 @@ void CredentialSet::deserializeFromJsonObject(const QJsonObject& jsonObject)
     _privateKeyFilename = jsonObject["ssh_priv"].toString();
 }
 
+void CredentialSet::fromDataStream(QDataStream& in)
+{
+    in >> _name
+        >> _username
+        >> _password
+        >> _publicKeyFilename
+        >> _privateKeyFilename;
+}
+
+void CredentialSet::toDataStream(QDataStream& out) const
+{
+    out << _name
+        << _username
+        << _password
+        << _publicKeyFilename
+        << _privateKeyFilename;
+}
+
 QByteArray CredentialSet::List::serializeToJson() const
 {
     QJsonDocument doc;
@@ -37,3 +55,7 @@ void CredentialSet::List::deserializeFromJson(const QByteArray& json)
     QJsonDocument doc = QJsonDocument::fromJson(json);
     deserializeFromJsonArray(doc.array());
 }
+
+QDataStream& operator<<(QDataStream& out, const CredentialSet& config) { config.toDataStream(out); return out; }
+
+QDataStream& operator>>(QDataStream& in, CredentialSet& config) { config.fromDataStream(in); return in; }

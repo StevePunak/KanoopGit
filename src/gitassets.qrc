@@ -26,5 +26,6 @@
         <file>assets/kanoop-git-logo.png</file>
         <file>assets/drop-down-ind-down.png</file>
         <file>assets/drop-down-ind-up.png</file>
+        <file>assets/submodules.png</file>
     </qresource>
 </RCC>

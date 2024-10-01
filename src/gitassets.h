@@ -37,6 +37,7 @@ public:
         Settings,
         Stash,
         StashPop,
+        Submodules,
         WarningRed,
         WindowClose,
     };
@@ -72,6 +73,7 @@ private:
             insert(Settings,                        "settings.png");
             insert(Stash,                           "stash.png");
             insert(StashPop,                        "stash-pop.png");
+            insert(Submodules,                      "submodules.png");
             insert(WarningRed,                      "warning-red.png");
             insert(WindowClose,                     "window-close.png");
         }

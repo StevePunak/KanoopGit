@@ -10,6 +10,7 @@ enum GitRoles
     BranchRole,
     CreateBranchRole,
     CommitRole,
+    ControlTypeRole,
     IsRepoHeadCommitRole,
     ObjectIdRole,
     ReferenceRole,
@@ -27,6 +28,9 @@ enum ControlType
 
     StagedFiles,
     UnstagedFiles,
+    LocalBranches,
+    RemoteBranches,
+    Submodules,
 };
 
 enum ColHeaders

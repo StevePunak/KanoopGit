@@ -140,7 +140,10 @@ void GitMainWindow::onCloneRepoClicked()
             }
             delete repo;
 
-            openRepository(localPath);
+            RepositoryWidget* widget = openRepository(localPath);
+            if(widget != nullptr) {
+                ui->tabWidgetRepos->setCurrentWidget(widget);
+            }
 
             ui->progressCloneProgress->setVisible(false);
         }
@@ -164,7 +167,10 @@ void GitMainWindow::onOpenRepoClicked()
             Settings::instance()->pushRecentFile(dirName);
             Settings::instance()->saveLastDirectory(RepoDirectory, dirName);
 
-            openRepository(dirName);
+            RepositoryWidget* widget = openRepository(dirName);
+            if(widget != nullptr) {
+                ui->tabWidgetRepos->setCurrentWidget(widget);
+            }
         }
     }
     catch(const CommonException& e)
@@ -190,7 +196,10 @@ void GitMainWindow::onRecentRepoDoubleClicked(const QModelIndex& index)
 {
     QString path = index.data(RepoPathRole).toString();
     if(Repository::isRepository(path)) {
-        openRepository(path);
+        RepositoryWidget* widget = openRepository(path);
+        if(widget != nullptr) {
+            ui->tabWidgetRepos->setCurrentWidget(widget);
+        }
     }
 }
 

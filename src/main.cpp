@@ -6,7 +6,13 @@
 #include <QApplication>
 #include <QTimer>
 
+#include "repoconfig.h"
 #include "settings.h"
+
+void registerMetaTypes()
+{
+    qRegisterMetaType<RepoConfig>();
+}
 
 int main(int argc, char *argv[])
 {
@@ -15,6 +21,8 @@ int main(int argc, char *argv[])
     app.setOrganizationName("Kanoop");
     app.setApplicationDisplayName("Kanoop Git");
     app.setApplicationVersion(QT_STRINGIFY(KANOOPGIT_VERSION));
+
+    registerMetaTypes();
 
     GuiSettings::setGlobalInstance(Settings::instance());
 
@@ -30,3 +38,4 @@ int main(int argc, char *argv[])
 
     return app.exec();
 }
+

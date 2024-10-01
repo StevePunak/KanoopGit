@@ -146,19 +146,7 @@ void RepositoryWidget::initializeCredentials()
 
 void RepositoryWidget::initializeButtonLabels()
 {
-    ui->splitter->setStretchFactor(0, 1);
-    ui->splitter->setStretchFactor(1, 1);
-
-    ui->buttonLabelLocalBranches->setText("Local Branches");
-    ui->buttonLabelLocalBranches->setIcon(Resources::getIcon(GitAssets::DropDownIndicatorDown), Resources::getIcon(GitAssets::DropDownIndicatorUp));
-    connect(ui->buttonLabelLocalBranches, &ButtonLabel::activeChanged, this, &RepositoryWidget::toggleLocalBranchVisibility);
-
-    ui->buttonLabelRemoteBranches->setText("Remote Branches");
-    ui->buttonLabelRemoteBranches->setIcon(Resources::getIcon(GitAssets::DropDownIndicatorDown), Resources::getIcon(GitAssets::DropDownIndicatorUp));
-    connect(ui->buttonLabelRemoteBranches, &ButtonLabel::activeChanged, this, &RepositoryWidget::toggleRemoteBranchVisibility);
-
-    ui->buttonLabelLocalBranches->setActive(Settings::instance()->areLocalBranchesVisible());
-    ui->buttonLabelRemoteBranches->setActive(Settings::instance()->areRemoteBranchesVisible());
+    ui->treeLeftSidebar->createModel(_repo);
 }
 
 void RepositoryWidget::refreshWidgets()
@@ -222,16 +210,6 @@ void RepositoryWidget::switchToCommitView()
     ui->tabWidget->setCurrentWidget(ui->tabCommits);
     ui->frameBranches->setVisible(true);
     maybeEnableButtons();
-}
-
-void RepositoryWidget::toggleLocalBranchVisibility()
-{
-    ui->treeLocalBranches->setVisible(ui->buttonLabelLocalBranches->isActive());
-}
-
-void RepositoryWidget::toggleRemoteBranchVisibility()
-{
-    ui->treeRemoteBranches->setVisible(ui->buttonLabelRemoteBranches->isActive());
 }
 
 void RepositoryWidget::onRefreshWidgets()

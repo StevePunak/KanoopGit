@@ -12,15 +12,18 @@ public:
         InvalidEntity = 0,
 
         Commit,
+        Credentials,
         File,
         FileLine,
         Folder,
         IndexEntry,
-        Reference,
         PlaceHolder,
+        Reference,
+        Remote,
         Repository,
-        Credentials,
         Stash,
+        Submodule,
+        TitleItem,
         WorkInProgress,
     };
 
@@ -36,10 +39,13 @@ private:
             insert(FileLine,        "FileLine");
             insert(Folder,          "Folder");
             insert(IndexEntry,      "IndexEntry");
-            insert(Reference,       "Reference");
             insert(PlaceHolder,     "PlaceHolder");
+            insert(Reference,       "Reference");
+            insert(Remote,          "Remote");
             insert(Repository,      "Repository");
             insert(Stash,           "Stash");
+            insert(Submodule,       "Submodule");
+            insert(TitleItem,       "TitleItem");
             insert(WorkInProgress,  "WorkInProgress");
         }
     };
