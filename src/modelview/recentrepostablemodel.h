@@ -2,7 +2,7 @@
 #define RECENTREPOSTABLEMODEL_H
 #include <Kanoop/gui/abstracttablemodel.h>
 #include <Kanoop/gui/abstractmodelitem.h>
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 #include "gitentities.h"
 
 class RecentReposTableModel : public AbstractTableModel

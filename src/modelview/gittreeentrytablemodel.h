@@ -3,7 +3,7 @@
 #include <Kanoop/gui/abstracttablemodel.h>
 #include <Kanoop/gui/abstractmodelitem.h>
 #include <git2qt.h>
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 #include "gitentities.h"
 
 class GitTreeEntryTableModel : public AbstractTableModel

@@ -25,6 +25,7 @@ file(GLOB_RECURSE KANOOPGIT_SOURCES
 qt_add_executable(${PROJ} ${KANOOPGIT_SOURCES} ${KANOOPGIT_HEADERS})
 
 target_compile_options(${PROJ} PRIVATE -Wextra -Wall -Werror)
+add_compile_definitions(KANOOPGIT_VERSION=${KANOOPGIT_VERSION})
 
 set_target_properties(${PROJ} PROPERTIES VERSION "${KANOOPGIT_VERSION}")
 set_target_properties(${PROJ} PROPERTIES SOVERSION 1)

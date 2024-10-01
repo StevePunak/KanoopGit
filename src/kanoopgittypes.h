@@ -1,5 +1,5 @@
-#ifndef GITROLES_H
-#define GITROLES_H
+#ifndef KANOOPGITTYPES_H
+#define KANOOPGITTYPES_H
 #include <Kanoop/kanoopcommon.h>
 
 enum GitRoles
@@ -45,4 +45,15 @@ enum ColHeaders
     CH_RecentRepos,
 };
 
-#endif // GITROLES_H
+// These need to be explicitly called out and maintained with original values
+enum FileTypes
+{
+    UnknownFileFtype    = 0,
+
+    SshPrivateKey       = 1,
+    SshPublicKey        = 2,
+    CloneToDirectory    = 3,
+    RepoDirectory       = 4,
+};
+
+#endif // KANOOPGITTYPES_H

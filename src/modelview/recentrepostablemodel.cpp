@@ -4,7 +4,7 @@
 #include <QStandardPaths>
 
 #include <Kanoop/pathutil.h>
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 
 RecentReposTableModel::RecentReposTableModel(const QStringList& repoPaths, QObject *parent) :
     AbstractTableModel("recenttable", parent)

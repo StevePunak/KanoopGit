@@ -1,5 +1,5 @@
 #include "statusentrytablemodel.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 #include <QFileInfo>
 
 #include <Kanoop/pathutil.h>

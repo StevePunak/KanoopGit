@@ -14,13 +14,15 @@ public slots:
     void refresh();
 
 private:
-    void loadDirectories();
-    void loadFiles();
+    virtual bool canFetchMore(const QModelIndex& parent) const override;
+    virtual void fetchMore(const QModelIndex& parent) override;
+
     QModelIndex findFolderIndex(const QString& path);
 
     static QString parentPath(const QString& path);
 
     GIT::Repository* _repo;
+    bool _rootLazyLoadComplete;
 
     class TreeBaseItem : public AbstractModelItem
     {
@@ -29,9 +31,10 @@ private:
 
         virtual QVariant data(const QModelIndex &index, int role) const override;
 
+        QString absolutePath() const { return _absolutePath; }
+
     protected:
         GIT::Repository* repo() const { return static_cast<GitFileSystemTreeModel*>(model())->_repo; }
-        QString absolutePath() const { return _absolutePath; }
         QString relativePath() const { return _relativePath; }
         QString filename() const { return _filename; }
 
@@ -48,9 +51,13 @@ private:
 
         virtual QVariant data(const QModelIndex &index, int role) const override;
 
+        bool lazyLoadComplete() const { return _lazyLoadComplete; }
+        void setLazyLoadComplete(bool value);
+
     private:
         QString _folderName;
         QIcon _icon;
+        bool _lazyLoadComplete;
     };
 
     class FileItem : public TreeBaseItem
@@ -60,6 +67,16 @@ private:
 
         virtual QVariant data(const QModelIndex &index, int role) const override;
     };
+
+    class PlaceHolderItem : public TreeBaseItem
+    {
+    public:
+        explicit PlaceHolderItem(const QString& path, GitFileSystemTreeModel* model);
+    };
+
+    void clearPlaceHolder(FolderItem* item);
+    void loadDirectories(const QString& parentDirectory, FolderItem* parentItem);
+    void loadFiles(const QString& parentDirectory, FolderItem* parentItem);
 };
 
 #endif // GITFILESYSTEMTREEMODEL_H

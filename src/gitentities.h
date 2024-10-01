@@ -17,7 +17,9 @@ public:
         Folder,
         IndexEntry,
         Reference,
+        PlaceHolder,
         Repository,
+        Credentials,
         Stash,
         WorkInProgress,
     };
@@ -29,11 +31,13 @@ private:
         EntityTypeToStringMap()
         {
             insert(Commit,          "Commit");
+            insert(Credentials,     "Credentials");
             insert(File,            "File");
             insert(FileLine,        "FileLine");
             insert(Folder,          "Folder");
             insert(IndexEntry,      "IndexEntry");
             insert(Reference,       "Reference");
+            insert(PlaceHolder,     "PlaceHolder");
             insert(Repository,      "Repository");
             insert(Stash,           "Stash");
             insert(WorkInProgress,  "WorkInProgress");

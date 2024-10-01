@@ -1,6 +1,6 @@
 #include "gitassets.h"
 #include "gitcommittablemodel.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 #include <QFileInfo>
 
 #include <Kanoop/datetimeutil.h>
@@ -97,7 +97,7 @@ QVariant GitCommitTableModel::CommitItem::data(const QModelIndex &index, int rol
             result = _commit.shortMessage();
             break;
         case CH_Timestamp:
-            result = DateTimeUtil::toStandardString(_commit.timestamp());
+            result = DateTimeUtil::toStandardString(_commit.timestamp(), false);
             break;
         case CH_SHA:
             result = _commit.objectId().toString();

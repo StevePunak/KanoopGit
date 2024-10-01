@@ -21,5 +21,10 @@
         <file>assets/push.png</file>
         <file>assets/computer.png</file>
         <file>assets/cloud.png</file>
+        <file>assets/security.png</file>
+        <file>assets/settings.png</file>
+        <file>assets/kanoop-git-logo.png</file>
+        <file>assets/drop-down-ind-down.png</file>
+        <file>assets/drop-down-ind-up.png</file>
     </qresource>
 </RCC>

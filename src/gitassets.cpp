@@ -1,5 +1,5 @@
 #include "gitassets.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 #include <Kanoop/gui/resources.h>
 #include <Kanoop/entitymetadata.h>
 

@@ -1,6 +1,6 @@
 #include "recentrepostableview.h"
 #include "recentrepostablemodel.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 
 RecentReposTableView::RecentReposTableView(QWidget *parent) :
     TableViewBase(parent)

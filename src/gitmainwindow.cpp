@@ -3,7 +3,7 @@
 #include "ui_gitmainwindow.h"
 
 #include <QFileDialog>
-#include <kanoopgitsettings.h>
+#include <settings.h>
 
 #include <QMessageBox>
 #include <git2qt.h>
@@ -12,15 +12,19 @@
 #include <Kanoop/stringutil.h>
 
 #include "gitassets.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 
 #include <Kanoop/gui/resources.h>
+
+#include <dialogs/clonerepodialog.h>
+#include <dialogs/preferencesdialog.h>
 
 using namespace GIT;
 
 GitMainWindow::GitMainWindow(QWidget *parent) :
     MainWindowBase("gittool", parent),
-    ui(new Ui::GitMainWindow)
+    ui(new Ui::GitMainWindow),
+    _progressCallback(this)
 {
     GitMainWindow::setObjectName(GitMainWindow::metaObject()->className());
 
@@ -35,17 +39,25 @@ GitMainWindow::GitMainWindow(QWidget *parent) :
     // Views
     connect(ui->tableRecentRepos, &RecentReposTableView::doubleClicked, this, &GitMainWindow::onRecentRepoDoubleClicked);
 
+    // Actions
+    connect(ui->actionCloneRepository, &QAction::triggered, this, &GitMainWindow::onCloneRepoClicked);
+    connect(ui->actionOpenRepository, &QAction::triggered, this, &GitMainWindow::onOpenRepoClicked);
+    connect(ui->actionPreferences, &QAction::triggered, this, &GitMainWindow::onPreferencesClicked);
+
     // Other wiring
     connect(ui->tabWidgetRepos, &QTabWidget::tabCloseRequested, this, &GitMainWindow::onTabCloseRequested);
     connect(ui->tabWidgetRepos->tabBar(), &QTabBar::tabBarClicked, this, &GitMainWindow::onTabBarClicked);
+    connect(&_progressCallback, &CloneProgressCallback::progress, this, &GitMainWindow::onCloneProgress);
 
     // Load models
-    ui->tableRecentRepos->createModel(KanoopGitSettings::instance()->recentFiles());
+    ui->tableRecentRepos->createModel(Settings::instance()->recentFiles());
     ui->stackedMain->setCurrentWidget(ui->pageRepos);
     ui->tabWidgetRepos->setMovable(true);
 
     // Other initialization
     ui->tabWidgetRepos->setTabIcon(0, Resources::getIcon(GitAssets::PlusGreen));
+
+    ui->progressCloneProgress->setVisible(false);
 
     openRecentRepos();
 }
@@ -59,8 +71,8 @@ void GitMainWindow::openRecentRepos()
 {
     // open persisted repos
     RepositoryWidget* firstWidget = nullptr;
-    for(int i = 0;i < KanoopGitSettings::instance()->openRepos().count();i++) {
-        QString repoPath = KanoopGitSettings::instance()->openRepos().at(i);
+    for(int i = 0;i < Settings::instance()->openRepos().count();i++) {
+        QString repoPath = Settings::instance()->openRepos().at(i);
         if(Repository::isRepository(repoPath)) {
             RepositoryWidget* widget = openRepository(repoPath);
             if(firstWidget == nullptr) {
@@ -69,7 +81,7 @@ void GitMainWindow::openRecentRepos()
         }
         else {
             logText(LVL_WARNING, QString("Removing invalid repo %1 from list").arg(repoPath));
-            KanoopGitSettings::instance()->removeOpenRepo(repoPath);
+            Settings::instance()->removeOpenRepo(repoPath);
         }
     }
 
@@ -94,9 +106,9 @@ RepositoryWidget* GitMainWindow::openRepository(const QString& path)
     connect(closeButton, &QPushButton::clicked, this, &GitMainWindow::onCloseTabClicked);
     ui->tabWidgetRepos->tabBar()->setTabButton(index, QTabBar::RightSide, closeButton);
 
-    ui->tableRecentRepos->createModel(KanoopGitSettings::instance()->recentFiles());
+    ui->tableRecentRepos->createModel(Settings::instance()->recentFiles());
 
-    KanoopGitSettings::instance()->saveOpenRepo(path);
+    Settings::instance()->saveOpenRepo(path);
 
     return repoWidget;
 }
@@ -105,28 +117,52 @@ void GitMainWindow::closeRepository(int tabIndex)
 {
     RepositoryWidget* repoWidget = dynamic_cast<RepositoryWidget*>(ui->tabWidgetRepos->widget(tabIndex));
     if(repoWidget != nullptr) {
-        KanoopGitSettings::instance()->removeOpenRepo(repoWidget->repository()->localPath());
+        Settings::instance()->removeOpenRepo(repoWidget->repository()->localPath());
     }
     ui->tabWidgetRepos->removeTab(tabIndex);
 }
 
 void GitMainWindow::onCloneRepoClicked()
 {
+    try
+    {
+        CloneRepoDialog dlg(this);
+        if(dlg.exec() == QDialog::Accepted) {
+            QString localPath = dlg.localPath();
+            QString url = dlg.url();
+            GitCredentialResolver credentialResolver(dlg.credentials());
 
+            ui->progressCloneProgress->setVisible(true);
+
+            Repository* repo = Commands::clone(url, localPath, &credentialResolver, &_progressCallback);
+            if(repo == nullptr) {
+                throw CommonException(Commands::lastErrorText());
+            }
+            delete repo;
+
+            openRepository(localPath);
+
+            ui->progressCloneProgress->setVisible(false);
+        }
+    }
+    catch(const CommonException& e)
+    {
+        QMessageBox::warning(this, "Error", e.message(), QMessageBox::Ok);
+    }
 }
 
 void GitMainWindow::onOpenRepoClicked()
 {
     try
     {
-        QString dirName = QFileDialog::getExistingDirectory(this, "Open Existing Repository", KanoopGitSettings::instance()->lastDirectory("repo"));
+        QString dirName = QFileDialog::getExistingDirectory(this, "Open Existing Repository", Settings::instance()->lastDirectory(RepoDirectory));
         if(dirName.isEmpty() == false) {
             if(Repository::isRepository(dirName) == false) {
                 throw CommonException("No repository found at give path");
             }
             // save settings
-            KanoopGitSettings::instance()->pushRecentFile(dirName);
-            KanoopGitSettings::instance()->saveLastDirectory("repo", dirName);
+            Settings::instance()->pushRecentFile(dirName);
+            Settings::instance()->saveLastDirectory(RepoDirectory, dirName);
 
             openRepository(dirName);
         }
@@ -167,4 +203,17 @@ void GitMainWindow::onTabBarClicked(int index)
 {
     bool visible = ui->tabWidgetRepos->tabBar()->isTabVisible(0);
     logText(LVL_DEBUG, QString("%1 %2  visible: %3").arg(__FUNCTION__).arg(index).arg(StringUtil::toString(visible)));
+}
+
+void GitMainWindow::onPreferencesClicked()
+{
+    PreferencesDialog dlg(this);
+    dlg.exec();
+}
+
+void GitMainWindow::onCloneProgress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects)
+{
+    Q_UNUSED(receivedBytes)
+    ui->progressCloneProgress->setMaximum(totalObjects);
+    ui->progressCloneProgress->setValue(receivedObjects);
 }

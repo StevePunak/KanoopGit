@@ -6,18 +6,28 @@
 
 #include <modelview/gitgraphpalette.h>
 
-class QComboBox;
+class ComboBox;
 class BranchLabelWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit BranchLabelWidget(const GIT::Reference::List& references, QWidget *parent = nullptr);
+    explicit BranchLabelWidget(GIT::Repository* repo, const GIT::Reference::List& references, QWidget *parent = nullptr);
+
+    QString currentReferenceFriendlyName() const;
+    QString firstReferenceName() const;
 
 private:
+    void createPixmaps();
+
+    GIT::Repository* _repo;
     GIT::Reference::List _references;
     GitGraphPalette _graphPalette;
 
-    QComboBox* _combo;
+    ComboBox* _combo;
+    QPixmap _cloudPixmap;
+    QPixmap _computerPixmap;
+    QPixmap _linePixmap;
+    QPixmap _noLinePixmap;
 
 signals:
 };

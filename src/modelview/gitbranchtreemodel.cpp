@@ -1,6 +1,6 @@
 #include "gitbranchtreemodel.h"
 #include "gitentities.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 
 #include <QDirIterator>
 #include <QFileInfo>
@@ -181,10 +181,12 @@ QVariant GitBranchTreeModel::FolderItem::data(const QModelIndex& index, int role
 
 GitBranchTreeModel::ReferenceItem::ReferenceItem(const Reference& reference, GitBranchTreeModel* model) :
     TreeBaseItem(EntityMetadata(GitEntities::Reference), model),
-    _reference(reference)
+    _reference(reference), _isCurrentBranch(false)
 {
     QStringList parts = reference.name().split('/');
     _text = parts.count() > 0 ? parts.last() : reference.name();
+    Branch currentBranch = model->_repo->currentBranch();
+    _isCurrentBranch = model->_typeToShow == LocalBranch && reference.friendlyName() == currentBranch.friendlyName();
 }
 
 QVariant GitBranchTreeModel::ReferenceItem::data(const QModelIndex& index, int role) const
@@ -196,16 +198,12 @@ QVariant GitBranchTreeModel::ReferenceItem::data(const QModelIndex& index, int r
             result = _text;
             break;
         case Qt::FontRole:
-        {
-            GitBranchTreeModel* model = static_cast<GitBranchTreeModel*>(AbstractModelItem::model());
-            Repository* repo = model->_repo;
-            if(model->_typeToShow == LocalBranch && _reference.objectId() == repo->head().reference().objectId()) {
+            if(_isCurrentBranch) {
                 QFont font;
                 font.setBold(true);
                 result = font;
             }
             break;
-        }
         case ReferenceRole:
             result = _reference.toVariant();
             break;

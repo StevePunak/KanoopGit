@@ -59,6 +59,7 @@ private:
     private:
         GIT::Reference _reference;
         QString _text;
+        bool _isCurrentBranch;
     };
 };
 

@@ -3,7 +3,7 @@
 #include "gittreeentrytablemodel.h"
 
 #include <git2qt.h>
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 
 using namespace GIT;
 

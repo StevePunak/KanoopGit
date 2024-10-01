@@ -7,12 +7,16 @@
 #include <QPainter>
 #include <git2qt.h>
 
-#include "gitroles.h"
+#include "settings.h"
+#include "kanoopgittypes.h"
+#include "gitassets.h"
 
 #include <Kanoop/geometry/rectangle.h>
 
 #include <Kanoop/commonexception.h>
 #include <Kanoop/stringutil.h>
+
+#include <Kanoop/gui/resources.h>
 
 using namespace GIT;
 namespace Colors = QColorConstants::Svg;
@@ -107,9 +111,15 @@ RepositoryWidget::RepositoryWidget(const QString& path, QWidget *parent) :
     // Validation wiring
     connect(ui->textStageCommitMessage, &QPlainTextEdit::textChanged, this, &RepositoryWidget::maybeEnableButtons);
 
+    // Initialize the dropdown buttons
+    initializeButtonLabels();
+
     // Set correct starting pages
     ui->stackedWidget->setCurrentWidget(ui->pageIndexEntry);
     ui->tabWidget->setCurrentWidget(ui->tabCommits);
+
+    // Set up credentials resolver
+    initializeCredentials();
 
     // Set button enablements and text
     maybeEnableButtons();
@@ -119,6 +129,36 @@ RepositoryWidget::~RepositoryWidget()
 {
     delete ui;
     delete _repo;
+}
+
+void RepositoryWidget::initializeCredentials()
+{
+    // Try and find credentials for this repo (by sha of initial commit)
+    Commit initialCommit = _repo->initialCommit();
+    CredentialSet credentials = Settings::instance()->credentials(initialCommit.objectId().sha());
+    if(credentials.isValid() == false) {
+        // not found... use the default credentials
+        credentials = Settings::instance()->defaultCredentials();
+    }
+    _credentialResolver.setCredentials(credentials);
+    _repo->setCredentialResolver(&_credentialResolver);
+}
+
+void RepositoryWidget::initializeButtonLabels()
+{
+    ui->splitter->setStretchFactor(0, 1);
+    ui->splitter->setStretchFactor(1, 1);
+
+    ui->buttonLabelLocalBranches->setText("Local Branches");
+    ui->buttonLabelLocalBranches->setIcon(Resources::getIcon(GitAssets::DropDownIndicatorDown), Resources::getIcon(GitAssets::DropDownIndicatorUp));
+    connect(ui->buttonLabelLocalBranches, &ButtonLabel::activeChanged, this, &RepositoryWidget::toggleLocalBranchVisibility);
+
+    ui->buttonLabelRemoteBranches->setText("Remote Branches");
+    ui->buttonLabelRemoteBranches->setIcon(Resources::getIcon(GitAssets::DropDownIndicatorDown), Resources::getIcon(GitAssets::DropDownIndicatorUp));
+    connect(ui->buttonLabelRemoteBranches, &ButtonLabel::activeChanged, this, &RepositoryWidget::toggleRemoteBranchVisibility);
+
+    ui->buttonLabelLocalBranches->setActive(Settings::instance()->areLocalBranchesVisible());
+    ui->buttonLabelRemoteBranches->setActive(Settings::instance()->areRemoteBranchesVisible());
 }
 
 void RepositoryWidget::refreshWidgets()
@@ -182,6 +222,16 @@ void RepositoryWidget::switchToCommitView()
     ui->tabWidget->setCurrentWidget(ui->tabCommits);
     ui->frameBranches->setVisible(true);
     maybeEnableButtons();
+}
+
+void RepositoryWidget::toggleLocalBranchVisibility()
+{
+    ui->treeLocalBranches->setVisible(ui->buttonLabelLocalBranches->isActive());
+}
+
+void RepositoryWidget::toggleRemoteBranchVisibility()
+{
+    ui->treeRemoteBranches->setVisible(ui->buttonLabelRemoteBranches->isActive());
 }
 
 void RepositoryWidget::onRefreshWidgets()
@@ -317,18 +367,6 @@ void RepositoryWidget::onLocalReferenceDoubleClicked(const GIT::Reference &refer
             throw CommonException(_repo->errorText());
         }
         refreshWidgets();
-#if 0
-        RepositoryStatus status = _repo->status();
-        if(status.entries().count() == 0) {
-            if(_repo->checkoutLocalBranch(reference.friendlyName()) == false) {
-                throw CommonException(_repo->errorText());
-            }
-            refreshWidgets();
-        }
-        else {
-            throw CommonException("You have uncomitted changes that would be overwritten.\nCheck in / stash your changes and try again.");
-        }
-#endif
     }
     catch(const CommonException& e)
     {
@@ -700,7 +738,32 @@ void RepositoryWidget::onPullFromRemoteClicked()
 
 void RepositoryWidget::onPushToRemoteClicked()
 {
-    UNIMPLEMENTED
+    try
+    {
+        Branch branch = _repo->currentBranch();
+        if(branch.remoteName().isEmpty()) {
+            if(_repo->remotes().count() == 0) {
+                throw CommonException("No remote t push to");
+            }
+            if(_repo->remotes().count() > 1) {
+                logText(LVL_WARNING, "Multiple remotes not yet supported. Only the first will be used");
+            }
+            Remote remote = _repo->remotes().at(0);
+            QString refspec = branch.canonicalName();
+            // QString destinationRefSpec = branch.createRemoteName(remote);
+            if(_repo->push(remote, refspec, refspec) == false) {
+                throw CommonException(_repo->errorText());
+            }
+        }
+        else if(_repo->push(_repo->currentBranch()) == false) {
+            throw CommonException(_repo->errorText());
+        }
+    }
+    catch(const CommonException& e)
+    {
+        QMessageBox::warning(this, "Push Failed", e.message());
+    }
+    refreshWidgets();
 }
 
 void RepositoryWidget::onCreateBranchClicked()
@@ -716,6 +779,7 @@ void RepositoryWidget::onCreateBranchClicked()
         return;
     }
 
+    ui->tableCommits->setEditingBranchName(true);       // puts view in a special mode to allow edit of branch cell
     ui->tableCommits->edit(index);
 }
 

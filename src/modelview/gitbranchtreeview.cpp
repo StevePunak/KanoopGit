@@ -1,7 +1,7 @@
 #include "gitbranchtreemodel.h"
 #include "gitbranchtreeview.h"
 #include "gitentities.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 
 #include <QHeaderView>
 #include <QSortFilterProxyModel>

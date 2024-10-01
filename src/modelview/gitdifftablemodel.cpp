@@ -1,6 +1,6 @@
 #include "gitdifftablemodel.h"
 #include "gitentities.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 #include <QFileInfo>
 
 #include <Kanoop/fileutil.h>

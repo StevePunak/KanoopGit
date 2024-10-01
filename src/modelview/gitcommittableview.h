@@ -7,13 +7,15 @@
 #include <Kanoop/geometry/size.h>
 #include "gitentities.h"
 #include "gitgraphpalette.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 
+class BranchLabelWidget;
 class GitCommitTableView : public TableViewBase
 {
     Q_OBJECT
 public:
     explicit GitCommitTableView(QWidget* parent = nullptr);
+    virtual ~GitCommitTableView();
 
     void createModel(GIT::Repository* repo);
 
@@ -31,6 +33,9 @@ public:
     const GIT::GraphedCommit::Map commitIndexRef() { return _commitIndex; }
     const GIT::StatusEntry::List workInProgressRef() { return _workInProgress; }
 
+    bool isEditingBranchName() const { return _editingBranchName; }
+    void setEditingBranchName(bool value) { _editingBranchName = value; }
+
     QPixmap cloudPixmap() const { return _cloudPixmap; }
     QPixmap computerPixmap() const { return _computerPixmap; }
 
@@ -39,7 +44,14 @@ public:
 private:
     void createPixmaps();
 
+    // Calls for friend class
+    BranchLabelWidget* getBranchLabelWidget(const GIT::ObjectId& objectId) const { return _branchLabelWidgets.value(objectId); }
+
+    // Widget overrides
+    virtual void mousePressEvent(QMouseEvent *event) override;
+
     GIT::Repository* _repo;
+    bool _editingBranchName;
 
     GIT::GraphedCommit::List _commits;
     GIT::GraphedCommit::Map _commitIndex;
@@ -49,6 +61,10 @@ private:
     QPixmap _computerPixmap;
 
     GitGraphPalette _graphPalette;
+
+    QMap<GIT::ObjectId, BranchLabelWidget*> _branchLabelWidgets;
+
+    friend class GitBranchTagStyledItemDelegate;
 
 signals:
     void commitClicked(const GIT::GraphedCommit& commit);
@@ -101,10 +117,12 @@ public:
 
     virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    virtual void destroyEditor(QWidget *editor, const QModelIndex &index) const override;
     virtual void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
 
 private:
-    QPixmap createPixmap(const Size &size, const QString& text, const QModelIndex &index) const;
+    QLineEdit* createBranchNameEditor(QWidget *parent, const QModelIndex &index) const;
+    BranchLabelWidget* getBranchLabelWidget(QWidget *parent, const QModelIndex &index) const;
 
     GitCommitTableView* _tableView;
     GitGraphPalette _palette;

@@ -3,6 +3,7 @@
 
 #include <Kanoop/gui/mainwindowbase.h>
 #include <git2qt.h>
+#include <gitcredentialresolver.h>
 
 namespace Ui {
 class RepositoryWidget;
@@ -22,6 +23,8 @@ public:
     GIT::Repository* repository() const { return _repo; }
 
 private:
+    void initializeCredentials();
+    void initializeButtonLabels();
     void updateCommitShaWidget(const GIT::ObjectId& objectId);
     void updateParentsShaWidget(const GIT::ObjectId& objectId);
     void updateParentsShaWidget(const GIT::ObjectId::List& objectIds);
@@ -30,6 +33,7 @@ private:
 
     Ui::RepositoryWidget *ui;
     GIT::Repository* _repo;
+    GitCredentialResolver _credentialResolver;
 
     static const QString StageUnstageProperty;
     static const QString ReferenceProperty;
@@ -42,6 +46,8 @@ private slots:
     void onRepositoryFileSystemChanged();
     void switchToDiffView();
     void switchToCommitView();
+    void toggleLocalBranchVisibility();
+    void toggleRemoteBranchVisibility();
 
     // Refresh
     void onRefreshWidgets();

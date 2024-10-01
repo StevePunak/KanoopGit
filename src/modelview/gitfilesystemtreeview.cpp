@@ -1,6 +1,6 @@
 #include "gitfilesystemtreeview.h"
 #include "gitfilesystemtreemodel.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 #include "gitentities.h"
 
 #include <QHeaderView>

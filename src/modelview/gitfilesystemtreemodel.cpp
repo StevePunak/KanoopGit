@@ -1,7 +1,7 @@
 #include "gitassets.h"
 #include "gitentities.h"
 #include "gitfilesystemtreemodel.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 
 #include <QDirIterator>
 #include <QFileInfo>
@@ -14,14 +14,11 @@ using namespace GIT;
 
 GitFileSystemTreeModel::GitFileSystemTreeModel(Repository* repo, QObject *parent) :
     AbstractTreeModel("gitfstree", parent),
-    _repo(repo)
+    _repo(repo), _rootLazyLoadComplete(false)
 {
     appendColumnHeader(CH_Name, "Name");
-    loadDirectories();
-    loadFiles();
-    // for(const IndexEntry& indexEntry : _repo->index()->entries()) {
-    //     createIfNotExists(indexEntry);
-    // }
+    // loadDirectories();
+    // loadFiles();
 }
 
 void GitFileSystemTreeModel::refresh()
@@ -33,15 +30,65 @@ void GitFileSystemTreeModel::refresh()
     emit dataChanged(topLeft, bottomRight);
 }
 
-void GitFileSystemTreeModel::loadDirectories()
+bool GitFileSystemTreeModel::canFetchMore(const QModelIndex& parent) const
 {
-    QDirIterator it(_repo->localPath(), QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+    bool result = false;
+    if(parent.isValid() == false) {
+        result = _rootLazyLoadComplete == false;
+    }
+    else {
+        GitEntities::Type type = (GitEntities::Type)parent.data(KANOOP::EntityTypeRole).toInt();
+        if(type == GitEntities::Folder) {
+            FolderItem* item = static_cast<FolderItem*>(parent.internalPointer());
+            result = item->lazyLoadComplete() == false;
+        }
+        else if(type == GitEntities::File) {
+            result = false;
+        }
+    }
+    return result;
+}
+
+void GitFileSystemTreeModel::fetchMore(const QModelIndex& parent)
+{
+    if(parent.isValid() == false) {
+        if(_rootLazyLoadComplete == false) {
+            loadDirectories(_repo->localPath(), nullptr);
+            loadFiles(_repo->localPath(), nullptr);
+            _rootLazyLoadComplete = true;
+        }
+    }
+    else {
+        GitEntities::Type type = (GitEntities::Type)parent.data(KANOOP::EntityTypeRole).toInt();
+        if(type == GitEntities::Folder) {
+            FolderItem* item = static_cast<FolderItem*>(parent.internalPointer());
+            clearPlaceHolder(item);
+            loadDirectories(item->absolutePath(), item);
+            loadFiles(item->absolutePath(), item);
+        }
+        else if(type == GitEntities::File) {
+            logText(LVL_WARNING, "Sholdn't get here");
+        }
+    }
+}
+
+void GitFileSystemTreeModel::clearPlaceHolder(FolderItem* item)
+{
+    if(item->children().count() == 1) {
+        AbstractModelItem* child = item->children().at(0);
+        if(child->entityMetadata().type() == GitEntities::PlaceHolder) {
+           item->deleteChild(child);
+        }
+    }
+}
+
+void GitFileSystemTreeModel::loadDirectories(const QString& parentDirectory, FolderItem* parentItem)
+{
+    QDirIterator it(parentDirectory, QDir::Dirs | QDir::NoDotAndDotDot);
     while(it.hasNext()) {
         QDir dir(it.next());
         if(dir.exists()) {
-            QModelIndex parentIndex = findFolderIndex(parentPath(dir.absolutePath()));
-            if(parentIndex.isValid()) {
-                FolderItem* parentItem = static_cast<FolderItem*>(parentIndex.internalPointer());
+            if(parentItem != nullptr) {
                 parentItem->appendChild(new FolderItem(dir.absolutePath(), this));
             }
             else {
@@ -51,20 +98,21 @@ void GitFileSystemTreeModel::loadDirectories()
     }
 }
 
-void GitFileSystemTreeModel::loadFiles()
+void GitFileSystemTreeModel::loadFiles(const QString& parentDirectory, FolderItem* parentItem)
 {
-    QDirIterator it(_repo->localPath(), QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+    QDirIterator it(parentDirectory, QDir::Files | QDir::NoDotAndDotDot);
     while(it.hasNext()) {
         QFileInfo fileinfo(it.next());
-        QString parentDir = fileinfo.absolutePath();
-        QModelIndex parentIndex = findFolderIndex(parentDir);
-        if(parentIndex.isValid()) {
-            FolderItem* parentItem = static_cast<FolderItem*>(parentIndex.internalPointer());
+        if(parentItem != nullptr) {
             parentItem->appendChild(new FileItem(fileinfo.absoluteFilePath(), this));
         }
         else {
             appendRootItem(new FileItem(fileinfo.absoluteFilePath(), this));
         }
+    }
+
+    if(parentItem != nullptr) {
+        parentItem->setLazyLoadComplete(true);
     }
 }
 
@@ -125,11 +173,13 @@ QVariant GitFileSystemTreeModel::TreeBaseItem::data(const QModelIndex& index, in
 
 
 GitFileSystemTreeModel::FolderItem::FolderItem(const QString& path, GitFileSystemTreeModel* model) :
-    TreeBaseItem(EntityMetadata(GitEntities::Folder), path, model)
+    TreeBaseItem(EntityMetadata(GitEntities::Folder), path, model),
+    _lazyLoadComplete(false)
 {
     QFileInfo fileInfo(path);
     _folderName = fileInfo.fileName();
     _icon = Resources::getIcon(GitAssets::Folder);
+    appendChild(new PlaceHolderItem(path, model));
 }
 
 QVariant GitFileSystemTreeModel::FolderItem::data(const QModelIndex& index, int role) const
@@ -154,12 +204,19 @@ QVariant GitFileSystemTreeModel::FolderItem::data(const QModelIndex& index, int 
     return result;
 }
 
+void GitFileSystemTreeModel::FolderItem::setLazyLoadComplete(bool value)
+{
+    _lazyLoadComplete = value;
+}
+
 
 // -------------------------------- FileItem --------------------------------
 
 
 GitFileSystemTreeModel::FileItem::FileItem(const QString& path, GitFileSystemTreeModel* model) :
-    TreeBaseItem(EntityMetadata(GitEntities::File), path, model) {}
+    TreeBaseItem(EntityMetadata(GitEntities::File), path, model)
+{
+}
 
 QVariant GitFileSystemTreeModel::FileItem::data(const QModelIndex& index, int role) const
 {
@@ -209,3 +266,9 @@ QVariant GitFileSystemTreeModel::FileItem::data(const QModelIndex& index, int ro
     return result;
 }
 
+
+GitFileSystemTreeModel::PlaceHolderItem::PlaceHolderItem(const QString& path, GitFileSystemTreeModel* model) :
+    TreeBaseItem(EntityMetadata(GitEntities::PlaceHolder), path, model)
+{
+
+}

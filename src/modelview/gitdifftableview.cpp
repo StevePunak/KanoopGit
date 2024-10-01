@@ -1,7 +1,7 @@
 #include "gitdifftablemodel.h"
 #include "gitdifftableview.h"
 #include "gitentities.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 
 #include <QHeaderView>
 #include <QPainter>

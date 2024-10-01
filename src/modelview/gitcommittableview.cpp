@@ -1,11 +1,12 @@
 #include "gitcommittableview.h"
 #include "gitcommittablemodel.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 #include "gitassets.h"
 
 #include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMouseEvent>
 #include <QPainter>
 #include <git2qt.h>
 
@@ -14,19 +15,27 @@
 #include <Kanoop/gui/resources.h>
 #include <Kanoop/gui/stylesheets.h>
 
+#include <widgets/branchlabelwidget.h>
+
 using namespace GIT;
 namespace Colors = QColorConstants::Svg;
 
 GitCommitTableView::GitCommitTableView(QWidget *parent) :
     TableViewBase(parent),
-    _repo(nullptr)
+    _repo(nullptr),
+    _editingBranchName(false)
 {
     setContextMenuPolicy(Qt::CustomContextMenu);
     setSelectionMode(SingleSelection);
     verticalHeader()->setDefaultSectionSize(RowHeight);
 
     createPixmaps();
-    setEditTriggers(NoEditTriggers);
+    setEditTriggers(AllEditTriggers);
+}
+
+GitCommitTableView::~GitCommitTableView()
+{
+    qDeleteAll(_branchLabelWidgets);
 }
 
 void GitCommitTableView::createModel(Repository* repo)
@@ -58,6 +67,9 @@ void GitCommitTableView::createModel(Repository* repo)
         if(commit.isHead() == false) {
             continue;
         }
+        Reference::List references = _repo->references().findByTargetObjectId(commit.objectId());
+        BranchLabelWidget* labelWidget = new BranchLabelWidget(_repo, references);
+        _branchLabelWidgets.insert(commit.objectId(), labelWidget);
     }
 
     restoreHeaderStates();
@@ -119,6 +131,18 @@ void GitCommitTableView::createPixmaps()
     Size pixmapSize(RowHeight / 2, RowHeight / 2);
     _cloudPixmap = _cloudPixmap.scaled(pixmapSize.toSize());
     _computerPixmap = _computerPixmap.scaled(pixmapSize.toSize());
+}
+
+void GitCommitTableView::mousePressEvent(QMouseEvent *event)
+{
+    TableViewBase::mousePressEvent(event);
+#if 0
+    QModelIndex index = indexAt(event->pos());
+    if(index.column() == sourceModel()->columnForHeader(CH_BranchOrTag) && index.data(Qt::DisplayRole).toString().isEmpty() == false) {
+        logText(LVL_DEBUG, "Show the dropdown");
+        edit(index);
+    }
+#endif
 }
 
 void GitCommitTableView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)
@@ -459,10 +483,22 @@ void GitBranchTagStyledItemDelegate::paint(QPainter *painter, const QStyleOption
         return;
     }
 
+    GraphedCommit commit = GraphedCommit::fromVariant(index.data(CommitRole));
+    if(commit.isNull()) {
+        return;
+    }
+
+    BranchLabelWidget* widget = _tableView->getBranchLabelWidget(commit.objectId());
+    if(widget == nullptr) {
+        return;
+    }
+
+    Rectangle rect = option.rect;
     painter->save();
 
-    QPixmap pixmap = createPixmap(option.rect.size(), text, index);
-    painter->drawPixmap(option.rect, pixmap);
+    painter->translate(rect.topLeft());
+    widget->resize(rect.size().toSize());
+    widget->render(painter, QPoint(), QRegion(), QWidget::DrawChildren);
 
     painter->restore();
 }
@@ -471,60 +507,65 @@ QWidget *GitBranchTagStyledItemDelegate::createEditor(QWidget *parent, const QSt
 {
     Q_UNUSED(option)
 
+    QWidget* result = nullptr;
+
+    if(_tableView->isEditingBranchName()) {
+        result = createBranchNameEditor(parent, index);
+    }
+    else {
+        result = getBranchLabelWidget(parent, index);
+    }
+
+    return result;
+}
+
+void GitBranchTagStyledItemDelegate::destroyEditor(QWidget *editor, const QModelIndex &index) const
+{
+    Q_UNUSED(index)
+    if(dynamic_cast<BranchLabelWidget*>(editor) == nullptr) {
+        delete editor;
+    }
+}
+
+void GitBranchTagStyledItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    Q_UNUSED(model) Q_UNUSED(index)
+    if(_tableView->isEditingBranchName()) {
+        QLineEdit* lineEdit = dynamic_cast<QLineEdit*>(editor);
+        if(lineEdit == nullptr) {
+            return;     // shouldn't happen
+        }
+
+        if(lineEdit->text().isEmpty() == false) {
+            model->setData(index, lineEdit->text(), CreateBranchRole);
+        }
+        _tableView->setEditingBranchName(false);
+    }
+    else {
+        Log::logText(LVL_DEBUG, "Do something here");
+    }
+}
+
+QLineEdit* GitBranchTagStyledItemDelegate::createBranchNameEditor(QWidget *parent, const QModelIndex &index) const
+{
     bool isHeadCommit = index.data(IsRepoHeadCommitRole).toBool();
     if(isHeadCommit == false) {
         return nullptr;     // shouldn't happen
     }
 
     QLineEdit* editor = new QLineEdit(parent);
-    editor->setPlaceholderText("-- enter new branch name --");
+    editor->setPlaceholderText("-- branch name --");
     return editor;
 }
 
-void GitBranchTagStyledItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+BranchLabelWidget* GitBranchTagStyledItemDelegate::getBranchLabelWidget(QWidget* parent, const QModelIndex& index) const
 {
-    Q_UNUSED(model) Q_UNUSED(index)
-    QLineEdit* lineEdit = dynamic_cast<QLineEdit*>(editor);
-    if(lineEdit == nullptr) {
-        return;     // shouldn't happen
-    }
-
-    if(lineEdit->text().isEmpty() == false) {
-        model->setData(index, lineEdit->text(), CreateBranchRole);
-    }
-}
-
-QPixmap GitBranchTagStyledItemDelegate::createPixmap(const Size &size, const QString &text, const QModelIndex& index) const
-{
-    Q_UNUSED(index)
-
-    QFont font;
-    QFontMetrics fm(font);
-
-    double textHeight = fm.height();
-    double textTop = (size.height() / 2) - (textHeight / 2);
-
-    Rectangle textRect(0, textTop, fm.horizontalAdvance(text), textHeight);
-
-    QPixmap pixmap(size.toSize());
-    pixmap.fill(Qt::transparent);
-
+    BranchLabelWidget* result = nullptr;
     GraphedCommit commit = GraphedCommit::fromVariant(index.data(CommitRole));
-    QPixmap indicatorPixmap = commit.isRemote() ? _tableView->cloudPixmap() : _tableView->computerPixmap();
-    Rectangle fillRect(0, 0, textRect.width() + indicatorPixmap.width() + 10, size.height());
-
-    QPainter painter(&pixmap);
-    painter.fillRect(fillRect, _palette.branchOrTagColor());
-    painter.drawText(pixmap.rect(), Qt::AlignVCenter, text);
-    double pixmapY = (size.height() / 2) - (indicatorPixmap.height() / 2);
-    painter.drawPixmap(fillRect.width() - (indicatorPixmap.width() + 5), pixmapY, indicatorPixmap);
-
-    bool isHeadCommit = index.data(IsRepoHeadCommitRole).toBool();
-    if(isHeadCommit) {
-        Point begin(fillRect.right(), fillRect.rightEdge().midpoint().y());
-        Point end(size.width(), begin.y());
-        painter.setPen(QPen(_palette.headCommitLineColor(), _palette.headCommitLineWidth()));
-        painter.drawLine(begin, end);
+    if(commit.isNull() == false && (result = _tableView->getBranchLabelWidget(commit.objectId())) != nullptr) {
+        result->setParent(parent);
     }
-    return pixmap;
+
+    return result;
 }
+

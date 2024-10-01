@@ -1,6 +1,6 @@
 #include "statusentrytableview.h"
 #include "statusentrytablemodel.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 
 #include <QHeaderView>
 #include <QPainter>

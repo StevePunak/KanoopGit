@@ -4,7 +4,7 @@
 
 #include <Kanoop/pathutil.h>
 #include "gitassets.h"
-#include "gitroles.h"
+#include "kanoopgittypes.h"
 
 #include <Kanoop/gui/resources.h>
 
