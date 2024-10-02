@@ -5,6 +5,7 @@
 
 #include <QMessageBox>
 #include <QPainter>
+#include <QMenu>
 #include <git2qt.h>
 
 #include "settings.h"
@@ -24,17 +25,16 @@ namespace Colors = QColorConstants::Svg;
 const QString RepositoryWidget::StageUnstageProperty    = "stage_unstage";
 const QString RepositoryWidget::ReferenceProperty       = "reference";
 
-RepositoryWidget::RepositoryWidget(const QString& path, QWidget *parent) :
-    MainWindowBase("gittree", parent),
-    ui(new Ui::RepositoryWidget)
+RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
+    ComplexWidget("gittree", parent),
+    ui(new Ui::RepositoryWidget),
+    _repo(repo)
 {
     RepositoryWidget::setObjectName(RepositoryWidget::metaObject()->className());
 
     ui->setupUi(this);
 
     initializeBase();
-
-    _repo = new Repository(path);
 
     // Load views
     ui->treeGitTree->createModel(_repo);
@@ -252,7 +252,7 @@ void RepositoryWidget::createBranch(const QString &branchName)
 
 void RepositoryWidget::keyPressEvent(QKeyEvent* event)
 {
-    MainWindowBase::keyPressEvent(event);
+    ComplexWidget::keyPressEvent(event);
     if(event->key() == Qt::Key_Escape && ui->frameBranches->isVisible() == false) {
         switchToCommitView();
     }

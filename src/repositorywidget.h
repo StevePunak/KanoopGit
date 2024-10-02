@@ -3,7 +3,7 @@
 
 #include "repoconfig.h"
 
-#include <Kanoop/gui/mainwindowbase.h>
+#include <Kanoop/gui/complexwidget.h>
 #include <git2qt.h>
 #include <gitcredentialresolver.h>
 
@@ -14,12 +14,12 @@ class RepositoryWidget;
 namespace GIT {
 class Repository;
 }
-class RepositoryWidget : public MainWindowBase
+class RepositoryWidget : public ComplexWidget
 {
     Q_OBJECT
 
 public:
-    explicit RepositoryWidget(const QString& path, QWidget *parent = nullptr);
+    explicit RepositoryWidget(GIT::Repository* repo, QWidget *parent = nullptr);
     ~RepositoryWidget();
 
     GIT::Repository* repository() const { return _repo; }

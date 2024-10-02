@@ -8,7 +8,7 @@ namespace Ui {
 class GitMainWindow;
 }
 
-class RepositoryWidget;
+class RepositoryContainer;
 class GitMainWindow : public MainWindowBase
 {
     Q_OBJECT
@@ -19,7 +19,7 @@ public:
 
 private:
     void openRecentRepos();
-    RepositoryWidget* openRepository(const QString& path);
+    RepositoryContainer* openRepository(const QString& path);
     void closeRepository(int tabIndex);
 
     Ui::GitMainWindow *ui;

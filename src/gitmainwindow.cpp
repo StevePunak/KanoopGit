@@ -13,6 +13,7 @@
 
 #include "gitassets.h"
 #include "kanoopgittypes.h"
+#include "repositorycontainer.h"
 
 #include <Kanoop/gui/resources.h>
 
@@ -70,11 +71,11 @@ GitMainWindow::~GitMainWindow()
 void GitMainWindow::openRecentRepos()
 {
     // open persisted repos
-    RepositoryWidget* firstWidget = nullptr;
+    RepositoryContainer* firstWidget = nullptr;
     for(int i = 0;i < Settings::instance()->openRepos().count();i++) {
         QString repoPath = Settings::instance()->openRepos().at(i);
         if(Repository::isRepository(repoPath)) {
-            RepositoryWidget* widget = openRepository(repoPath);
+            RepositoryContainer* widget = openRepository(repoPath);
             if(firstWidget == nullptr) {
                 firstWidget = widget;
             }
@@ -90,14 +91,14 @@ void GitMainWindow::openRecentRepos()
     }
 }
 
-RepositoryWidget* GitMainWindow::openRepository(const QString& path)
+RepositoryContainer* GitMainWindow::openRepository(const QString& path)
 {
-    RepositoryWidget* repoWidget = nullptr;
+    RepositoryContainer* repoWidget = nullptr;
     if(Repository::isRepository(path) == false) {
         return repoWidget;
     }
 
-    repoWidget = new RepositoryWidget(path, this);
+    repoWidget = new RepositoryContainer(path, this);
     QString title = QDir(path).dirName();
     int index = ui->tabWidgetRepos->addTab(repoWidget, title);
 
@@ -140,7 +141,7 @@ void GitMainWindow::onCloneRepoClicked()
             }
             delete repo;
 
-            RepositoryWidget* widget = openRepository(localPath);
+            RepositoryContainer* widget = openRepository(localPath);
             if(widget != nullptr) {
                 ui->tabWidgetRepos->setCurrentWidget(widget);
             }
@@ -167,7 +168,7 @@ void GitMainWindow::onOpenRepoClicked()
             Settings::instance()->pushRecentFile(dirName);
             Settings::instance()->saveLastDirectory(RepoDirectory, dirName);
 
-            RepositoryWidget* widget = openRepository(dirName);
+            RepositoryContainer* widget = openRepository(dirName);
             if(widget != nullptr) {
                 ui->tabWidgetRepos->setCurrentWidget(widget);
             }
@@ -196,7 +197,7 @@ void GitMainWindow::onRecentRepoDoubleClicked(const QModelIndex& index)
 {
     QString path = index.data(RepoPathRole).toString();
     if(Repository::isRepository(path)) {
-        RepositoryWidget* widget = openRepository(path);
+        RepositoryContainer* widget = openRepository(path);
         if(widget != nullptr) {
             ui->tabWidgetRepos->setCurrentWidget(widget);
         }
