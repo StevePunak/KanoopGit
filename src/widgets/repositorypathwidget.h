@@ -10,7 +10,7 @@ public:
     explicit RepositoryPathWidget(QWidget* parent = nullptr);
 
     void setRepo(GIT::Repository* value);
-    void setSubmodule(const GIT::Submodule& submodule);
+    void appendSubmodule(const QString& submodule);
     void setBranchName(const QString& branchName);
 
 private:
@@ -44,6 +44,9 @@ private:
     };
 
     QList<PathPart> _pathParts;
+
+signals:
+    void closeClicked();
 };
 
 #endif // REPOSITORYPATHWIDGET_H

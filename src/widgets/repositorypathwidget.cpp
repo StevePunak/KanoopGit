@@ -29,9 +29,10 @@ void RepositoryPathWidget::setRepo(GIT::Repository* value)
     createLayout();
 }
 
-void RepositoryPathWidget::setSubmodule(const Submodule& submodule)
+void RepositoryPathWidget::appendSubmodule(const QString& submodule)
 {
-    _pathParts.append(PathPart(SubmodulePart, submodule.name()));
+    _pathParts.append(PathPart(SubmodulePart, submodule));
+    createLayout();
 }
 
 void RepositoryPathWidget::createLayout()
@@ -39,6 +40,11 @@ void RepositoryPathWidget::createLayout()
     const int SmallTextSize = 7;
 
     if(layout() != nullptr) {
+        while(layout()->count() > 0) {
+            QLayoutItem* item = layout()->takeAt(0);
+            delete item->widget();
+            delete item;
+        }
         delete layout();
     }
 
@@ -60,6 +66,8 @@ void RepositoryPathWidget::createLayout()
             Label* titleLabel = new Label("Submodule", this);
             titleLabel->setFontPointSize(SmallTextSize);
             ButtonLabel* nameLabel = new ButtonLabel(pathPart.text(), this);
+            connect(nameLabel, &ButtonLabel::clicked, this, &RepositoryPathWidget::closeClicked);
+            nameLabel->setButtonAlignment(Qt::AlignLeft);
             nameLabel->setIcon(Resources::getIcon(Resources::CloseButton));
             newLayout->addWidget(titleLabel, 0, col);
             newLayout->addWidget(nameLabel, 1, col);

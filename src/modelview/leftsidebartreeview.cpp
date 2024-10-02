@@ -27,6 +27,7 @@ void LeftSidebarTreeView::createModel(GIT::Repository* repo)
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &LeftSidebarTreeView::onCurrentIndexChanged);
     connect(this, &LeftSidebarTreeView::expanded, this, &LeftSidebarTreeView::onExpanded);
     connect(this, &LeftSidebarTreeView::collapsed, this, &LeftSidebarTreeView::onCollapsed);
+    connect(this, &LeftSidebarTreeView::doubleClicked, this, &LeftSidebarTreeView::onDoubleClicked);
 
     RepoConfig config = Settings::instance()->repoConfig(_repo->localPath());
     if(config.localBranchesVisible()) {
@@ -69,6 +70,13 @@ void LeftSidebarTreeView::onDoubleClicked(const QModelIndex& index)
             logText(LVL_DEBUG, QString("DblClick: %1").arg(reference.canonicalName()));
             if(reference.isNull() == false) {
                 emit referenceDoubleClicked(reference);
+            }
+        }
+        else if(type == GitEntities::Submodule) {
+            Submodule submodule = Submodule::fromVariant(index.data(KANOOP::DataRole));
+            logText(LVL_DEBUG, QString("DblClick: %1").arg(submodule.name()));
+            if(submodule.isNull() == false) {
+                emit submoduleDoubleClicked(submodule);
             }
         }
     }

@@ -24,9 +24,22 @@ public:
 
     GIT::Repository* repository() const { return _repo; }
 
+    bool isOnStash() const;
+
+signals:
+    void validate();
+    void submoduleDoubleClicked(const GIT::Submodule& submodule);
+
+public slots:
+    void pullFromRemote();
+    void pushToRemote();
+    void beginCreateBranch();
+    void stashChanges();
+    void doDebugThing();
+    void popStash();
+
 private:
     void initializeCredentials();
-    void initializeButtonLabels();
     void updateCommitShaWidget(const GIT::ObjectId& objectId);
     void updateParentsShaWidget(const GIT::ObjectId& objectId);
     void updateParentsShaWidget(const GIT::ObjectId::List& objectIds);
@@ -82,11 +95,9 @@ private slots:
     void onStageFilesClicked();
     void onUnstageFilesClicked();
     void onIgnoreClicked();
-    void onStashChangesClicked();
     void onDiscardChangesClicked();
     void onApplyStashClicked();
     void onDeleteStashClicked();
-    void onPopStashClicked();
     void onDeleteLocalBranchClicked();
     void onRenameLocalBranchClicked();
 
@@ -95,12 +106,9 @@ private slots:
     void onStageDiffFileClicked();
     void onUnstageAllChangesClicked();
     void onCommitChangesClicked();
-    void onPullFromRemoteClicked();
-    void onPushToRemoteClicked();
-    void onCreateBranchClicked();
+
     void onNextDiffClicked();
     void onPreviousDiffClicked();
-    void onDebugClicked();
 
     // Debug
     void drawDebugArc();

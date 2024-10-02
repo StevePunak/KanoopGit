@@ -77,7 +77,6 @@ CredentialSet Settings::defaultCredentials() const
 void Settings::saveRepoConfig(const RepoConfig& config)
 {
     _settings.setValue(makeRepoConfigKey(config.repoPath()), config.toVariant());
-    _settings.sync();
 }
 
 RepoConfig Settings::repoConfig(const QString& repoPath) const

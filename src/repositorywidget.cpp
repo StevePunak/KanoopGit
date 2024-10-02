@@ -39,12 +39,10 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
     // Load views
     ui->treeGitTree->createModel(_repo);
     ui->tableCommits->createModel(_repo);
-    ui->treeLocalBranches->createModel(_repo, LocalBranch);
-    ui->treeRemoteBranches->createModel(_repo, RemoteBranch);
+    ui->treeLeftSidebar->createModel(_repo);
 
     // Some initial values
     ui->textDiffFileName->clear();
-    ui->pathWidget->setRepo(_repo);
 
     // Wire up views to this widget
     connect(ui->treeGitTree, &GitFileSystemTreeView::indexEntryClicked, this, &RepositoryWidget::onIndexEntryClicked);
@@ -54,28 +52,28 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
     connect(ui->tableCommits, &GitCommitTableView::workInProgressClicked, this, &RepositoryWidget::onWorkInProgressClicked);
     connect(ui->tableCommits, &GitCommitTableView::currentSelectionChanged, this, &RepositoryWidget::maybeEnableButtons);
     connect(ui->tableCommits, &GitCommitTableView::createBranch, this, &RepositoryWidget::createBranch);
-    connect(ui->treeLocalBranches, &GitBranchTreeView::referenceClicked, this, &RepositoryWidget::onReferenceClicked);
-    connect(ui->treeLocalBranches, &GitBranchTreeView::referenceDoubleClicked, this, &RepositoryWidget::onLocalReferenceDoubleClicked);
-    connect(ui->treeRemoteBranches, &GitBranchTreeView::referenceClicked, this, &RepositoryWidget::onReferenceClicked);
+    connect(ui->treeLeftSidebar, &LeftSidebarTreeView::referenceClicked, this, &RepositoryWidget::onReferenceClicked);
+    connect(ui->treeLeftSidebar, &LeftSidebarTreeView::referenceDoubleClicked, this, &RepositoryWidget::onLocalReferenceDoubleClicked);
     connect(ui->tableStagedFiles, &StatusEntryTableView::statusEntryClicked, this, &RepositoryWidget::onStagedStatusEntryClicked);
     connect(ui->tableUnstagedFiles, &StatusEntryTableView::statusEntryClicked, this, &RepositoryWidget::onUnstagedStatusEntryClicked);
     connect(ui->tableTreeEntries, &GitTreeEntryTableView::treeChangeEntryClicked, this, &RepositoryWidget::onTreeChangeEntryClicked);
+    connect(ui->treeLeftSidebar, &LeftSidebarTreeView::submoduleDoubleClicked, this, &RepositoryWidget::submoduleDoubleClicked);
 
     // Context Menus
     connect(ui->tableStagedFiles, &StatusEntryTableView::customContextMenuRequested, this, &RepositoryWidget::onStagedFilesContextMenuRequested);
     connect(ui->tableUnstagedFiles, &StatusEntryTableView::customContextMenuRequested, this, &RepositoryWidget::onUnstagedFilesContextMenuRequested);
     connect(ui->tableCommits, &GitCommitTableView::customContextMenuRequested, this, &RepositoryWidget::onCommitTableContextMenuRequested);
-    connect(ui->treeLocalBranches, &GitBranchTreeView::customContextMenuRequested, this, &RepositoryWidget::onLocalBranchesCustomContextMenuRequested);
+    connect(ui->treeLeftSidebar, &LeftSidebarTreeView::customContextMenuRequested, this, &RepositoryWidget::onLocalBranchesCustomContextMenuRequested);
 
     // Actions
     connect(ui->actionStageFiles, &QAction::triggered, this, &RepositoryWidget::onStageFilesClicked);
     connect(ui->actionUnstageFiles, &QAction::triggered, this, &RepositoryWidget::onUnstageFilesClicked);
     connect(ui->actionIgnore, &QAction::triggered, this, &RepositoryWidget::onIgnoreClicked);
-    connect(ui->actionStash, &QAction::triggered, this, &RepositoryWidget::onStashChangesClicked);
+    connect(ui->actionStash, &QAction::triggered, this, &RepositoryWidget::stashChanges);
     connect(ui->actionDiscardChanges, &QAction::triggered, this, &RepositoryWidget::onDiscardChangesClicked);
     connect(ui->actionApplyStash, &QAction::triggered, this, &RepositoryWidget::onApplyStashClicked);
     connect(ui->actionDeleteStash, &QAction::triggered, this, &RepositoryWidget::onDeleteStashClicked);
-    connect(ui->actionPopStash, &QAction::triggered, this, &RepositoryWidget::onPopStashClicked);
+    connect(ui->actionPopStash, &QAction::triggered, this, &RepositoryWidget::popStash);
     connect(ui->actionDeleteLocalBranch, &QAction::triggered, this, &RepositoryWidget::onDeleteLocalBranchClicked);
     connect(ui->actionRenameLocalBranch, &QAction::triggered, this, &RepositoryWidget::onRenameLocalBranchClicked);
 
@@ -84,15 +82,9 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
     connect(ui->pushStageDiffFile, &QPushButton::clicked, this, &RepositoryWidget::onStageDiffFileClicked);
     connect(ui->pushUnstageAll, &QPushButton::clicked, this, &RepositoryWidget::onUnstageAllChangesClicked);
     connect(ui->pushCommitChanges, &QPushButton::clicked, this, &RepositoryWidget::onCommitChangesClicked);
-    connect(ui->pushPullFromRemote, &QPushButton::clicked, this, &RepositoryWidget::onPullFromRemoteClicked);
-    connect(ui->pushPushToRemote, &QPushButton::clicked, this, &RepositoryWidget::onPushToRemoteClicked);
-    connect(ui->pushStashChanges, &QPushButton::clicked, this, &RepositoryWidget::onStashChangesClicked);
-    connect(ui->pushPopStash, &QPushButton::clicked, this, &RepositoryWidget::onPopStashClicked);
-    connect(ui->pushCreateBranch, &QPushButton::clicked, this, &RepositoryWidget::onCreateBranchClicked);
     connect(ui->pushNextDiff, &QToolButton::clicked, this, &RepositoryWidget::onNextDiffClicked);
     connect(ui->pushPreviousDiff, &QToolButton::clicked, this, &RepositoryWidget::onPreviousDiffClicked);
     connect(ui->pushCloseDiff, &QToolButton::clicked, this, &RepositoryWidget::switchToCommitView);
-    connect(ui->pushDebug, &QPushButton::clicked, this, &RepositoryWidget::onDebugClicked);
 
     // Debug stuff
     connect(ui->textStartAngle, &QLineEdit::textChanged, this, &RepositoryWidget::drawDebugArc);
@@ -112,12 +104,14 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
     // Validation wiring
     connect(ui->textStageCommitMessage, &QPlainTextEdit::textChanged, this, &RepositoryWidget::maybeEnableButtons);
 
-    // Initialize the dropdown buttons
-    initializeButtonLabels();
-
     // Set correct starting pages
     ui->stackedWidget->setCurrentWidget(ui->pageIndexEntry);
     ui->tabWidget->setCurrentWidget(ui->tabCommits);
+
+    // Set current commit
+    if(_repo->headCommit().objectId().isValid()) {
+        ui->tableCommits->selectCommit(_repo->headCommit().objectId());
+    }
 
     // Set up credentials resolver
     initializeCredentials();
@@ -129,7 +123,11 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
 RepositoryWidget::~RepositoryWidget()
 {
     delete ui;
-    delete _repo;
+}
+
+bool RepositoryWidget::isOnStash() const
+{
+    return ui->tableCommits->currentMetadataType() == GitEntities::Stash;
 }
 
 void RepositoryWidget::initializeCredentials()
@@ -143,11 +141,6 @@ void RepositoryWidget::initializeCredentials()
     }
     _credentialResolver.setCredentials(credentials);
     _repo->setCredentialResolver(&_credentialResolver);
-}
-
-void RepositoryWidget::initializeButtonLabels()
-{
-    ui->treeLeftSidebar->createModel(_repo);
 }
 
 void RepositoryWidget::refreshWidgets()
@@ -235,8 +228,7 @@ void RepositoryWidget::onRefreshWidgets()
 
     ui->treeGitTree->createModel(_repo);
     ui->tableCommits->createModel(_repo);
-    ui->treeLocalBranches->createModel(_repo, LocalBranch);
-    ui->treeRemoteBranches->createModel(_repo, RemoteBranch);
+    ui->treeLeftSidebar->createModel(_repo);
 
     maybeEnableButtons();
 }
@@ -260,19 +252,14 @@ void RepositoryWidget::keyPressEvent(QKeyEvent* event)
 
 void RepositoryWidget::maybeEnableButtons()
 {
-    RepositoryStatus status = _repo->status();
-
     int stagedFileCount = ui->tableStagedFiles->entries().count();
     int unstagedFileCount = ui->tableUnstagedFiles->entries().count();
     ui->pushCommitChanges->setEnabled(stagedFileCount > 0 && ui->textStageCommitMessage->toPlainText().length() > 0);
     ui->pushStageAll->setEnabled(unstagedFileCount > 0);
     ui->pushUnstageAll->setEnabled(stagedFileCount > 0);
-    ui->pushStashChanges->setEnabled(status.entries().count() > 0);
-    ui->pushPopStash->setEnabled(ui->tableCommits->currentMetadataType() == GitEntities::Stash);
     ui->pushNextDiff->setEnabled(ui->tableDiffs->hasNextDelta());
     ui->pushPreviousDiff->setEnabled(ui->tableDiffs->hasPreviousDelta());
     ui->pushStageDiffFile->setVisible(ui->pushStageDiffFile->property(StageUnstageProperty.toUtf8().constData()) != StageTypeInvalid);
-    ui->pushCreateBranch->setEnabled(_repo->headCommit().isNull() == false);
 
     // Potentially change the text of some widgets
     if(stagedFileCount > 0 && ui->textStageCommitMessage->toPlainText().length() == 0) {
@@ -284,7 +271,7 @@ void RepositoryWidget::maybeEnableButtons()
     else {
         ui->pushCommitChanges->setText("Stage some files or changes");
     }
-
+    emit validate();
 }
 
 void RepositoryWidget::onRepositoryFileSystemChanged()
@@ -523,7 +510,7 @@ void RepositoryWidget::onCommitTableContextMenuRequested(const QPoint& pos)
 
 void RepositoryWidget::onLocalBranchesCustomContextMenuRequested(const QPoint &pos)
 {
-    QModelIndex index = ui->treeLocalBranches->indexAt(pos);
+    QModelIndex index = ui->treeLeftSidebar->indexAt(pos);
     if(index.isValid() == false) {
         return;
     }
@@ -535,6 +522,10 @@ void RepositoryWidget::onLocalBranchesCustomContextMenuRequested(const QPoint &p
 
     Reference reference = Reference::fromVariant(index.data(ReferenceRole));
     if(reference.isNull()) {
+        return;
+    }
+
+    if(reference.isRemote()) {
         return;
     }
 
@@ -594,7 +585,7 @@ void RepositoryWidget::onIgnoreClicked()
     UNIMPLEMENTED
 }
 
-void RepositoryWidget::onStashChangesClicked()
+void RepositoryWidget::stashChanges()
 {
     Signature signature = _repo->config()->buildSignature();
     QString message = "WIP";
@@ -625,7 +616,7 @@ void RepositoryWidget::onDeleteStashClicked()
     }
 }
 
-void RepositoryWidget::onPopStashClicked()
+void RepositoryWidget::popStash()
 {
     Stash stash = ui->tableCommits->currentSelectedStash();
     if(stash.isValid() == false) {
@@ -710,12 +701,12 @@ void RepositoryWidget::onCommitChangesClicked()
     refreshWidgets();
 }
 
-void RepositoryWidget::onPullFromRemoteClicked()
+void RepositoryWidget::pullFromRemote()
 {
     UNIMPLEMENTED
 }
 
-void RepositoryWidget::onPushToRemoteClicked()
+void RepositoryWidget::pushToRemote()
 {
     try
     {
@@ -745,7 +736,7 @@ void RepositoryWidget::onPushToRemoteClicked()
     refreshWidgets();
 }
 
-void RepositoryWidget::onCreateBranchClicked()
+void RepositoryWidget::beginCreateBranch()
 {
     GraphedCommit commit = _repo->headCommit();
     if(commit.isNull()) {
@@ -774,7 +765,7 @@ void RepositoryWidget::onPreviousDiffClicked()
     maybeEnableButtons();
 }
 
-void RepositoryWidget::onDebugClicked()
+void RepositoryWidget::doDebugThing()
 {
 #if 0
     GraphedCommit::List commits = _repo->commitGraph();

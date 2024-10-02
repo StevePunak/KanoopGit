@@ -8,6 +8,7 @@ namespace Ui {
 class RepositoryContainer;
 }
 
+class RepositoryWidget;
 class RepositoryContainer : public ComplexWidget
 {
     Q_OBJECT
@@ -17,9 +18,23 @@ public:
     ~RepositoryContainer();
 
 private:
+    void openRepository(GIT::Repository* repo);
+    void clearStackedWidget();
+    void setRepoWidget();
+    void initializePathWidget();
+
     Ui::RepositoryContainer *ui;
-    GIT::Repository* _repo = nullptr;
-    GIT::Repository* _submoduleRepo = nullptr;
+    GIT::Repository* _primaryRepo = nullptr;
+    GIT::Repository* _workingRepo = nullptr;
+    RepositoryWidget* _repoWidget = nullptr;
+
+    QStringList _submoduleStack;
+    QMap<QString, GIT::Repository*> _repos;
+
+private slots:
+    void onSubmoduleDoubleClicked(const GIT::Submodule& submodule);
+    void maybeEnableButtons();
+    void onPathWidgetCloseClicked();
 };
 
 #endif // REPOSITORYCONTAINER_H

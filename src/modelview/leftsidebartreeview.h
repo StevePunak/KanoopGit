@@ -18,7 +18,7 @@ signals:
     void folderClicked(const QString& folderPath);
     void referenceClicked(const GIT::Reference& reference);
     void referenceDoubleClicked(const GIT::Reference& reference);
-    void submoduleDoubleClicked();
+    void submoduleDoubleClicked(const GIT::Submodule& submodule);
     void refresh();
 
 private slots:
