@@ -21,6 +21,7 @@ public:
     bool submodulesVisible() const { return _submodulesVisible; }
     void setSubmodulesVisible(bool value) { _submodulesVisible = value; }
 
+    CredentialSet credentials() const { return _credentials; }
     CredentialSet& credentialsRef() { return _credentials; }
     void setCredentials(CredentialSet value) { _credentials = value; }
 

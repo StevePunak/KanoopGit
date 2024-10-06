@@ -17,6 +17,9 @@ public:
     explicit RepositoryContainer(const QString& path, QWidget *parent = nullptr);
     ~RepositoryContainer();
 
+    GIT::Repository* primaryRepo() const { return _primaryRepo; }
+    GIT::Repository* workingRepo() const { return _workingRepo; }
+
 private:
     void openRepository(GIT::Repository* repo);
     void clearStackedWidget();
@@ -24,6 +27,7 @@ private:
     void initializePathWidget();
 
     Ui::RepositoryContainer *ui;
+
     GIT::Repository* _primaryRepo = nullptr;
     GIT::Repository* _workingRepo = nullptr;
     RepositoryWidget* _repoWidget = nullptr;

@@ -181,6 +181,12 @@ QModelIndex LeftSidebarTreeModel::findTitleItemIndex(AbstractModelItem* item) co
     return result;
 }
 
+QModelIndexList LeftSidebarTreeModel::submoduleIndexes() const
+{
+    QModelIndexList result = match(index(0, 0), KANOOP::EntityTypeRole, GitEntities::Submodule, -1, Qt::MatchRecursive | Qt::MatchWrap);
+    return result;
+}
+
 QString LeftSidebarTreeModel::parentPath(const QString& path)
 {
     return PathUtil::popLevel(path);
@@ -231,13 +237,25 @@ QVariant LeftSidebarTreeModel::TitleItem::data(const QModelIndex& index, int rol
 
 // -------------------------------- SubmoduleItem --------------------------------
 
+LeftSidebarTreeModel::SubmoduleItem::SubmoduleItem(const GIT::Submodule& submodule, LeftSidebarTreeModel* model) :
+    TreeBaseItem(EntityMetadata(GitEntities::Submodule, submodule.toVariant()), model),
+    _submodule(submodule)
+{
+}
+
 QVariant LeftSidebarTreeModel::SubmoduleItem::data(const QModelIndex& index, int role) const
 {
+
     QVariant result;
     if(index.column() == 0) {
         switch(role) {
         case Qt::DisplayRole:
             result = _submodule.name();
+            break;
+        case Qt::ForegroundRole:
+            if(_submodule.isWorkdirInitialized() == false) {
+                result = Colors::darkorange;
+            }
             break;
         default:
             break;
@@ -284,7 +302,7 @@ QVariant LeftSidebarTreeModel::FolderItem::data(const QModelIndex& index, int ro
 // -------------------------------- ReferenceItem --------------------------------
 
 LeftSidebarTreeModel::ReferenceItem::ReferenceItem(const GIT::Reference& reference, LeftSidebarTreeModel* model) :
-    TreeBaseItem(EntityMetadata(GitEntities::Reference), model),
+    TreeBaseItem(EntityMetadata(GitEntities::Reference, reference.toVariant()), model),
     _reference(reference), _isCurrentBranch(false)
 {
     QStringList parts = reference.name().split('/');

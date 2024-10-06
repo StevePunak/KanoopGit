@@ -40,13 +40,13 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="LeftSidebarTreeView" name="treeLeftSidebar"/>
+        <widget class="LeftSidebarTreeView" name="leftSidebar"/>
        </item>
       </layout>
      </widget>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>3</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tabCommits">
        <attribute name="title">
@@ -91,7 +91,7 @@
              <string>Previous Diff</string>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="gitassets.qrc">
               <normaloff>:/assets/arrow-up.png</normaloff>:/assets/arrow-up.png</iconset>
             </property>
            </widget>
@@ -102,7 +102,7 @@
              <string>Next Diff</string>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="gitassets.qrc">
               <normaloff>:/assets/arrow-down.png</normaloff>:/assets/arrow-down.png</iconset>
             </property>
            </widget>
@@ -187,8 +187,25 @@
             <item row="1" column="1">
              <widget class="QLineEdit" name="textSpanAngle"/>
             </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_8">
+              <property name="text">
+               <string>Row:</string>
+              </property>
+             </widget>
+            </item>
             <item row="2" column="1">
              <widget class="QLineEdit" name="textRow"/>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_9">
+              <property name="text">
+               <string>Level:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="textLevel"/>
             </item>
             <item row="4" column="1">
              <widget class="QRadioButton" name="radioUpToLeft">
@@ -218,36 +235,6 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_8">
-              <property name="text">
-               <string>Row:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QLineEdit" name="textLevel"/>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_9">
-              <property name="text">
-               <string>Level:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="12" column="1">
-             <spacer name="verticalSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
             <item row="8" column="1">
              <widget class="QRadioButton" name="radioLeftThenDown">
               <property name="text">
@@ -275,6 +262,26 @@
                <string>Right Then Up</string>
               </property>
              </widget>
+            </item>
+            <item row="12" column="1">
+             <widget class="QRadioButton" name="radioRightThenUp_2">
+              <property name="text">
+               <string>Glop</string>
+              </property>
+             </widget>
+            </item>
+            <item row="13" column="1">
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </widget>
@@ -687,6 +694,30 @@
   <action name="actionRenameLocalBranch">
    <property name="text">
     <string>Rename Branch</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionInitializeSubmodule">
+   <property name="text">
+    <string>Initialize Submodule</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionDeleteSubmodule">
+   <property name="text">
+    <string>Delete Submodule</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionInitializeAllSubmodules">
+   <property name="text">
+    <string>Initialize all submodules</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

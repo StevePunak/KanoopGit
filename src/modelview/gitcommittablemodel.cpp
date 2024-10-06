@@ -73,10 +73,14 @@ bool GitCommitTableModel::setData(const QModelIndex &index, const QVariant &valu
 
 GitCommitTableModel::CommitItem::CommitItem(const GIT::GraphedCommit &commit, GitCommitTableModel *model) :
     TableBaseItem(EntityMetadata(GitEntities::Commit), model),
-    _commit(commit), _isHeadCommit(false)
+    _commit(commit), _isHeadCommit(false), _isDetachedHeadCommit(false)
 {
     if(commit.objectId() == repo()->headCommit().objectId()) {
         _isHeadCommit = true;
+    }
+
+    if(repo()->head().isDetachedHead() && commit.objectId() == repo()->headCommit().objectId()) {
+        _isDetachedHeadCommit = true;
     }
 }
 
@@ -91,6 +95,9 @@ QVariant GitCommitTableModel::CommitItem::data(const QModelIndex &index, int rol
         case CH_BranchOrTag:
             if(_commit.isHead()) {
                 result = _commit.friendlyBranchName();
+            }
+            else if(_isDetachedHeadCommit) {
+                result = "HEAD";
             }
             break;
         case CH_Message:

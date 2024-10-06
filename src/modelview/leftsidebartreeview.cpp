@@ -2,8 +2,15 @@
 #include "kanoopgittypes.h"
 #include "leftsidebartreemodel.h"
 
+#include <QPainter>
 #include <repoconfig.h>
 #include <settings.h>
+
+#include <widgets/submodulelabelwidget.h>
+
+#include <Kanoop/geometry/rectangle.h>
+
+#include <Kanoop/stringutil.h>
 
 using namespace GIT;
 
@@ -11,6 +18,15 @@ LeftSidebarTreeView::LeftSidebarTreeView(QWidget *parent) :
     TreeViewBase(parent)
 {
     setContextMenuPolicy(Qt::CustomContextMenu);
+
+    connect(this, &LeftSidebarTreeView::expanded, this, &LeftSidebarTreeView::onExpanded);
+    connect(this, &LeftSidebarTreeView::collapsed, this, &LeftSidebarTreeView::onCollapsed);
+    connect(this, &LeftSidebarTreeView::doubleClicked, this, &LeftSidebarTreeView::onDoubleClicked);
+}
+
+LeftSidebarTreeView::~LeftSidebarTreeView()
+{
+    qDeleteAll(_submoduleWidgets);
 }
 
 void LeftSidebarTreeView::createModel(GIT::Repository* repo)
@@ -19,27 +35,74 @@ void LeftSidebarTreeView::createModel(GIT::Repository* repo)
         delete model();
     }
 
+    qDeleteAll(_submoduleWidgets);
+    _submoduleWidgets.clear();
+
     _repo = repo;
 
-    LeftSidebarTreeModel* tableModel = new LeftSidebarTreeModel(repo, this);
-    setModel(tableModel);
+    LeftSidebarTreeModel* treeModel = new LeftSidebarTreeModel(repo, this);
+    setModel(treeModel);
 
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &LeftSidebarTreeView::onCurrentIndexChanged);
-    connect(this, &LeftSidebarTreeView::expanded, this, &LeftSidebarTreeView::onExpanded);
-    connect(this, &LeftSidebarTreeView::collapsed, this, &LeftSidebarTreeView::onCollapsed);
-    connect(this, &LeftSidebarTreeView::doubleClicked, this, &LeftSidebarTreeView::onDoubleClicked);
 
     RepoConfig config = Settings::instance()->repoConfig(_repo->localPath());
     if(config.localBranchesVisible()) {
-        expandRecursively(tableModel->localBranchesIndex());
+        expandRecursively(treeModel->localBranchesIndex());
     }
 
     if(config.remoteBranchesVisible()) {
-        expandRecursively(tableModel->remoteBranchesIndex());
+        expandRecursively(treeModel->remoteBranchesIndex());
     }
 
     if(config.submodulesVisible()) {
-        expandRecursively(tableModel->submodulesIndex());
+        expandRecursively(treeModel->submodulesIndex());
+    }
+
+    setItemDelegateForColumn(0, new SubmoduleStyledItemDelegate(this));
+
+    // Create widgets
+    for(const Submodule& submodule : _repo->submodules()) {
+        SubmoduleLabelWidget* labelWidget = new SubmoduleLabelWidget(_repo, submodule);
+        _submoduleWidgets.insert(submodule.name(), labelWidget);
+    }
+
+    for(const QModelIndex& index : treeModel->submoduleIndexes()) {
+        openPersistentEditor(index);
+    }
+}
+
+void LeftSidebarTreeView::setSubmoduleSpinning(const GIT::Submodule& submodule, bool value)
+{
+    SubmoduleLabelWidget* widget = _submoduleWidgets.value(submodule.name());
+    if(widget != nullptr) {
+        if(value) {
+            widget->setSpinnerVisible(true);
+            widget->setSpinning(true);
+        }
+        else {
+            widget->setSpinning(false);
+            widget->hideSpinnerIn(TimeSpan::fromSeconds(3));
+        }
+    }
+}
+
+void LeftSidebarTreeView::setSubmoduleSpinnerValue(const GIT::Submodule& submodule, int value)
+{
+    SubmoduleLabelWidget* widget = _submoduleWidgets.value(submodule.name());
+    if(widget != nullptr) {
+        if(widget->isSpinning() == false) {
+            widget->setSpinning(true);
+        }
+        if(value != widget->spinnerValue()) {
+            widget->setSpinnerValue(value);
+        }
+    }
+}
+
+void LeftSidebarTreeView::hideAllSubmoduleSpinners()
+{
+    for(SubmoduleLabelWidget* widget : qAsConst(_submoduleWidgets)) {
+        widget->setSpinning(false);
     }
 }
 
@@ -48,15 +111,31 @@ void LeftSidebarTreeView::onCurrentIndexChanged(const QModelIndex& current, cons
     Q_UNUSED(previous);
     if(current.isValid()) {
         GitEntities::Type type = (GitEntities::Type)current.data(KANOOP::MetadataTypeRole).toInt();
-        if(type == GitEntities::Folder) {
+        switch(type) {
+        case GitEntities::Folder:
+        {
             QString path = current.data(RelativePathRole).toString();
             emit folderClicked(path);
+            break;
         }
-        else if(type == GitEntities::Reference) {
+        case GitEntities::Reference:
+        {
             Reference reference = Reference::fromVariant(current.data(ReferenceRole));
             if(reference.isNull() == false) {
                 emit referenceClicked(reference);
             }
+            break;
+        }
+        case GitEntities::Submodule:
+        {
+            Submodule submodule = Submodule::fromVariant(current.data(KANOOP::DataRole));
+            if(submodule.isNull() == false) {
+                emit submoduleClicked(submodule);
+            }
+            break;
+        }
+        default:
+            break;
         }
     }
 }
@@ -69,7 +148,12 @@ void LeftSidebarTreeView::onDoubleClicked(const QModelIndex& index)
             Reference reference = Reference::fromVariant(index.data(ReferenceRole));
             logText(LVL_DEBUG, QString("DblClick: %1").arg(reference.canonicalName()));
             if(reference.isNull() == false) {
-                emit referenceDoubleClicked(reference);
+                if(reference.isRemote()) {
+                    emit remoteReferenceDoubleClicked(reference);
+                }
+                else {
+                    emit localReferenceDoubleClicked(reference);
+                }
             }
         }
         else if(type == GitEntities::Submodule) {
@@ -131,3 +215,51 @@ void LeftSidebarTreeView::onCollapsed(const QModelIndex& index)
         }
     }
 }
+
+void SubmoduleStyledItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    GitEntities::Type metadataType = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
+    if(metadataType != GitEntities::Submodule) {
+        QStyledItemDelegate::paint(painter, option, index);
+        return;
+    }
+
+    // Draw the label
+    QString name = index.data(Qt::DisplayRole).toString();
+    if(name.isEmpty() == true) {
+        return;
+    }
+
+    SubmoduleLabelWidget* widget = _tableView->getSubmoduleWidget(name);
+    if(widget == nullptr) {
+        return;
+    }
+
+    Rectangle rect = option.rect;
+    painter->save();
+
+    painter->translate(rect.topLeft());
+    widget->resize(rect.size().toSize());
+    widget->render(painter, QPoint(), QRegion(), QWidget::DrawChildren);
+
+    painter->restore();
+}
+
+QWidget* SubmoduleStyledItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    Q_UNUSED(option)
+
+    QString name = index.data(Qt::DisplayRole).toString();
+    QWidget* result = _tableView->getSubmoduleWidget(name);
+    if(result != nullptr) {
+        result->setParent(parent);
+    }
+
+    return result;
+}
+
+void SubmoduleStyledItemDelegate::destroyEditor(QWidget* editor, const QModelIndex& index) const
+{
+    Q_UNUSED(index) Q_UNUSED(editor)
+}
+

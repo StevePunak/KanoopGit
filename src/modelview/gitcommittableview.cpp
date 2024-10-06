@@ -31,6 +31,8 @@ GitCommitTableView::GitCommitTableView(QWidget *parent) :
 
     createPixmaps();
     setEditTriggers(AllEditTriggers);
+
+    connect(this, &GitCommitTableView::horizontalHeaderChanged, this, &GitCommitTableView::onHorizontalHeaderChanged);
 }
 
 GitCommitTableView::~GitCommitTableView()
@@ -62,14 +64,21 @@ void GitCommitTableView::createModel(Repository* repo)
         setItemDelegateForColumn(column, new GitBranchTagStyledItemDelegate(this));
     }
 
+    // Detect detached head
+    Commit detachedHeadCommit;
+    if(_repo->head().isDetachedHead()) {
+        detachedHeadCommit = _repo->headCommit();
+    }
+
     // Create branch/tag widgets
     for(const GraphedCommit& commit : _commits) {
-        if(commit.isHead() == false) {
-            continue;
+        bool thisIsDetachedHead = detachedHeadCommit.isValid() && commit.objectId() == detachedHeadCommit.objectId();
+        if(commit.isHead() == true || thisIsDetachedHead) {
+            Reference::List references = _repo->references().findByTargetObjectId(commit.objectId());
+            BranchLabelWidget* labelWidget = new BranchLabelWidget(_repo, references);
+            labelWidget->setFixedWidth(300);
+            _branchLabelWidgets.insert(commit.objectId(), labelWidget);
         }
-        Reference::List references = _repo->references().findByTargetObjectId(commit.objectId());
-        BranchLabelWidget* labelWidget = new BranchLabelWidget(_repo, references);
-        _branchLabelWidgets.insert(commit.objectId(), labelWidget);
     }
 
     restoreHeaderStates();
@@ -172,6 +181,15 @@ void GitCommitTableView::onCurrentIndexChanged(const QModelIndex& current, const
     }
     default:
         break;
+    }
+}
+
+void GitCommitTableView::onHorizontalHeaderChanged()
+{
+    int width = horizontalHeader()->sectionSize(0);
+    QList<BranchLabelWidget*> widgets = _branchLabelWidgets.values();
+    for(BranchLabelWidget* widget : widgets) {
+        widget->setFixedWidth(width);
     }
 }
 

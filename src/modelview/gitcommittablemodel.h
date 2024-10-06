@@ -43,7 +43,9 @@ private:
     protected:
         explicit CommitItem(const EntityMetadata& metadata, const GIT::GraphedCommit& commit, GitCommitTableModel* model) :
             TableBaseItem(metadata, model),
-            _commit(commit), _isHeadCommit(false) {}
+            _commit(commit),
+            _isHeadCommit(false),
+            _isDetachedHeadCommit(false) {}
 
 
         virtual QVariant data(const QModelIndex &index, int role) const override;
@@ -51,6 +53,7 @@ private:
     private:
         GIT::GraphedCommit _commit;
         bool _isHeadCommit;
+        bool _isDetachedHeadCommit;
     };
 
     class WorkInProgressItem : public TableBaseItem

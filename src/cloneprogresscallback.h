@@ -15,6 +15,7 @@ public:
 
 signals:
     void progress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects);
+    void progressPercent(double percent);
 };
 
 #endif // CLONEPROGRESSCALLBACK_H

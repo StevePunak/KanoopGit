@@ -24,6 +24,7 @@ CloneRepoDialog::CloneRepoDialog(QWidget *parent) :
     ui->credentialsWidget->setCredentials(credentials);
 
     // Wiring
+    connect(ui->textLocalPath, &QLineEdit::textChanged, this, &CloneRepoDialog::onLocalPathTextChanged);
     connect(ui->textUrl, &QLineEdit::textChanged, this, &CloneRepoDialog::onUrlTextChanged);
     connect(ui->pushBrowse, &QToolButton::clicked, this, &CloneRepoDialog::onBrowseClicked);
 
@@ -67,6 +68,7 @@ void CloneRepoDialog::validate()
 void CloneRepoDialog::applyClicked()
 {
     _url = ui->textUrl->text();
+    Settings::instance()->saveLastDirectory(CloneToDirectory, ui->textLocalPath->text());
 }
 
 void CloneRepoDialog::okClicked()
@@ -79,6 +81,15 @@ void CloneRepoDialog::onUrlTextChanged()
     if(ui->textDirectory->text().isEmpty()) {
         QFileInfo fileInfo(ui->textUrl->text());
         ui->textDirectory->setPlaceholderText(fileInfo.baseName());
+        onLocalPathTextChanged();
+    }
+}
+
+void CloneRepoDialog::onLocalPathTextChanged()
+{
+    RepoConfig repoConfig = Settings::instance()->repoConfig(localPath());
+    if(repoConfig.isValid()) {
+        ui->credentialsWidget->setCredentials(repoConfig.credentialsRef());
     }
 }
 

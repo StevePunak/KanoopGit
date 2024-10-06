@@ -6,6 +6,7 @@
 
 #include <modelview/gitgraphpalette.h>
 
+class QLabel;
 class ComboBox;
 class BranchLabelWidget : public QWidget
 {
@@ -18,12 +19,16 @@ public:
 
 private:
     void createPixmaps();
+    QWidget* labelWidget() const;
 
     GIT::Repository* _repo;
     GIT::Reference::List _references;
     GitGraphPalette _graphPalette;
 
-    ComboBox* _combo;
+    ComboBox* _combo = nullptr;
+    QLabel* _nameLabel = nullptr;
+    QLabel* _lineLabel = nullptr;
+
     QPixmap _cloudPixmap;
     QPixmap _computerPixmap;
     QPixmap _linePixmap;

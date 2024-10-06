@@ -74,6 +74,7 @@ signals:
 
 private slots:
     void onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous);
+    void onHorizontalHeaderChanged();
 };
 
 class GitCommitGraphStyledItemDelegate : public QStyledItemDelegate

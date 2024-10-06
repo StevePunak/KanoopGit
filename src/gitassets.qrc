@@ -27,5 +27,7 @@
         <file>assets/drop-down-ind-down.png</file>
         <file>assets/drop-down-ind-up.png</file>
         <file>assets/submodules.png</file>
+        <file>assets/arrow-down.png</file>
+        <file>assets/arrow-up.png</file>
     </qresource>
 </RCC>

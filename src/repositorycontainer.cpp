@@ -60,6 +60,7 @@ void RepositoryContainer::openRepository(GIT::Repository* repo)
         connect(ui->pushStashChanges, &QPushButton::clicked, _repoWidget, &RepositoryWidget::stashChanges);
         connect(ui->pushPopStash, &QPushButton::clicked, _repoWidget, &RepositoryWidget::popStash);
         connect(ui->pushCreateBranch, &QPushButton::clicked, _repoWidget, &RepositoryWidget::beginCreateBranch);
+        connect(ui->pushRepoOptions, &QPushButton::clicked, _repoWidget, &RepositoryWidget::showRepoOptionsDialog);
         connect(ui->pushDebug, &QPushButton::clicked, _repoWidget, &RepositoryWidget::doDebugThing);
 
         connect(_repoWidget, &RepositoryWidget::validate, this, &RepositoryContainer::maybeEnableButtons);

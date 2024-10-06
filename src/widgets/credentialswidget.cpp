@@ -5,6 +5,8 @@
 #include <settings.h>
 #include <kanoopgittypes.h>
 
+#include <Kanoop/pathutil.h>
+
 CredentialsWidget::CredentialsWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::CredentialsWidget),
@@ -49,6 +51,11 @@ void CredentialsWidget::onBrowsePublicKeyClicked()
         QFileInfo fileInfo(filename);
         ui->textPublicKey->setText(filename);
         Settings::instance()->saveLastDirectory(SshPublicKey, fileInfo.absolutePath());
+
+        QString privateKeyPath = PathUtil::combine(fileInfo.absolutePath(), fileInfo.baseName());
+        if(QFile::exists(privateKeyPath)) {
+            ui->textPrivateKey->setText(privateKeyPath);
+        }
     }
 }
 

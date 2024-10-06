@@ -15,7 +15,7 @@ RecentReposTableModel::RecentReposTableModel(const QStringList& repoPaths, QObje
     for(const QString& path : repoPaths) {
         QString displayPath = path;
         if(path.startsWith(homeDir)) {
-            displayPath = "~/" + path.mid(homeDir.length());
+            displayPath = "~/" + path.mid(homeDir.length() + 1);
         }
         appendRootItem(new RepoPathItem(path, displayPath, this));
     }

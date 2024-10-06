@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <settings.h>
 
+#include <QClipboard>
 #include <QMessageBox>
 #include <git2qt.h>
 
@@ -16,6 +17,7 @@
 #include "repositorycontainer.h"
 
 #include <Kanoop/gui/resources.h>
+#include <Kanoop/gui/tabbar.h>
 
 #include <dialogs/clonerepodialog.h>
 #include <dialogs/preferencesdialog.h>
@@ -33,6 +35,9 @@ GitMainWindow::GitMainWindow(QWidget *parent) :
 
     initializeBase();
 
+    // Some initialization
+    ui->tabWidgetRepos->setContextMenuPolicy(Qt::CustomContextMenu);
+
     // Pushbuttons
     connect(ui->pushCloneRepo, &QPushButton::clicked, this, &GitMainWindow::onCloneRepoClicked);
     connect(ui->pushOpenRepo, &QPushButton::clicked, this, &GitMainWindow::onOpenRepoClicked);
@@ -44,10 +49,13 @@ GitMainWindow::GitMainWindow(QWidget *parent) :
     connect(ui->actionCloneRepository, &QAction::triggered, this, &GitMainWindow::onCloneRepoClicked);
     connect(ui->actionOpenRepository, &QAction::triggered, this, &GitMainWindow::onOpenRepoClicked);
     connect(ui->actionPreferences, &QAction::triggered, this, &GitMainWindow::onPreferencesClicked);
+    connect(ui->actionCopyUrlToClipboard, &QAction::triggered, this, &GitMainWindow::onCopyUrlToClipboard);
+    connect(ui->actionCopyPathToClipboard, &QAction::triggered, this, &GitMainWindow::onCopyPathToClipboard);
 
     // Other wiring
     connect(ui->tabWidgetRepos, &QTabWidget::tabCloseRequested, this, &GitMainWindow::onTabCloseRequested);
-    connect(ui->tabWidgetRepos->tabBar(), &QTabBar::tabBarClicked, this, &GitMainWindow::onTabBarClicked);
+    connect(ui->tabWidgetRepos, &TabWidget::tabBarClicked, this, &GitMainWindow::onTabBarClicked);
+    connect(ui->tabWidgetRepos, &TabWidget::tabCustomContextMenuRequested, this, &GitMainWindow::onTabBarContextMenuRequested);
     connect(&_progressCallback, &CloneProgressCallback::progress, this, &GitMainWindow::onCloneProgress);
 
     // Load models
@@ -71,13 +79,13 @@ GitMainWindow::~GitMainWindow()
 void GitMainWindow::openRecentRepos()
 {
     // open persisted repos
-    RepositoryContainer* firstWidget = nullptr;
+    RepositoryContainer* activeWidget = nullptr;
     for(int i = 0;i < Settings::instance()->openRepos().count();i++) {
         QString repoPath = Settings::instance()->openRepos().at(i);
         if(Repository::isRepository(repoPath)) {
             RepositoryContainer* widget = openRepository(repoPath);
-            if(firstWidget == nullptr) {
-                firstWidget = widget;
+            if(repoPath == Settings::instance()->activeRepo()) {
+                activeWidget = widget;
             }
         }
         else {
@@ -86,8 +94,8 @@ void GitMainWindow::openRecentRepos()
         }
     }
 
-    if(firstWidget != nullptr) {
-        ui->tabWidgetRepos->setCurrentWidget(firstWidget);
+    if(activeWidget != nullptr) {
+        ui->tabWidgetRepos->setCurrentWidget(activeWidget);
     }
 }
 
@@ -106,6 +114,7 @@ RepositoryContainer* GitMainWindow::openRepository(const QString& path)
     closeButton->setFixedSize(16, 16);
     connect(closeButton, &QPushButton::clicked, this, &GitMainWindow::onCloseTabClicked);
     ui->tabWidgetRepos->tabBar()->setTabButton(index, QTabBar::RightSide, closeButton);
+    ui->tabWidgetRepos->tabBar()->setTabToolTip(index, path);
 
     ui->tableRecentRepos->createModel(Settings::instance()->recentFiles());
 
@@ -116,9 +125,10 @@ RepositoryContainer* GitMainWindow::openRepository(const QString& path)
 
 void GitMainWindow::closeRepository(int tabIndex)
 {
-    RepositoryWidget* repoWidget = dynamic_cast<RepositoryWidget*>(ui->tabWidgetRepos->widget(tabIndex));
+    RepositoryContainer* repoWidget = dynamic_cast<RepositoryContainer*>(ui->tabWidgetRepos->widget(tabIndex));
     if(repoWidget != nullptr) {
-        Settings::instance()->removeOpenRepo(repoWidget->repository()->localPath());
+        Settings::instance()->removeOpenRepo(repoWidget->primaryRepo()->localPath());
+        delete repoWidget;
     }
     ui->tabWidgetRepos->removeTab(tabIndex);
 }
@@ -135,24 +145,30 @@ void GitMainWindow::onCloneRepoClicked()
 
             ui->progressCloneProgress->setVisible(true);
 
+            // persist the configuration for repo
+            RepoConfig repoConfig = Settings::instance()->repoConfig(localPath);
+            repoConfig.setCredentials(dlg.credentials());
+            Settings::instance()->saveRepoConfig(repoConfig);
+
+            // Clone it
             Repository* repo = Commands::clone(url, localPath, &credentialResolver, &_progressCallback);
             if(repo == nullptr) {
                 throw CommonException(Commands::lastErrorText());
             }
             delete repo;
 
+            // Create and display widget
             RepositoryContainer* widget = openRepository(localPath);
             if(widget != nullptr) {
                 ui->tabWidgetRepos->setCurrentWidget(widget);
             }
-
-            ui->progressCloneProgress->setVisible(false);
         }
     }
     catch(const CommonException& e)
     {
         QMessageBox::warning(this, "Error", e.message(), QMessageBox::Ok);
     }
+    ui->progressCloneProgress->setVisible(false);
 }
 
 void GitMainWindow::onOpenRepoClicked()
@@ -193,6 +209,20 @@ void GitMainWindow::onCloseTabClicked()
     }
 }
 
+void GitMainWindow::onCopyUrlToClipboard()
+{
+    QAction* action = static_cast<QAction*>(sender());
+    QString value = action->data().toString();
+    QGuiApplication::clipboard()->setText(value);
+}
+
+void GitMainWindow::onCopyPathToClipboard()
+{
+    QAction* action = static_cast<QAction*>(sender());
+    QString value = action->data().toString();
+    QGuiApplication::clipboard()->setText(value);
+}
+
 void GitMainWindow::onRecentRepoDoubleClicked(const QModelIndex& index)
 {
     QString path = index.data(RepoPathRole).toString();
@@ -211,8 +241,29 @@ void GitMainWindow::onTabCloseRequested(int index)
 
 void GitMainWindow::onTabBarClicked(int index)
 {
-    bool visible = ui->tabWidgetRepos->tabBar()->isTabVisible(0);
-    logText(LVL_DEBUG, QString("%1 %2  visible: %3").arg(__FUNCTION__).arg(index).arg(StringUtil::toString(visible)));
+    RepositoryContainer* container = dynamic_cast<RepositoryContainer*>(ui->tabWidgetRepos->widget(index));
+    if(container == nullptr) {
+        return;
+    }
+
+    Settings::instance()->saveActiveRepo(container->primaryRepo()->localPath());
+}
+
+void GitMainWindow::onTabBarContextMenuRequested(int index)
+{
+    RepositoryContainer* repoContainer = dynamic_cast<RepositoryContainer*>(ui->tabWidgetRepos->widget(index));
+    if(repoContainer == nullptr || repoContainer->workingRepo() == nullptr) {
+        return;
+    }
+
+    QMenu menu;
+    menu.addAction(ui->actionCopyPathToClipboard);
+    menu.addAction(ui->actionCopyUrlToClipboard);
+
+    ui->actionCopyPathToClipboard->setData(repoContainer->workingRepo()->localPath());
+    ui->actionCopyUrlToClipboard->setData(repoContainer->workingRepo()->firstRemoteUrl());
+
+    menu.exec(QCursor::pos());
 }
 
 void GitMainWindow::onPreferencesClicked()

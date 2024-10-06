@@ -33,6 +33,7 @@ protected:
 
 private slots:
     void onUrlTextChanged();
+    void onLocalPathTextChanged();
     void onBrowseClicked();
 };
 

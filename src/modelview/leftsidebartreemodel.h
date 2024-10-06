@@ -16,6 +16,7 @@ public:
     QModelIndex localBranchesIndex() const;
     QModelIndex remoteBranchesIndex() const;
     QModelIndex submodulesIndex() const;
+    QModelIndexList submoduleIndexes() const;
 
 private:
     void createLocalBranchesLeaf();
@@ -62,9 +63,7 @@ private:
     class SubmoduleItem : public TreeBaseItem
     {
     public:
-        explicit SubmoduleItem(const GIT::Submodule& submodule, LeftSidebarTreeModel* model) :
-            TreeBaseItem(EntityMetadata(GitEntities::Submodule, submodule.toVariant()), model),
-            _submodule(submodule) {}
+        explicit SubmoduleItem(const GIT::Submodule& submodule, LeftSidebarTreeModel* model);
 
         virtual QVariant data(const QModelIndex &index, int role) const override;
 

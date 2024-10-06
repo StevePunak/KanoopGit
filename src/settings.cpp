@@ -4,6 +4,7 @@
 
 #include <QMutex>
 
+const QString Settings::KEY_ACTIVE_REPO                 = "active_repo";
 const QString Settings::KEY_CREDENTIALS                 = "creds";
 const QString Settings::KEY_OPEN_REPOS                  = "open_repos";
 const QString Settings::KEY_RECENT_FILES                = "recent_files";
@@ -31,9 +32,10 @@ Settings::Settings() :
 void Settings::saveOpenRepo(const QString& value)
 {
     QStringList repos = openRepos();
-    repos.removeAll(value);
-    repos.insert(0, value);
-    _settings.setValue(KEY_OPEN_REPOS, repos);
+    if(repos.contains(value) == false) {
+        repos.insert(0, value);
+        _settings.setValue(KEY_OPEN_REPOS, repos);
+    }
 }
 
 void Settings::removeOpenRepo(const QString& value)
@@ -76,14 +78,20 @@ CredentialSet Settings::defaultCredentials() const
 
 void Settings::saveRepoConfig(const RepoConfig& config)
 {
-    _settings.setValue(makeRepoConfigKey(config.repoPath()), config.toVariant());
+    QString key = makeRepoConfigKey(config.repoPath());
+    _settings.setValue(key, config.toVariant());
 }
 
 RepoConfig Settings::repoConfig(const QString& repoPath) const
 {
-    RepoConfig config = RepoConfig::fromVariant(_settings.value(makeRepoConfigKey(repoPath)));
-    if(config.isValid() == false) {
-        config.setRepoPath(repoPath);
+    RepoConfig config;
+    QString key = makeRepoConfigKey(repoPath);
+    QVariant value = _settings.value(key);
+    if(value.isNull() == false) {
+        config = RepoConfig::fromVariant(value);
+        if(config.isValid() == false) {
+            config.setRepoPath(repoPath);
+        }
     }
     return config;
 }

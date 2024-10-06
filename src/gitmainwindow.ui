@@ -39,7 +39,7 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="QTabWidget" name="tabWidgetRepos">
+         <widget class="TabWidget" name="tabWidgetRepos">
           <widget class="QWidget" name="tabOpenOptions">
            <attribute name="icon">
             <iconset>
@@ -247,12 +247,34 @@
     <string>Ctrl+P</string>
    </property>
   </action>
+  <action name="actionCopyPathToClipboard">
+   <property name="text">
+    <string>Copy path to clipboard</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionCopyUrlToClipboard">
+   <property name="text">
+    <string>Copy url to clipboard</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
    <class>RecentReposTableView</class>
    <extends>QTableView</extends>
    <header>modelview/recentrepostableview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>TabWidget</class>
+   <extends>QTabWidget</extends>
+   <header>Kanoop/gui/tabwidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

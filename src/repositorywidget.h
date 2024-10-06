@@ -4,8 +4,10 @@
 #include "repoconfig.h"
 
 #include <Kanoop/gui/complexwidget.h>
+#include <cloneprogresscallback.h>
 #include <git2qt.h>
 #include <gitcredentialresolver.h>
+#include <submoduleupdateprogresscallback.h>
 
 namespace Ui {
 class RepositoryWidget;
@@ -37,6 +39,7 @@ public slots:
     void stashChanges();
     void doDebugThing();
     void popStash();
+    void showRepoOptionsDialog();
 
 private:
     void initializeCredentials();
@@ -45,14 +48,21 @@ private:
     void updateParentsShaWidget(const GIT::ObjectId::List& objectIds);
     void stageFile(const GIT::StatusEntry& entry, const GIT::DiffDelta& delta);
     void unstageFile(const GIT::StatusEntry& entry, const GIT::DiffDelta& delta);
+    void showLocalBranchCustomContextMenu(const GIT::Reference& reference);
+    void showSubmoduleCustomContextMenu(const GIT::Submodule& submodule);
+    void showSubmodulesCustomContextMenu();
 
     Ui::RepositoryWidget *ui;
     GIT::Repository* _repo;
-    GitCredentialResolver _credentialResolver;
     RepoConfig _config;
+    bool _filesystemWatchEnabled = true;
+
+    GitCredentialResolver _credentialResolver;
+    SubmoduleUpdateProgressCallback _submoduleUpdateProgressCallback;
 
     static const QString StageUnstageProperty;
     static const QString ReferenceProperty;
+    static const QString SubmoduleProperty;
 
     enum StageType { StageTypeInvalid, StageFile, UnstageFile };
 
@@ -62,6 +72,8 @@ private slots:
     void onRepositoryFileSystemChanged();
     void switchToDiffView();
     void switchToCommitView();
+    void suspendWatchingFileSystem() { _filesystemWatchEnabled = false; }
+    void resumeWatchingFileSystem() { _filesystemWatchEnabled = true; }
 
     // Refresh
     void onRefreshWidgets();
@@ -80,16 +92,18 @@ private slots:
     void onWorkInProgressClicked();
     void onReferenceClicked(const GIT::Reference& reference);
     void onLocalReferenceDoubleClicked(const GIT::Reference& reference);
+    void onRemoteReferenceDoubleClicked(const GIT::Reference& reference);
     void onCommitShaClicked(const GIT::ObjectId& objectId);
     void onStagedStatusEntryClicked(const GIT::StatusEntry& statusEntry);
     void onUnstagedStatusEntryClicked(const GIT::StatusEntry& statusEntry);
     void onTreeChangeEntryClicked(const GIT::TreeChangeEntry& treeChangeEntry);
+    void onSubmoduleClicked(const GIT::Submodule& submodule);
 
     // Context Menus
     void onStagedFilesContextMenuRequested();
     void onUnstagedFilesContextMenuRequested();
     void onCommitTableContextMenuRequested(const QPoint &pos);
-    void onLocalBranchesCustomContextMenuRequested(const QPoint &pos);
+    void onLeftSidebarCustomContextMenuRequested(const QPoint &pos);
 
     // Actions
     void onStageFilesClicked();
@@ -100,6 +114,9 @@ private slots:
     void onDeleteStashClicked();
     void onDeleteLocalBranchClicked();
     void onRenameLocalBranchClicked();
+    void onInitializeSubmoduleClicked();
+    void onDeleteSubmoduleClicked();
+    void onInitializeAllSubmodulesClicked();
 
     // Pushbuttons
     void onStageAllChangesClicked();
@@ -109,6 +126,13 @@ private slots:
 
     void onNextDiffClicked();
     void onPreviousDiffClicked();
+
+    // Callbacks
+    void onSubmoduleUpdateProgress(double percent);
+    void onSubmoduleUpdateProgress2(const QString& name, double percent);
+    void onSubmoduleUpdateStarted(const QString& name);
+    void onSubmoduleUpdateFinished(const QString& name);
+    void onSubmoduleUpdaterFinished();
 
     // Debug
     void drawDebugArc();

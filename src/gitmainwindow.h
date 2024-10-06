@@ -30,13 +30,25 @@ signals:
     void loaded();
 
 private slots:
+    // Actions
     void onCloneRepoClicked();
     void onOpenRepoClicked();
     void onCloseTabClicked();
+    void onCopyUrlToClipboard();
+    void onCopyPathToClipboard();
+    void onPreferencesClicked();
+
+    // Double-clicks
     void onRecentRepoDoubleClicked(const QModelIndex &index);
+
+    // Context Menus
+    void onTabBarContextMenuRequested(int index);
+
+    // Tab bar handlers
     void onTabCloseRequested(int index);
     void onTabBarClicked(int index);
-    void onPreferencesClicked();
+
+    // Other
     void onCloneProgress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects);
 };
 

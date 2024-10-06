@@ -27,7 +27,7 @@ void GitBranchTreeView::createModel(Repository* repo, BranchType typeToShow)
     GitBranchTreeModel* treeModel = new GitBranchTreeModel(repo, typeToShow, this);
     connect(this, &GitBranchTreeView::refresh, treeModel, &GitBranchTreeModel::refresh);
 
-    setSourceModel(treeModel);
+    setModel(treeModel);
 
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &GitBranchTreeView::onCurrentIndexChanged);
 

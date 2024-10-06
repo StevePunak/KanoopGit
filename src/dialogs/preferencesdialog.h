@@ -2,7 +2,6 @@
 #define PREFERENCESDIALOG_H
 
 #include <Kanoop/gui/dialog.h>
-
 #include <credentialset.h>
 
 namespace Ui {

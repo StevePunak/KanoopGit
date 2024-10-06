@@ -11,19 +11,24 @@
 #include "settings.h"
 #include "kanoopgittypes.h"
 #include "gitassets.h"
+#include "submodulecloner.h"
 
 #include <Kanoop/geometry/rectangle.h>
 
 #include <Kanoop/commonexception.h>
+#include <Kanoop/pathutil.h>
 #include <Kanoop/stringutil.h>
 
 #include <Kanoop/gui/resources.h>
+
+#include <dialogs/repooptionsdialog.h>
 
 using namespace GIT;
 namespace Colors = QColorConstants::Svg;
 
 const QString RepositoryWidget::StageUnstageProperty    = "stage_unstage";
 const QString RepositoryWidget::ReferenceProperty       = "reference";
+const QString RepositoryWidget::SubmoduleProperty       = "submodule";
 
 RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
     ComplexWidget("gittree", parent),
@@ -39,7 +44,7 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
     // Load views
     ui->treeGitTree->createModel(_repo);
     ui->tableCommits->createModel(_repo);
-    ui->treeLeftSidebar->createModel(_repo);
+    ui->leftSidebar->createModel(_repo);
 
     // Some initial values
     ui->textDiffFileName->clear();
@@ -52,18 +57,20 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
     connect(ui->tableCommits, &GitCommitTableView::workInProgressClicked, this, &RepositoryWidget::onWorkInProgressClicked);
     connect(ui->tableCommits, &GitCommitTableView::currentSelectionChanged, this, &RepositoryWidget::maybeEnableButtons);
     connect(ui->tableCommits, &GitCommitTableView::createBranch, this, &RepositoryWidget::createBranch);
-    connect(ui->treeLeftSidebar, &LeftSidebarTreeView::referenceClicked, this, &RepositoryWidget::onReferenceClicked);
-    connect(ui->treeLeftSidebar, &LeftSidebarTreeView::referenceDoubleClicked, this, &RepositoryWidget::onLocalReferenceDoubleClicked);
+    connect(ui->leftSidebar, &LeftSidebarTreeView::referenceClicked, this, &RepositoryWidget::onReferenceClicked);
+    connect(ui->leftSidebar, &LeftSidebarTreeView::localReferenceDoubleClicked, this, &RepositoryWidget::onLocalReferenceDoubleClicked);
+    connect(ui->leftSidebar, &LeftSidebarTreeView::remoteReferenceDoubleClicked, this, &RepositoryWidget::onRemoteReferenceDoubleClicked);
     connect(ui->tableStagedFiles, &StatusEntryTableView::statusEntryClicked, this, &RepositoryWidget::onStagedStatusEntryClicked);
     connect(ui->tableUnstagedFiles, &StatusEntryTableView::statusEntryClicked, this, &RepositoryWidget::onUnstagedStatusEntryClicked);
     connect(ui->tableTreeEntries, &GitTreeEntryTableView::treeChangeEntryClicked, this, &RepositoryWidget::onTreeChangeEntryClicked);
-    connect(ui->treeLeftSidebar, &LeftSidebarTreeView::submoduleDoubleClicked, this, &RepositoryWidget::submoduleDoubleClicked);
+    connect(ui->leftSidebar, &LeftSidebarTreeView::submoduleClicked, this, &RepositoryWidget::onSubmoduleClicked);
+    connect(ui->leftSidebar, &LeftSidebarTreeView::submoduleDoubleClicked, this, &RepositoryWidget::submoduleDoubleClicked);
 
     // Context Menus
     connect(ui->tableStagedFiles, &StatusEntryTableView::customContextMenuRequested, this, &RepositoryWidget::onStagedFilesContextMenuRequested);
     connect(ui->tableUnstagedFiles, &StatusEntryTableView::customContextMenuRequested, this, &RepositoryWidget::onUnstagedFilesContextMenuRequested);
     connect(ui->tableCommits, &GitCommitTableView::customContextMenuRequested, this, &RepositoryWidget::onCommitTableContextMenuRequested);
-    connect(ui->treeLeftSidebar, &LeftSidebarTreeView::customContextMenuRequested, this, &RepositoryWidget::onLocalBranchesCustomContextMenuRequested);
+    connect(ui->leftSidebar, &LeftSidebarTreeView::customContextMenuRequested, this, &RepositoryWidget::onLeftSidebarCustomContextMenuRequested);
 
     // Actions
     connect(ui->actionStageFiles, &QAction::triggered, this, &RepositoryWidget::onStageFilesClicked);
@@ -76,6 +83,9 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
     connect(ui->actionPopStash, &QAction::triggered, this, &RepositoryWidget::popStash);
     connect(ui->actionDeleteLocalBranch, &QAction::triggered, this, &RepositoryWidget::onDeleteLocalBranchClicked);
     connect(ui->actionRenameLocalBranch, &QAction::triggered, this, &RepositoryWidget::onRenameLocalBranchClicked);
+    connect(ui->actionInitializeSubmodule, &QAction::triggered, this, &RepositoryWidget::onInitializeSubmoduleClicked);
+    connect(ui->actionDeleteSubmodule, &QAction::triggered, this, &RepositoryWidget::onDeleteSubmoduleClicked);
+    connect(ui->actionInitializeAllSubmodules, &QAction::triggered, this, &RepositoryWidget::onInitializeAllSubmodulesClicked);
 
     // Pushbuttons
     connect(ui->pushStageAll, &QPushButton::clicked, this, &RepositoryWidget::onStageAllChangesClicked);
@@ -100,6 +110,9 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
 
     // Repo wiring
     connect(_repo, &Repository::repositoryChanged, this, &RepositoryWidget::onRepositoryFileSystemChanged);
+
+    // Callbacks
+    connect(&_submoduleUpdateProgressCallback, &CloneProgressCallback::progressPercent, this, &RepositoryWidget::onSubmoduleUpdateProgress);
 
     // Validation wiring
     connect(ui->textStageCommitMessage, &QPlainTextEdit::textChanged, this, &RepositoryWidget::maybeEnableButtons);
@@ -133,13 +146,13 @@ bool RepositoryWidget::isOnStash() const
 void RepositoryWidget::initializeCredentials()
 {
     // Try and find credentials for this repo (by sha of initial commit)
-    Commit initialCommit = _repo->initialCommit();
-    CredentialSet credentials = Settings::instance()->credentials(initialCommit.objectId().sha());
-    if(credentials.isValid() == false) {
-        // not found... use the default credentials
-        credentials = Settings::instance()->defaultCredentials();
+    _config = Settings::instance()->repoConfig(_repo);
+    if(_config.isValid() == false) {
+        _config.setRepoPath(_repo->localPath());
+        _config.setCredentials(Settings::instance()->defaultCredentials());
+        Settings::instance()->saveRepoConfig(_config);
     }
-    _credentialResolver.setCredentials(credentials);
+    _credentialResolver.setCredentials(_config.credentials());
     _repo->setCredentialResolver(&_credentialResolver);
 }
 
@@ -192,6 +205,62 @@ void RepositoryWidget::updateParentsShaWidget(const GIT::ObjectId::List& objectI
     }
 }
 
+void RepositoryWidget::showLocalBranchCustomContextMenu(const Reference& reference)
+{
+    if(reference.isNull()) {
+        return;
+    }
+
+    if(reference.isRemote()) {
+        return;
+    }
+
+    ui->actionDeleteLocalBranch->setText(QString("Delete %1").arg(reference.friendlyName()));
+    ui->actionRenameLocalBranch->setText(QString("Rename %1").arg(reference.friendlyName()));
+
+    ui->actionDeleteLocalBranch->setProperty(ReferenceProperty.toUtf8().constData(), reference.toVariant());
+    ui->actionRenameLocalBranch->setProperty(ReferenceProperty.toUtf8().constData(), reference.toVariant());
+
+    QMenu menu(this);
+    menu.addAction(ui->actionDeleteLocalBranch);
+    menu.addAction(ui->actionRenameLocalBranch);
+
+    menu.exec(QCursor::pos());
+}
+
+void RepositoryWidget::showSubmoduleCustomContextMenu(const GIT::Submodule& submodule)
+{
+    if(submodule.isNull()) {
+        return;
+    }
+
+    ui->actionInitializeSubmodule->setText(QString("Initialize %1").arg(submodule.name()));
+    ui->actionDeleteSubmodule->setText(QString("Delete %1").arg(submodule.name()));
+
+    ui->actionInitializeSubmodule->setProperty(SubmoduleProperty.toUtf8().constData(), submodule.toVariant());
+    ui->actionDeleteSubmodule->setProperty(SubmoduleProperty.toUtf8().constData(), submodule.toVariant());
+
+    ui->actionInitializeSubmodule->setEnabled(submodule.isWorkdirInitialized() == false);
+
+    QMenu menu(this);
+    menu.addAction(ui->actionInitializeSubmodule);
+    menu.addAction(ui->actionDeleteSubmodule);
+
+    menu.exec(QCursor::pos());
+}
+
+void RepositoryWidget::showSubmodulesCustomContextMenu()
+{
+    int uninitialized = _repo->submodules().countWithStatus(Submodule::WorkDirUninitialized);
+    ui->actionInitializeAllSubmodules->setText(QString("Initialize %1 submodules").arg(uninitialized));
+    ui->actionInitializeAllSubmodules->setEnabled(uninitialized > 0);
+
+    QMenu menu(this);
+    menu.addAction(ui->actionInitializeAllSubmodules);
+
+    menu.exec(QCursor::pos());
+}
+
 void RepositoryWidget::switchToDiffView()
 {
     ui->tabWidget->setCurrentWidget(ui->tabDiffs);
@@ -228,7 +297,7 @@ void RepositoryWidget::onRefreshWidgets()
 
     ui->treeGitTree->createModel(_repo);
     ui->tableCommits->createModel(_repo);
-    ui->treeLeftSidebar->createModel(_repo);
+    ui->leftSidebar->createModel(_repo);
 
     maybeEnableButtons();
 }
@@ -276,6 +345,9 @@ void RepositoryWidget::maybeEnableButtons()
 
 void RepositoryWidget::onRepositoryFileSystemChanged()
 {
+    if(_filesystemWatchEnabled == false) {
+        return;
+    }
     logText(LVL_DEBUG, "Repo file system change notification");
     refreshWidgets();
 }
@@ -330,6 +402,21 @@ void RepositoryWidget::onLocalReferenceDoubleClicked(const GIT::Reference &refer
     try
     {
         if(_repo->checkoutLocalBranch(reference.friendlyName()) == false) {
+            throw CommonException(_repo->errorText());
+        }
+        refreshWidgets();
+    }
+    catch(const CommonException& e)
+    {
+        QMessageBox::warning(this, "Error", e.message());
+    }
+}
+
+void RepositoryWidget::onRemoteReferenceDoubleClicked(const GIT::Reference& reference)
+{
+    try
+    {
+        if(_repo->checkoutRemoteBranch(reference.friendlyName()) == false) {
             throw CommonException(_repo->errorText());
         }
         refreshWidgets();
@@ -430,6 +517,21 @@ void RepositoryWidget::onTreeChangeEntryClicked(const GIT::TreeChangeEntry& tree
     }
 }
 
+void RepositoryWidget::onSubmoduleClicked(const GIT::Submodule& submodule)
+{
+    QList<Submodule::SubmoduleStatus> allStatuses = Submodule::getSubmoduleStatusValues();
+    Submodule::SubmoduleStatuses moduleStatus = submodule.status();
+    QString str;
+    QTextStream output(&str);
+    for(Submodule::SubmoduleStatus status : allStatuses) {
+        if(moduleStatus & status) {
+            output << getSubmoduleStatusString(status) << ' ';
+        }
+    }
+    logText(LVL_DEBUG, QString("%1 (%2)").arg(submodule.name()).arg(str));
+    logText(LVL_DEBUG, QString("%1 head: %2  idx: %3").arg(submodule.name()).arg(submodule.headCommitId().toString()).arg(submodule.indexCommitId().toString()));
+}
+
 void RepositoryWidget::onStagedFilesContextMenuRequested()
 {
     QMenu menu(this);
@@ -508,38 +610,46 @@ void RepositoryWidget::onCommitTableContextMenuRequested(const QPoint& pos)
     menu.exec(QCursor::pos());
 }
 
-void RepositoryWidget::onLocalBranchesCustomContextMenuRequested(const QPoint &pos)
+void RepositoryWidget::onLeftSidebarCustomContextMenuRequested(const QPoint &pos)
 {
-    QModelIndex index = ui->treeLeftSidebar->indexAt(pos);
+    QModelIndex index = ui->leftSidebar->indexAt(pos);
     if(index.isValid() == false) {
         return;
     }
 
     GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
-    if(type != GitEntities::Reference) {
-        return;
+    switch(type) {
+    case GitEntities::Reference:
+    {
+        Reference reference = Reference::fromVariant(index.data(ReferenceRole));
+        if(reference.isNull() == false && reference.isLocal()) {
+            showLocalBranchCustomContextMenu(reference);
+        }
+        break;
     }
-
-    Reference reference = Reference::fromVariant(index.data(ReferenceRole));
-    if(reference.isNull()) {
-        return;
+    case GitEntities::Submodule:
+    {
+        Submodule submodule = Submodule::fromVariant(index.data(KANOOP::DataRole));
+        if(submodule.isNull() == false) {
+            showSubmoduleCustomContextMenu(submodule);
+        }
+        break;
     }
-
-    if(reference.isRemote()) {
-        return;
+    case GitEntities::TitleItem:
+    {
+        ControlType controlType = (ControlType)index.data(ControlTypeRole).toInt();
+        switch (controlType) {
+        case Submodules:
+            showSubmodulesCustomContextMenu();
+            break;
+        default:
+            break;
+        }
+        break;
     }
-
-    ui->actionDeleteLocalBranch->setText(QString("Delete %1").arg(reference.friendlyName()));
-    ui->actionRenameLocalBranch->setText(QString("Rename %1").arg(reference.friendlyName()));
-
-    ui->actionDeleteLocalBranch->setProperty(ReferenceProperty.toUtf8().constData(), reference.toVariant());
-    ui->actionRenameLocalBranch->setProperty(ReferenceProperty.toUtf8().constData(), reference.toVariant());
-
-    QMenu menu(this);
-    menu.addAction(ui->actionDeleteLocalBranch);
-    menu.addAction(ui->actionRenameLocalBranch);
-
-    menu.exec(QCursor::pos());
+    default:
+        break;
+    }
 }
 
 void RepositoryWidget::onStageFilesClicked()
@@ -628,6 +738,14 @@ void RepositoryWidget::popStash()
     }
 }
 
+void RepositoryWidget::showRepoOptionsDialog()
+{
+    RepoOptionsDialog dlg(_repo, this);
+    if(dlg.exec() == QDialog::Accepted) {
+        initializeCredentials();
+    }
+}
+
 void RepositoryWidget::onDeleteLocalBranchClicked()
 {
     Reference reference  = Reference::fromVariant(static_cast<QAction*>(sender())->property(ReferenceProperty.toUtf8().constData()));
@@ -643,7 +761,60 @@ void RepositoryWidget::onDeleteLocalBranchClicked()
 
 void RepositoryWidget::onRenameLocalBranchClicked()
 {
+    UNIMPLEMENTED
+}
 
+void RepositoryWidget::onInitializeSubmoduleClicked()
+{
+    QAction* action = dynamic_cast<QAction*>(sender());
+    if(action == nullptr) {
+        return;
+    }
+
+    try
+    {
+        Submodule submodule = Submodule::fromVariant(action->property(SubmoduleProperty.toUtf8().constData()));
+        if(submodule.isNull()) {
+            throw CommonException("Invalid submodule (bug)");
+        }
+
+        Submodule::SubmoduleStatuses status = submodule.status();
+        Q_UNUSED(status)
+
+        if(submodule.initialize() == false) {
+            throw CommonException(_repo->errorText());
+        }
+
+        ui->leftSidebar->setSubmoduleSpinning(submodule, true);
+        ui->leftSidebar->setSubmoduleSpinnerValue(submodule, 0);
+        _submoduleUpdateProgressCallback.setSubmodule(submodule);
+        if(submodule.update(false, &_credentialResolver, &_submoduleUpdateProgressCallback) == false) {
+            throw CommonException(_repo->errorText());
+        }
+        ui->leftSidebar->setSubmoduleSpinning(submodule, false);
+        ui->leftSidebar->setSubmoduleSpinnerValue(submodule, 0);
+    }
+    catch(const CommonException& e)
+    {
+        QMessageBox::warning(this, "Error", e.message(), QMessageBox::Ok);
+    }
+}
+
+void RepositoryWidget::onDeleteSubmoduleClicked()
+{
+    UNIMPLEMENTED
+}
+
+void RepositoryWidget::onInitializeAllSubmodulesClicked()
+{
+    suspendWatchingFileSystem();
+
+    SubmoduleCloner* cloner = new SubmoduleCloner(_repo);
+    connect(cloner, &SubmoduleCloner::progress, this, &RepositoryWidget::onSubmoduleUpdateProgress2);
+    connect(cloner, &SubmoduleCloner::submoduleStarted, this, &RepositoryWidget::onSubmoduleUpdateStarted);
+    connect(cloner, &SubmoduleCloner::submoduleFinished, this, &RepositoryWidget::onSubmoduleUpdateFinished);
+    connect(cloner, &SubmoduleCloner::finished, this, &RepositoryWidget::onSubmoduleUpdaterFinished);
+    cloner->start();
 }
 
 void RepositoryWidget::onStageAllChangesClicked()
@@ -703,7 +874,17 @@ void RepositoryWidget::onCommitChangesClicked()
 
 void RepositoryWidget::pullFromRemote()
 {
-    UNIMPLEMENTED
+    try
+    {
+        if(_repo->pull() == false) {
+            throw CommonException(_repo->errorText());
+        }
+    }
+    catch(const CommonException& e)
+    {
+        QMessageBox::warning(this, "Pull Failed", e.message());
+    }
+    refreshWidgets();
 }
 
 void RepositoryWidget::pushToRemote()
@@ -713,7 +894,7 @@ void RepositoryWidget::pushToRemote()
         Branch branch = _repo->currentBranch();
         if(branch.remoteName().isEmpty()) {
             if(_repo->remotes().count() == 0) {
-                throw CommonException("No remote t push to");
+                throw CommonException("No remote to push to");
             }
             if(_repo->remotes().count() > 1) {
                 logText(LVL_WARNING, "Multiple remotes not yet supported. Only the first will be used");
@@ -765,8 +946,53 @@ void RepositoryWidget::onPreviousDiffClicked()
     maybeEnableButtons();
 }
 
+void RepositoryWidget::onSubmoduleUpdateProgress(double percent)
+{
+    SubmoduleUpdateProgressCallback* callback = dynamic_cast<SubmoduleUpdateProgressCallback*>(sender());
+    if(callback == nullptr) {
+        return;
+    }
+    Submodule submodule = callback->submodule();
+    ui->leftSidebar->setSubmoduleSpinnerValue(submodule, percent);
+}
+
+void RepositoryWidget::onSubmoduleUpdateProgress2(const QString& name, double percent)
+{
+    Submodule submodule = _repo->submodules().findByName(name);
+    ui->leftSidebar->setSubmoduleSpinnerValue(submodule, percent);
+}
+
+void RepositoryWidget::onSubmoduleUpdateStarted(const QString& name)
+{
+    Submodule submodule = _repo->submodules().findByName(name);
+    ui->leftSidebar->setSubmoduleSpinning(submodule, true);
+}
+
+void RepositoryWidget::onSubmoduleUpdateFinished(const QString& name)
+{
+    Submodule submodule = _repo->submodules().findByName(name);
+    ui->leftSidebar->setSubmoduleSpinning(submodule, false);
+}
+
+void RepositoryWidget::onSubmoduleUpdaterFinished()
+{
+    ui->leftSidebar->hideAllSubmoduleSpinners();
+    ui->leftSidebar->refreshVisible();
+    resumeWatchingFileSystem();
+
+    SubmoduleCloner* cloner = static_cast<SubmoduleCloner*>(sender());
+    cloner->deleteLater();
+}
+
 void RepositoryWidget::doDebugThing()
 {
+    if(_repo->submodules().count() == 0) {
+        return;
+    }
+
+    Submodule submodule = _repo->submodules().first();
+    ui->leftSidebar->setSubmoduleSpinning(submodule, true);
+    ui->leftSidebar->setSubmoduleSpinnerValue(submodule, 10);
 #if 0
     GraphedCommit::List commits = _repo->commitGraph();
     QStringList headers = {

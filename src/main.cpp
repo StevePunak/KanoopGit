@@ -9,6 +9,8 @@
 #include "repoconfig.h"
 #include "settings.h"
 
+#include <widgets/testdialog.h>
+
 void registerMetaTypes()
 {
     qRegisterMetaType<RepoConfig>();
@@ -35,6 +37,9 @@ int main(int argc, char *argv[])
     GitMainWindow mainWindow;
     QTimer::singleShot(1000, splash, &SplashScreen::close);
     QTimer::singleShot(1000, &mainWindow, &GitMainWindow::show);
+
+    // TestDialog dlg;
+    // dlg.show();
 
     return app.exec();
 }
