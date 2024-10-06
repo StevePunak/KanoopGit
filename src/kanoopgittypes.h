@@ -8,10 +8,13 @@ enum GitRoles
 
     AbsolutePathRole,
     BranchRole,
+    CanonicalNameRole,
     CreateBranchRole,
     CommitRole,
     ControlTypeRole,
     IsRepoHeadCommitRole,
+    IsLocalReferenceRole,
+    IsRemoteReferenceRole,
     ObjectIdRole,
     ReferenceRole,
     RelativePathRole,

@@ -889,6 +889,7 @@ void RepositoryWidget::pullFromRemote()
 
 void RepositoryWidget::pushToRemote()
 {
+    QApplication::setOverrideCursor(Qt::WaitCursor);
     try
     {
         Branch branch = _repo->currentBranch();
@@ -915,6 +916,7 @@ void RepositoryWidget::pushToRemote()
         QMessageBox::warning(this, "Push Failed", e.message());
     }
     refreshWidgets();
+    QApplication::restoreOverrideCursor();
 }
 
 void RepositoryWidget::beginCreateBranch()

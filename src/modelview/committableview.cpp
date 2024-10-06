@@ -15,7 +15,7 @@
 #include <Kanoop/gui/resources.h>
 #include <Kanoop/gui/stylesheets.h>
 
-#include <widgets/branchlabelwidget.h>
+#include <widgets/branchtaglabelwidget.h>
 
 using namespace GIT;
 namespace Colors = QColorConstants::Svg;
@@ -75,7 +75,7 @@ void CommitTableView::createModel(Repository* repo)
         bool thisIsDetachedHead = detachedHeadCommit.isValid() && commit.objectId() == detachedHeadCommit.objectId();
         if(commit.isHead() == true || thisIsDetachedHead) {
             Reference::List references = _repo->references().findByTargetObjectId(commit.objectId());
-            BranchLabelWidget* labelWidget = new BranchLabelWidget(_repo, references);
+            BranchTagLabelWidget* labelWidget = new BranchTagLabelWidget(_repo, references);
             labelWidget->setFixedWidth(300);
             _branchLabelWidgets.insert(commit.objectId(), labelWidget);
         }
@@ -187,8 +187,8 @@ void CommitTableView::onCurrentIndexChanged(const QModelIndex& current, const QM
 void CommitTableView::onHorizontalHeaderChanged()
 {
     int width = horizontalHeader()->sectionSize(0);
-    QList<BranchLabelWidget*> widgets = _branchLabelWidgets.values();
-    for(BranchLabelWidget* widget : widgets) {
+    QList<BranchTagLabelWidget*> widgets = _branchLabelWidgets.values();
+    for(BranchTagLabelWidget* widget : widgets) {
         widget->setFixedWidth(width);
     }
 }
@@ -506,7 +506,7 @@ void GitBranchTagStyledItemDelegate::paint(QPainter *painter, const QStyleOption
         return;
     }
 
-    BranchLabelWidget* widget = _tableView->getBranchLabelWidget(commit.objectId());
+    BranchTagLabelWidget* widget = _tableView->getBranchLabelWidget(commit.objectId());
     if(widget == nullptr) {
         return;
     }
@@ -540,7 +540,7 @@ QWidget *GitBranchTagStyledItemDelegate::createEditor(QWidget *parent, const QSt
 void GitBranchTagStyledItemDelegate::destroyEditor(QWidget *editor, const QModelIndex &index) const
 {
     Q_UNUSED(index)
-    if(dynamic_cast<BranchLabelWidget*>(editor) == nullptr) {
+    if(dynamic_cast<BranchTagLabelWidget*>(editor) == nullptr) {
         delete editor;
     }
 }
@@ -576,9 +576,9 @@ QLineEdit* GitBranchTagStyledItemDelegate::createBranchNameEditor(QWidget *paren
     return editor;
 }
 
-BranchLabelWidget* GitBranchTagStyledItemDelegate::getBranchLabelWidget(QWidget* parent, const QModelIndex& index) const
+BranchTagLabelWidget* GitBranchTagStyledItemDelegate::getBranchLabelWidget(QWidget* parent, const QModelIndex& index) const
 {
-    BranchLabelWidget* result = nullptr;
+    BranchTagLabelWidget* result = nullptr;
     GraphedCommit commit = GraphedCommit::fromVariant(index.data(CommitRole));
     if(commit.isNull() == false && (result = _tableView->getBranchLabelWidget(commit.objectId())) != nullptr) {
         result->setParent(parent);

@@ -1,4 +1,4 @@
-#include "branchlabelwidget.h"
+#include "branchtaglabelwidget.h"
 
 #include <QComboBox>
 #include <QHBoxLayout>
@@ -17,11 +17,11 @@
 
 using namespace GIT;
 
-BranchLabelWidget::BranchLabelWidget(Repository* repo, const GIT::Reference::List &references, QWidget *parent) :
+BranchTagLabelWidget::BranchTagLabelWidget(Repository* repo, const GIT::Reference::List &references, QWidget *parent) :
     QWidget(parent),
     _repo(repo), _references(references)
 {
-    BranchLabelWidget::setObjectName(BranchLabelWidget::metaObject()->className());
+    BranchTagLabelWidget::setObjectName(BranchTagLabelWidget::metaObject()->className());
 
     QFont f = font();
     f.setPointSize(Settings::instance()->fontSize());
@@ -75,7 +75,7 @@ BranchLabelWidget::BranchLabelWidget(Repository* repo, const GIT::Reference::Lis
     layout->addWidget(_lineLabel);
 }
 
-QString BranchLabelWidget::currentReferenceFriendlyName() const
+QString BranchTagLabelWidget::currentReferenceFriendlyName() const
 {
     QString result;
     if(_combo != nullptr) {
@@ -90,7 +90,7 @@ QString BranchLabelWidget::currentReferenceFriendlyName() const
     return result;
 }
 
-QString BranchLabelWidget::firstReferenceName() const
+QString BranchTagLabelWidget::firstReferenceName() const
 {
     QString result;
     if(_references.count() > 0) {
@@ -99,7 +99,7 @@ QString BranchLabelWidget::firstReferenceName() const
     return result;
 }
 
-void BranchLabelWidget::createPixmaps()
+void BranchTagLabelWidget::createPixmaps()
 {
     double widgetHeight = labelWidget()->height() - 2;
     _cloudPixmap = Resources::getPixmap(GitAssets::Cloud);
@@ -119,7 +119,7 @@ void BranchLabelWidget::createPixmaps()
     painter.drawLine(p1, p2);
 }
 
-QWidget* BranchLabelWidget::labelWidget() const
+QWidget* BranchTagLabelWidget::labelWidget() const
 {
     return _combo != nullptr ? (QWidget*)_combo : (QWidget*)_nameLabel;
 }

@@ -1,5 +1,5 @@
-#ifndef BRANCHLABELWIDGET_H
-#define BRANCHLABELWIDGET_H
+#ifndef BRANCHTAGLABELWIDGET_H
+#define BRANCHTAGLABELWIDGET_H
 
 #include <QWidget>
 #include <git2qt.h>
@@ -8,11 +8,11 @@
 
 class QLabel;
 class ComboBox;
-class BranchLabelWidget : public QWidget
+class BranchTagLabelWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit BranchLabelWidget(GIT::Repository* repo, const GIT::Reference::List& references, QWidget *parent = nullptr);
+    explicit BranchTagLabelWidget(GIT::Repository* repo, const GIT::Reference::List& references, QWidget *parent = nullptr);
 
     QString currentReferenceFriendlyName() const;
     QString firstReferenceName() const;
@@ -37,4 +37,4 @@ private:
 signals:
 };
 
-#endif // BRANCHLABELWIDGET_H
+#endif // BRANCHTAGLABELWIDGET_H

@@ -4,6 +4,7 @@
 #include <QStyledItemDelegate>
 #include <git2qt.h>
 
+class LocalBranchLabelWidget;
 class SubmoduleLabelWidget;
 class LeftSidebarTreeView : public TreeViewBase
 {
@@ -20,8 +21,10 @@ public:
 
 private:
     SubmoduleLabelWidget* getSubmoduleWidget(const QString& name) { return _submoduleWidgets.value(name); }
+    LocalBranchLabelWidget* getLocalBranchWidget(const QString& canonicalName) { return _localBranchWidgets.value(canonicalName); }
     GIT::Repository* _repo;
     QMap<QString, SubmoduleLabelWidget*> _submoduleWidgets;
+    QMap<QString, LocalBranchLabelWidget*> _localBranchWidgets;
 
     friend class SubmoduleStyledItemDelegate;
 
@@ -49,6 +52,8 @@ public:
         _tableView(parent) {}
 
     virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+    void paintSubmodule(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+    void paintLocalBranch(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
     virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     virtual void destroyEditor(QWidget *editor, const QModelIndex &index) const override;
 

@@ -16,6 +16,9 @@ public:
     QModelIndex localBranchesIndex() const;
     QModelIndex remoteBranchesIndex() const;
     QModelIndex submodulesIndex() const;
+
+    QModelIndexList localBranchIndexes() const;
+    QModelIndexList remoteBranchIndexes() const;
     QModelIndexList submoduleIndexes() const;
 
 private:

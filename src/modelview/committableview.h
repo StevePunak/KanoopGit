@@ -9,7 +9,7 @@
 #include "gitgraphpalette.h"
 #include "kanoopgittypes.h"
 
-class BranchLabelWidget;
+class BranchTagLabelWidget;
 class CommitTableView : public TableViewBase
 {
     Q_OBJECT
@@ -45,7 +45,7 @@ private:
     void createPixmaps();
 
     // Calls for friend class
-    BranchLabelWidget* getBranchLabelWidget(const GIT::ObjectId& objectId) const { return _branchLabelWidgets.value(objectId); }
+    BranchTagLabelWidget* getBranchLabelWidget(const GIT::ObjectId& objectId) const { return _branchLabelWidgets.value(objectId); }
 
     // Widget overrides
     virtual void mousePressEvent(QMouseEvent *event) override;
@@ -62,7 +62,7 @@ private:
 
     GitGraphPalette _graphPalette;
 
-    QMap<GIT::ObjectId, BranchLabelWidget*> _branchLabelWidgets;
+    QMap<GIT::ObjectId, BranchTagLabelWidget*> _branchLabelWidgets;
 
     friend class GitBranchTagStyledItemDelegate;
 
@@ -123,7 +123,7 @@ public:
 
 private:
     QLineEdit* createBranchNameEditor(QWidget *parent, const QModelIndex &index) const;
-    BranchLabelWidget* getBranchLabelWidget(QWidget *parent, const QModelIndex &index) const;
+    BranchTagLabelWidget* getBranchLabelWidget(QWidget *parent, const QModelIndex &index) const;
 
     CommitTableView* _tableView;
     GitGraphPalette _palette;

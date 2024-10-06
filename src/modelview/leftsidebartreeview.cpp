@@ -6,6 +6,7 @@
 #include <repoconfig.h>
 #include <settings.h>
 
+#include <widgets/localbranchlabelwidget.h>
 #include <widgets/submodulelabelwidget.h>
 
 #include <Kanoop/geometry/rectangle.h>
@@ -60,13 +61,27 @@ void LeftSidebarTreeView::createModel(GIT::Repository* repo)
 
     setItemDelegateForColumn(0, new SubmoduleStyledItemDelegate(this));
 
-    // Create widgets
+    // Create submodule widgets
     for(const Submodule& submodule : _repo->submodules()) {
         SubmoduleLabelWidget* labelWidget = new SubmoduleLabelWidget(_repo, submodule);
         _submoduleWidgets.insert(submodule.name(), labelWidget);
     }
 
     for(const QModelIndex& index : treeModel->submoduleIndexes()) {
+        openPersistentEditor(index);
+    }
+
+
+    // Create local branch widgets
+    for(const Reference& reference : _repo->localReferences()) {
+        if(reference.isBranch() == false) {
+            continue;
+        }
+        LocalBranchLabelWidget* labelWidget = new LocalBranchLabelWidget(_repo, reference);
+        _localBranchWidgets.insert(reference.canonicalName(), labelWidget);
+    }
+
+    for(const QModelIndex& index : treeModel->localBranchIndexes()) {
         openPersistentEditor(index);
     }
 }
@@ -219,11 +234,24 @@ void LeftSidebarTreeView::onCollapsed(const QModelIndex& index)
 void SubmoduleStyledItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
     GitEntities::Type metadataType = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
-    if(metadataType != GitEntities::Submodule) {
-        QStyledItemDelegate::paint(painter, option, index);
-        return;
+    if(metadataType == GitEntities::Submodule) {
+        paintSubmodule(painter, option, index);
     }
+    else if(metadataType == GitEntities::Reference) {
+        if(index.data(IsLocalReferenceRole).toBool()) {
+            paintLocalBranch(painter, option, index);
+        }
+        else {
+            QStyledItemDelegate::paint(painter, option, index);
+        }
+    }
+    else {
+        QStyledItemDelegate::paint(painter, option, index);
+    }
+}
 
+void SubmoduleStyledItemDelegate::paintSubmodule(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
     // Draw the label
     QString name = index.data(Qt::DisplayRole).toString();
     if(name.isEmpty() == true) {
@@ -245,12 +273,59 @@ void SubmoduleStyledItemDelegate::paint(QPainter* painter, const QStyleOptionVie
     painter->restore();
 }
 
+void SubmoduleStyledItemDelegate::paintLocalBranch(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    // Draw the label
+    QString name = index.data(CanonicalNameRole).toString();
+    if(name.isEmpty() == true) {
+        return;
+    }
+
+    LocalBranchLabelWidget* widget = _tableView->getLocalBranchWidget(name);
+    if(widget == nullptr) {
+        return;
+    }
+
+    Rectangle rect = option.rect;
+    painter->save();
+
+    painter->translate(rect.topLeft());
+    widget->resize(rect.size().toSize());
+    widget->render(painter, QPoint(), QRegion(), QWidget::DrawChildren);
+
+    painter->restore();
+}
+
 QWidget* SubmoduleStyledItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
     Q_UNUSED(option)
 
-    QString name = index.data(Qt::DisplayRole).toString();
-    QWidget* result = _tableView->getSubmoduleWidget(name);
+    QWidget* result = nullptr;
+    GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::EntityTypeRole).toInt();
+    switch(type) {
+    case GitEntities::Submodule:
+    {
+        QString name = index.data(Qt::DisplayRole).toString();
+        result = _tableView->getSubmoduleWidget(name);
+        break;
+    }
+    case GitEntities::Reference:
+    {
+        bool local = index.data(IsLocalReferenceRole).toBool();
+        bool remote = index.data(IsRemoteReferenceRole).toBool();
+        if(remote == false && local == false) {
+            break;
+        }
+        QString canonicalName = index.data(CanonicalNameRole).toString();
+        if(local) {
+            result = _tableView->getLocalBranchWidget(canonicalName);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
     if(result != nullptr) {
         result->setParent(parent);
     }

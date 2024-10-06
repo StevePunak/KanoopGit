@@ -37,6 +37,24 @@ QModelIndex LeftSidebarTreeModel::submodulesIndex() const
     return firstMatch(index(0, 0, QModelIndex()), ControlTypeRole, Submodules, Qt::MatchRecursive | Qt::MatchWrap);
 }
 
+QModelIndexList LeftSidebarTreeModel::localBranchIndexes() const
+{
+    QModelIndexList result = match(index(0, 0), IsLocalReferenceRole, true, -1, Qt::MatchRecursive | Qt::MatchWrap);
+    return result;
+}
+
+QModelIndexList LeftSidebarTreeModel::remoteBranchIndexes() const
+{
+    QModelIndexList result = match(index(0, 0), IsRemoteReferenceRole, true, -1, Qt::MatchRecursive | Qt::MatchWrap);
+    return result;
+}
+
+QModelIndexList LeftSidebarTreeModel::submoduleIndexes() const
+{
+    QModelIndexList result = match(index(0, 0), KANOOP::EntityTypeRole, GitEntities::Submodule, -1, Qt::MatchRecursive | Qt::MatchWrap);
+    return result;
+}
+
 void LeftSidebarTreeModel::createLocalBranchesLeaf()
 {
     TitleItem* titleItem = static_cast<TitleItem*>(appendRootItem(new TitleItem("Local Branches", Resources::getIcon(GitAssets::Computer), LocalBranches, this)));
@@ -181,12 +199,6 @@ QModelIndex LeftSidebarTreeModel::findTitleItemIndex(AbstractModelItem* item) co
     return result;
 }
 
-QModelIndexList LeftSidebarTreeModel::submoduleIndexes() const
-{
-    QModelIndexList result = match(index(0, 0), KANOOP::EntityTypeRole, GitEntities::Submodule, -1, Qt::MatchRecursive | Qt::MatchWrap);
-    return result;
-}
-
 QString LeftSidebarTreeModel::parentPath(const QString& path)
 {
     return PathUtil::popLevel(path);
@@ -328,6 +340,15 @@ QVariant LeftSidebarTreeModel::ReferenceItem::data(const QModelIndex& index, int
             break;
         case ReferenceRole:
             result = _reference.toVariant();
+            break;
+        case IsLocalReferenceRole:
+            result = _reference.isRemote() == false;
+            break;
+        case IsRemoteReferenceRole:
+            result = _reference.isRemote();
+            break;
+        case CanonicalNameRole:
+            result = _reference.canonicalName();
             break;
         case ObjectIdRole:
             result = _reference.objectId().toVariant();

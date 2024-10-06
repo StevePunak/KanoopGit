@@ -52,6 +52,8 @@ SubmoduleLabelWidget::SubmoduleLabelWidget(GIT::Repository* repo, const GIT::Sub
     _spinner->setVisible(false);
 
     layout->addWidget(_spinner);
+
+    setLayout(layout);
 }
 
 SubmoduleLabelWidget::~SubmoduleLabelWidget()
