@@ -1,4 +1,4 @@
-#include "gitbranchtreemodel.h"
+#include "branchtreemodel.h"
 #include "gitentities.h"
 #include "kanoopgittypes.h"
 
@@ -10,7 +10,7 @@
 
 using namespace GIT;
 
-GitBranchTreeModel::GitBranchTreeModel(Repository* repo, BranchType typeToShow, QObject *parent) :
+BranchTreeModel::BranchTreeModel(Repository* repo, BranchType typeToShow, QObject *parent) :
     AbstractTreeModel("branchtree", parent),
     _repo(repo), _typeToShow(typeToShow)
 {
@@ -30,7 +30,7 @@ GitBranchTreeModel::GitBranchTreeModel(Repository* repo, BranchType typeToShow, 
     }
 }
 
-void GitBranchTreeModel::refresh()
+void BranchTreeModel::refresh()
 {
     QModelIndex topLeft = index(0, 0, QModelIndex());
     int rows = rowCount(QModelIndex());
@@ -39,7 +39,7 @@ void GitBranchTreeModel::refresh()
     emit dataChanged(topLeft, bottomRight);
 }
 
-void GitBranchTreeModel::loadBranches(const Reference::List& references)
+void BranchTreeModel::loadBranches(const Reference::List& references)
 {
     for(const Reference& reference : references) {
         if(reference.type() != DirectReferenceType) {
@@ -76,7 +76,7 @@ void GitBranchTreeModel::loadBranches(const Reference::List& references)
     }
 }
 
-void GitBranchTreeModel::ensureFolder(const QString& path)
+void BranchTreeModel::ensureFolder(const QString& path)
 {
     QModelIndex index = findFolderIndex(path);
     if(index.isValid() == false) {
@@ -91,7 +91,7 @@ void GitBranchTreeModel::ensureFolder(const QString& path)
     }
 }
 
-QModelIndex GitBranchTreeModel::findBranchIndex(const QString& path) const
+QModelIndex BranchTreeModel::findBranchIndex(const QString& path) const
 {
     QModelIndex result;
     QModelIndex startSearchIndex = index(0, 0, QModelIndex());
@@ -102,7 +102,7 @@ QModelIndex GitBranchTreeModel::findBranchIndex(const QString& path) const
     return result;
 }
 
-QModelIndex GitBranchTreeModel::findReferenceIndex(const GIT::ObjectId& objectId) const
+QModelIndex BranchTreeModel::findReferenceIndex(const GIT::ObjectId& objectId) const
 {
     QModelIndex result;
     QModelIndex startSearchIndex = index(0, 0, QModelIndex());
@@ -113,7 +113,7 @@ QModelIndex GitBranchTreeModel::findReferenceIndex(const GIT::ObjectId& objectId
     return result;
 }
 
-QModelIndex GitBranchTreeModel::findFolderIndex(const QString& path) const
+QModelIndex BranchTreeModel::findFolderIndex(const QString& path) const
 {
     QModelIndex result;
     QModelIndex startSearchIndex = index(0, 0, QModelIndex());
@@ -124,7 +124,7 @@ QModelIndex GitBranchTreeModel::findFolderIndex(const QString& path) const
     return result;
 }
 
-QModelIndex GitBranchTreeModel::findRemoteIndex(const QString& remoteName) const
+QModelIndex BranchTreeModel::findRemoteIndex(const QString& remoteName) const
 {
     QModelIndex result;
     QModelIndex startSearchIndex = index(0, 0, QModelIndex());
@@ -135,7 +135,7 @@ QModelIndex GitBranchTreeModel::findRemoteIndex(const QString& remoteName) const
     return result;
 }
 
-QString GitBranchTreeModel::parentPath(const QString& path)
+QString BranchTreeModel::parentPath(const QString& path)
 {
     return PathUtil::popLevel(path);
 }
@@ -144,7 +144,7 @@ QString GitBranchTreeModel::parentPath(const QString& path)
 // -------------------------------- FolderItem --------------------------------
 
 
-GitBranchTreeModel::FolderItem::FolderItem(const QString& path, GitBranchTreeModel* model) :
+BranchTreeModel::FolderItem::FolderItem(const QString& path, BranchTreeModel* model) :
     TreeBaseItem(EntityMetadata(GitEntities::Folder), model),
     _path(path)
 {
@@ -152,7 +152,7 @@ GitBranchTreeModel::FolderItem::FolderItem(const QString& path, GitBranchTreeMod
     _folderName = fileInfo.fileName();
 }
 
-QVariant GitBranchTreeModel::FolderItem::data(const QModelIndex& index, int role) const
+QVariant BranchTreeModel::FolderItem::data(const QModelIndex& index, int role) const
 {
     QVariant result;
     if(index.column() == 0) {
@@ -179,7 +179,7 @@ QVariant GitBranchTreeModel::FolderItem::data(const QModelIndex& index, int role
 // -------------------------------- ReferenceItem --------------------------------
 
 
-GitBranchTreeModel::ReferenceItem::ReferenceItem(const Reference& reference, GitBranchTreeModel* model) :
+BranchTreeModel::ReferenceItem::ReferenceItem(const Reference& reference, BranchTreeModel* model) :
     TreeBaseItem(EntityMetadata(GitEntities::Reference), model),
     _reference(reference), _isCurrentBranch(false)
 {
@@ -189,7 +189,7 @@ GitBranchTreeModel::ReferenceItem::ReferenceItem(const Reference& reference, Git
     _isCurrentBranch = model->_typeToShow == LocalBranch && reference.friendlyName() == currentBranch.friendlyName();
 }
 
-QVariant GitBranchTreeModel::ReferenceItem::data(const QModelIndex& index, int role) const
+QVariant BranchTreeModel::ReferenceItem::data(const QModelIndex& index, int role) const
 {
     QVariant result;
     if(index.column() == 0) {

@@ -101,7 +101,7 @@ void SubmoduleLabelWidget::paintEvent(QPaintEvent* event)
         if(_commitsBehind != 0) {
             _rightLabel->setText(QString("%1 %2").arg(_commitsBehind).arg(Unicode::specialCharacter(Unicode::ArrowUp)));
             _rightLabel->setVisible(true);
-            color = Colors::brown;
+            color = Colors::saddlebrown;
         }
     }
 

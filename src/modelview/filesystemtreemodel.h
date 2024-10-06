@@ -1,14 +1,14 @@
-#ifndef GITFILESYSTEMTREEMODEL_H
-#define GITFILESYSTEMTREEMODEL_H
+#ifndef FILESYSTEMTREEMODEL_H
+#define FILESYSTEMTREEMODEL_H
 #include <Kanoop/gui/abstracttreemodel.h>
 #include <Kanoop/gui/abstractmodelitem.h>
 #include <git2qt.h>
 
-class GitFileSystemTreeModel : public AbstractTreeModel
+class FileSystemTreeModel : public AbstractTreeModel
 {
     Q_OBJECT
 public:
-    GitFileSystemTreeModel(GIT::Repository* repo, QObject* parent = nullptr);
+    FileSystemTreeModel(GIT::Repository* repo, QObject* parent = nullptr);
 
 public slots:
     void refresh();
@@ -27,14 +27,14 @@ private:
     class TreeBaseItem : public AbstractModelItem
     {
     public:
-        explicit TreeBaseItem(const EntityMetadata& metadata, const QString& path, GitFileSystemTreeModel* model);
+        explicit TreeBaseItem(const EntityMetadata& metadata, const QString& path, FileSystemTreeModel* model);
 
         virtual QVariant data(const QModelIndex &index, int role) const override;
 
         QString absolutePath() const { return _absolutePath; }
 
     protected:
-        GIT::Repository* repo() const { return static_cast<GitFileSystemTreeModel*>(model())->_repo; }
+        GIT::Repository* repo() const { return static_cast<FileSystemTreeModel*>(model())->_repo; }
         QString relativePath() const { return _relativePath; }
         QString filename() const { return _filename; }
 
@@ -47,7 +47,7 @@ private:
     class FolderItem : public TreeBaseItem
     {
     public:
-        explicit FolderItem(const QString& path, GitFileSystemTreeModel* model);
+        explicit FolderItem(const QString& path, FileSystemTreeModel* model);
 
         virtual QVariant data(const QModelIndex &index, int role) const override;
 
@@ -63,7 +63,7 @@ private:
     class FileItem : public TreeBaseItem
     {
     public:
-        explicit FileItem(const QString& path, GitFileSystemTreeModel* model);
+        explicit FileItem(const QString& path, FileSystemTreeModel* model);
 
         virtual QVariant data(const QModelIndex &index, int role) const override;
     };
@@ -71,7 +71,7 @@ private:
     class PlaceHolderItem : public TreeBaseItem
     {
     public:
-        explicit PlaceHolderItem(const QString& path, GitFileSystemTreeModel* model);
+        explicit PlaceHolderItem(const QString& path, FileSystemTreeModel* model);
     };
 
     void clearPlaceHolder(FolderItem* item);
@@ -79,4 +79,4 @@ private:
     void loadFiles(const QString& parentDirectory, FolderItem* parentItem);
 };
 
-#endif // GITFILESYSTEMTREEMODEL_H
+#endif // FILESYSTEMTREEMODEL_H

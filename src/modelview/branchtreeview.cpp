@@ -1,5 +1,5 @@
-#include "gitbranchtreemodel.h"
-#include "gitbranchtreeview.h"
+#include "branchtreemodel.h"
+#include "branchtreeview.h"
 #include "gitentities.h"
 #include "kanoopgittypes.h"
 
@@ -10,31 +10,31 @@
 
 using namespace GIT;
 
-GitBranchTreeView::GitBranchTreeView(QWidget *parent) :
+BranchTreeView::BranchTreeView(QWidget *parent) :
     TreeViewBase(parent)
 {
     header()->setVisible(true);
     setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(this, &GitBranchTreeView::doubleClicked, this, &GitBranchTreeView::onDoubleClicked);
+    connect(this, &BranchTreeView::doubleClicked, this, &BranchTreeView::onDoubleClicked);
 }
 
-void GitBranchTreeView::createModel(Repository* repo, BranchType typeToShow)
+void BranchTreeView::createModel(Repository* repo, BranchType typeToShow)
 {
     if(model() != nullptr) {
         delete model();
     }
 
-    GitBranchTreeModel* treeModel = new GitBranchTreeModel(repo, typeToShow, this);
-    connect(this, &GitBranchTreeView::refresh, treeModel, &GitBranchTreeModel::refresh);
+    BranchTreeModel* treeModel = new BranchTreeModel(repo, typeToShow, this);
+    connect(this, &BranchTreeView::refresh, treeModel, &BranchTreeModel::refresh);
 
     setModel(treeModel);
 
-    connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &GitBranchTreeView::onCurrentIndexChanged);
+    connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &BranchTreeView::onCurrentIndexChanged);
 
     expandAll();
 }
 
-void GitBranchTreeView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)
+void BranchTreeView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)
 {
     Q_UNUSED(previous);
     if(current.isValid()) {
@@ -52,7 +52,7 @@ void GitBranchTreeView::onCurrentIndexChanged(const QModelIndex& current, const 
     }
 }
 
-void GitBranchTreeView::onDoubleClicked(const QModelIndex &index)
+void BranchTreeView::onDoubleClicked(const QModelIndex &index)
 {
     if(index.isValid()) {
         GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();

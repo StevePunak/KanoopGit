@@ -1,14 +1,14 @@
-#ifndef GITBRANCHTREEMODEL_H
-#define GITBRANCHTREEMODEL_H
+#ifndef BRANCHTREEMODEL_H
+#define BRANCHTREEMODEL_H
 #include <Kanoop/gui/abstracttreemodel.h>
 #include <Kanoop/gui/abstractmodelitem.h>
 #include <git2qt.h>
 
-class GitBranchTreeModel : public AbstractTreeModel
+class BranchTreeModel : public AbstractTreeModel
 {
     Q_OBJECT
 public:
-    GitBranchTreeModel(GIT::Repository* repo, GIT::BranchType typeToShow, QObject* parent = nullptr);
+    BranchTreeModel(GIT::Repository* repo, GIT::BranchType typeToShow, QObject* parent = nullptr);
 
 public slots:
     void refresh();
@@ -30,17 +30,17 @@ private:
     class TreeBaseItem : public AbstractModelItem
     {
     public:
-        explicit TreeBaseItem(const EntityMetadata& metadata, GitBranchTreeModel* model) :
+        explicit TreeBaseItem(const EntityMetadata& metadata, BranchTreeModel* model) :
             AbstractModelItem(metadata, model) {}
 
     protected:
-        GIT::Repository* repo() const { return static_cast<GitBranchTreeModel*>(model())->_repo; }
+        GIT::Repository* repo() const { return static_cast<BranchTreeModel*>(model())->_repo; }
     };
 
     class FolderItem : public TreeBaseItem
     {
     public:
-        explicit FolderItem(const QString& path, GitBranchTreeModel* model);
+        explicit FolderItem(const QString& path, BranchTreeModel* model);
 
         virtual QVariant data(const QModelIndex &index, int role) const override;
 
@@ -52,7 +52,7 @@ private:
     class ReferenceItem : public TreeBaseItem
     {
     public:
-        explicit ReferenceItem(const GIT::Reference& reference, GitBranchTreeModel* model);
+        explicit ReferenceItem(const GIT::Reference& reference, BranchTreeModel* model);
 
         virtual QVariant data(const QModelIndex &index, int role) const override;
 
@@ -63,4 +63,4 @@ private:
     };
 };
 
-#endif // GITBRANCHTREEMODEL_H
+#endif // BRANCHTREEMODEL_H

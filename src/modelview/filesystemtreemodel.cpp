@@ -1,6 +1,6 @@
 #include "gitassets.h"
 #include "gitentities.h"
-#include "gitfilesystemtreemodel.h"
+#include "filesystemtreemodel.h"
 #include "kanoopgittypes.h"
 
 #include <QDirIterator>
@@ -12,7 +12,7 @@
 
 using namespace GIT;
 
-GitFileSystemTreeModel::GitFileSystemTreeModel(Repository* repo, QObject *parent) :
+FileSystemTreeModel::FileSystemTreeModel(Repository* repo, QObject *parent) :
     AbstractTreeModel("gitfstree", parent),
     _repo(repo), _rootLazyLoadComplete(false)
 {
@@ -21,7 +21,7 @@ GitFileSystemTreeModel::GitFileSystemTreeModel(Repository* repo, QObject *parent
     // loadFiles();
 }
 
-void GitFileSystemTreeModel::refresh()
+void FileSystemTreeModel::refresh()
 {
     QModelIndex topLeft = index(0, 0, QModelIndex());
     int rows = rowCount(QModelIndex());
@@ -30,7 +30,7 @@ void GitFileSystemTreeModel::refresh()
     emit dataChanged(topLeft, bottomRight);
 }
 
-bool GitFileSystemTreeModel::canFetchMore(const QModelIndex& parent) const
+bool FileSystemTreeModel::canFetchMore(const QModelIndex& parent) const
 {
     bool result = false;
     if(parent.isValid() == false) {
@@ -49,7 +49,7 @@ bool GitFileSystemTreeModel::canFetchMore(const QModelIndex& parent) const
     return result;
 }
 
-void GitFileSystemTreeModel::fetchMore(const QModelIndex& parent)
+void FileSystemTreeModel::fetchMore(const QModelIndex& parent)
 {
     if(parent.isValid() == false) {
         if(_rootLazyLoadComplete == false) {
@@ -72,7 +72,7 @@ void GitFileSystemTreeModel::fetchMore(const QModelIndex& parent)
     }
 }
 
-void GitFileSystemTreeModel::clearPlaceHolder(FolderItem* item)
+void FileSystemTreeModel::clearPlaceHolder(FolderItem* item)
 {
     if(item->children().count() == 1) {
         AbstractModelItem* child = item->children().at(0);
@@ -82,7 +82,7 @@ void GitFileSystemTreeModel::clearPlaceHolder(FolderItem* item)
     }
 }
 
-void GitFileSystemTreeModel::loadDirectories(const QString& parentDirectory, FolderItem* parentItem)
+void FileSystemTreeModel::loadDirectories(const QString& parentDirectory, FolderItem* parentItem)
 {
     QDirIterator it(parentDirectory, QDir::Dirs | QDir::NoDotAndDotDot);
     while(it.hasNext()) {
@@ -98,7 +98,7 @@ void GitFileSystemTreeModel::loadDirectories(const QString& parentDirectory, Fol
     }
 }
 
-void GitFileSystemTreeModel::loadFiles(const QString& parentDirectory, FolderItem* parentItem)
+void FileSystemTreeModel::loadFiles(const QString& parentDirectory, FolderItem* parentItem)
 {
     QDirIterator it(parentDirectory, QDir::Files | QDir::NoDotAndDotDot);
     while(it.hasNext()) {
@@ -116,7 +116,7 @@ void GitFileSystemTreeModel::loadFiles(const QString& parentDirectory, FolderIte
     }
 }
 
-QModelIndex GitFileSystemTreeModel::findFolderIndex(const QString& path)
+QModelIndex FileSystemTreeModel::findFolderIndex(const QString& path)
 {
     QModelIndex result;
     QModelIndex startSearchIndex = index(0, 0, QModelIndex());
@@ -127,7 +127,7 @@ QModelIndex GitFileSystemTreeModel::findFolderIndex(const QString& path)
     return result;
 }
 
-QString GitFileSystemTreeModel::parentPath(const QString& path)
+QString FileSystemTreeModel::parentPath(const QString& path)
 {
     return PathUtil::popLevel(path);
 }
@@ -135,7 +135,7 @@ QString GitFileSystemTreeModel::parentPath(const QString& path)
 // -------------------------------- TreeBaseItem --------------------------------
 
 
-GitFileSystemTreeModel::TreeBaseItem::TreeBaseItem(const EntityMetadata &metadata, const QString& path, GitFileSystemTreeModel* model) :
+FileSystemTreeModel::TreeBaseItem::TreeBaseItem(const EntityMetadata &metadata, const QString& path, FileSystemTreeModel* model) :
     AbstractModelItem(metadata, model),
     _absolutePath(path)
 {
@@ -144,7 +144,7 @@ GitFileSystemTreeModel::TreeBaseItem::TreeBaseItem(const EntityMetadata &metadat
     _relativePath = _absolutePath.mid(repo()->localPath().length() + 1);
 }
 
-QVariant GitFileSystemTreeModel::TreeBaseItem::data(const QModelIndex& index, int role) const
+QVariant FileSystemTreeModel::TreeBaseItem::data(const QModelIndex& index, int role) const
 {
     QVariant result;
     if(index.column() == 0) {
@@ -172,7 +172,7 @@ QVariant GitFileSystemTreeModel::TreeBaseItem::data(const QModelIndex& index, in
 // -------------------------------- FolderItem --------------------------------
 
 
-GitFileSystemTreeModel::FolderItem::FolderItem(const QString& path, GitFileSystemTreeModel* model) :
+FileSystemTreeModel::FolderItem::FolderItem(const QString& path, FileSystemTreeModel* model) :
     TreeBaseItem(EntityMetadata(GitEntities::Folder), path, model),
     _lazyLoadComplete(false)
 {
@@ -182,7 +182,7 @@ GitFileSystemTreeModel::FolderItem::FolderItem(const QString& path, GitFileSyste
     appendChild(new PlaceHolderItem(path, model));
 }
 
-QVariant GitFileSystemTreeModel::FolderItem::data(const QModelIndex& index, int role) const
+QVariant FileSystemTreeModel::FolderItem::data(const QModelIndex& index, int role) const
 {
     QVariant result;
     if(index.column() == 0) {
@@ -204,7 +204,7 @@ QVariant GitFileSystemTreeModel::FolderItem::data(const QModelIndex& index, int 
     return result;
 }
 
-void GitFileSystemTreeModel::FolderItem::setLazyLoadComplete(bool value)
+void FileSystemTreeModel::FolderItem::setLazyLoadComplete(bool value)
 {
     _lazyLoadComplete = value;
 }
@@ -213,12 +213,12 @@ void GitFileSystemTreeModel::FolderItem::setLazyLoadComplete(bool value)
 // -------------------------------- FileItem --------------------------------
 
 
-GitFileSystemTreeModel::FileItem::FileItem(const QString& path, GitFileSystemTreeModel* model) :
+FileSystemTreeModel::FileItem::FileItem(const QString& path, FileSystemTreeModel* model) :
     TreeBaseItem(EntityMetadata(GitEntities::File), path, model)
 {
 }
 
-QVariant GitFileSystemTreeModel::FileItem::data(const QModelIndex& index, int role) const
+QVariant FileSystemTreeModel::FileItem::data(const QModelIndex& index, int role) const
 {
     QVariant result;
     if(index.column() == 0) {
@@ -267,7 +267,7 @@ QVariant GitFileSystemTreeModel::FileItem::data(const QModelIndex& index, int ro
 }
 
 
-GitFileSystemTreeModel::PlaceHolderItem::PlaceHolderItem(const QString& path, GitFileSystemTreeModel* model) :
+FileSystemTreeModel::PlaceHolderItem::PlaceHolderItem(const QString& path, FileSystemTreeModel* model) :
     TreeBaseItem(EntityMetadata(GitEntities::PlaceHolder), path, model)
 {
 

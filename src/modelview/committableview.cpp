@@ -1,5 +1,5 @@
-#include "gitcommittableview.h"
-#include "gitcommittablemodel.h"
+#include "committableview.h"
+#include "committablemodel.h"
 #include "kanoopgittypes.h"
 #include "gitassets.h"
 
@@ -20,7 +20,7 @@
 using namespace GIT;
 namespace Colors = QColorConstants::Svg;
 
-GitCommitTableView::GitCommitTableView(QWidget *parent) :
+CommitTableView::CommitTableView(QWidget *parent) :
     TableViewBase(parent),
     _repo(nullptr),
     _editingBranchName(false)
@@ -32,15 +32,15 @@ GitCommitTableView::GitCommitTableView(QWidget *parent) :
     createPixmaps();
     setEditTriggers(AllEditTriggers);
 
-    connect(this, &GitCommitTableView::horizontalHeaderChanged, this, &GitCommitTableView::onHorizontalHeaderChanged);
+    connect(this, &CommitTableView::horizontalHeaderChanged, this, &CommitTableView::onHorizontalHeaderChanged);
 }
 
-GitCommitTableView::~GitCommitTableView()
+CommitTableView::~CommitTableView()
 {
     qDeleteAll(_branchLabelWidgets);
 }
 
-void GitCommitTableView::createModel(Repository* repo)
+void CommitTableView::createModel(Repository* repo)
 {
     if(model() != nullptr) {
         delete model();
@@ -49,11 +49,11 @@ void GitCommitTableView::createModel(Repository* repo)
     _repo = repo;
     _commits = repo->commitGraph();
     _workInProgress = repo->status().entries();
-    GitCommitTableModel* tableModel = new GitCommitTableModel(repo, _commits, this);
+    CommitTableModel* tableModel = new CommitTableModel(repo, _commits, this);
     setModel(tableModel);
 
-    connect(tableModel, &GitCommitTableModel::createBranch, this, &GitCommitTableView::createBranch);
-    connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &GitCommitTableView::onCurrentIndexChanged);
+    connect(tableModel, &CommitTableModel::createBranch, this, &CommitTableView::createBranch);
+    connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &CommitTableView::onCurrentIndexChanged);
 
     int column = tableModel->columnForHeader(CH_Graph);
     if(column >= 0) {
@@ -84,12 +84,12 @@ void GitCommitTableView::createModel(Repository* repo)
     restoreHeaderStates();
 }
 
-QModelIndex GitCommitTableView::findCommit(const GIT::ObjectId& objectId) const
+QModelIndex CommitTableView::findCommit(const GIT::ObjectId& objectId) const
 {
-    return static_cast<GitCommitTableModel*>(sourceModel())->findCommitIndex(objectId);
+    return static_cast<CommitTableModel*>(sourceModel())->findCommitIndex(objectId);
 }
 
-void GitCommitTableView::selectCommit(const GIT::ObjectId& objectId)
+void CommitTableView::selectCommit(const GIT::ObjectId& objectId)
 {
     QModelIndex index = findCommit(objectId);
     if(index.isValid()) {
@@ -97,7 +97,7 @@ void GitCommitTableView::selectCommit(const GIT::ObjectId& objectId)
     }
 }
 
-Stash GitCommitTableView::currentSelectedStash() const
+Stash CommitTableView::currentSelectedStash() const
 {
     Stash stash;
     QModelIndex index = selectionModel()->currentIndex();
@@ -107,7 +107,7 @@ Stash GitCommitTableView::currentSelectedStash() const
     return stash;
 }
 
-GraphedCommit GitCommitTableView::currentSelectedCommit() const
+GraphedCommit CommitTableView::currentSelectedCommit() const
 {
     GraphedCommit commit;
     QModelIndex index = selectionModel()->currentIndex();
@@ -117,13 +117,13 @@ GraphedCommit GitCommitTableView::currentSelectedCommit() const
     return commit;
 }
 
-int GitCommitTableView::selectedCount() const
+int CommitTableView::selectedCount() const
 {
     int result = selectedIndexes().count();
     return result;
 }
 
-GitEntities::Type GitCommitTableView::currentMetadataType() const
+GitEntities::Type CommitTableView::currentMetadataType() const
 {
     GitEntities::Type type = GitEntities::InvalidEntity;
     QModelIndex index = selectionModel()->currentIndex();
@@ -133,7 +133,7 @@ GitEntities::Type GitCommitTableView::currentMetadataType() const
     return type;
 }
 
-void GitCommitTableView::createPixmaps()
+void CommitTableView::createPixmaps()
 {
     _cloudPixmap = Resources::getPixmap(GitAssets::Cloud);
     _computerPixmap = Resources::getPixmap(GitAssets::Computer);
@@ -142,7 +142,7 @@ void GitCommitTableView::createPixmaps()
     _computerPixmap = _computerPixmap.scaled(pixmapSize.toSize());
 }
 
-void GitCommitTableView::mousePressEvent(QMouseEvent *event)
+void CommitTableView::mousePressEvent(QMouseEvent *event)
 {
     TableViewBase::mousePressEvent(event);
 #if 0
@@ -154,7 +154,7 @@ void GitCommitTableView::mousePressEvent(QMouseEvent *event)
 #endif
 }
 
-void GitCommitTableView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)
+void CommitTableView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)
 {
     Q_UNUSED(previous);
     GitEntities::Type itemType = (GitEntities::Type)current.data(KANOOP::MetadataTypeRole).toInt();
@@ -184,7 +184,7 @@ void GitCommitTableView::onCurrentIndexChanged(const QModelIndex& current, const
     }
 }
 
-void GitCommitTableView::onHorizontalHeaderChanged()
+void CommitTableView::onHorizontalHeaderChanged()
 {
     int width = horizontalHeader()->sectionSize(0);
     QList<BranchLabelWidget*> widgets = _branchLabelWidgets.values();
@@ -195,7 +195,7 @@ void GitCommitTableView::onHorizontalHeaderChanged()
 
 // ------------------------------------ GitCommitGraphStyledItemDelegate ------------------------------------
 
-GitCommitGraphStyledItemDelegate::GitCommitGraphStyledItemDelegate(GitCommitTableView* parent) :
+GitCommitGraphStyledItemDelegate::GitCommitGraphStyledItemDelegate(CommitTableView* parent) :
     QStyledItemDelegate(parent),
     _tableView(parent)
 {
@@ -421,13 +421,13 @@ void GitCommitGraphStyledItemDelegate::drawCurvedConnector(QPainter* painter, co
     case DownToLeft:
     case LeftThenUp:
         drawX = dotPos.x() - LevelWidth;
-        drawY = dotPos.y() - (GitCommitTableView::RowHeight / 2);
+        drawY = dotPos.y() - (CommitTableView::RowHeight / 2);
         break;
     case UpToRight:
     case DownToRight:
     case RightThenUp:
         drawX = dotPos.x();
-        drawY = dotPos.y() - (GitCommitTableView::RowHeight / 2);
+        drawY = dotPos.y() - (CommitTableView::RowHeight / 2);
         break;
     default:
         break;

@@ -54,7 +54,7 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="GitCommitTableView" name="tableCommits"/>
+         <widget class="CommitTableView" name="tableCommits"/>
         </item>
        </layout>
       </widget>
@@ -141,7 +141,7 @@
          </layout>
         </item>
         <item>
-         <widget class="GitDiffTableView" name="tableDiffs"/>
+         <widget class="DiffTableView" name="tableDiffs"/>
         </item>
        </layout>
       </widget>
@@ -151,7 +151,7 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
-         <widget class="GitFileSystemTreeView" name="treeGitTree"/>
+         <widget class="FileSystemTreeView" name="treeGitTree"/>
         </item>
        </layout>
       </widget>
@@ -309,7 +309,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="pageBlank"/>
       <widget class="QWidget" name="pageIndexEntry">
@@ -486,7 +486,7 @@
          </widget>
         </item>
         <item>
-         <widget class="GitTreeEntryTableView" name="tableTreeEntries"/>
+         <widget class="TreeEntryTableView" name="tableTreeEntries"/>
         </item>
        </layout>
       </widget>
@@ -726,19 +726,19 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>GitFileSystemTreeView</class>
+   <class>FileSystemTreeView</class>
    <extends>QTreeView</extends>
-   <header>modelview/gitfilesystemtreeview.h</header>
+   <header>modelview/filesystemtreeview.h</header>
   </customwidget>
   <customwidget>
-   <class>GitCommitTableView</class>
+   <class>CommitTableView</class>
    <extends>QTableView</extends>
-   <header>modelview/gitcommittableview.h</header>
+   <header>modelview/committableview.h</header>
   </customwidget>
   <customwidget>
-   <class>GitTreeEntryTableView</class>
+   <class>TreeEntryTableView</class>
    <extends>QTableView</extends>
-   <header>modelview/gittreeentrytableview.h</header>
+   <header>modelview/treeentrytableview.h</header>
   </customwidget>
   <customwidget>
    <class>StatusEntryTableView</class>
@@ -746,9 +746,9 @@
    <header>modelview/statusentrytableview.h</header>
   </customwidget>
   <customwidget>
-   <class>GitDiffTableView</class>
+   <class>DiffTableView</class>
    <extends>QTableView</extends>
-   <header>modelview/gitdifftableview.h</header>
+   <header>modelview/difftableview.h</header>
   </customwidget>
   <customwidget>
    <class>LeftSidebarTreeView</class>

@@ -1,16 +1,16 @@
-#ifndef GITTREEENTRYTABLEMODEL_H
-#define GITTREEENTRYTABLEMODEL_H
+#ifndef TREEENTRYTABLEMODEL_H
+#define TREEENTRYTABLEMODEL_H
 #include <Kanoop/gui/abstracttablemodel.h>
 #include <Kanoop/gui/abstractmodelitem.h>
 #include <git2qt.h>
 #include "kanoopgittypes.h"
 #include "gitentities.h"
 
-class GitTreeEntryTableModel : public AbstractTableModel
+class TreeEntryTableModel : public AbstractTableModel
 {
     Q_OBJECT
 public:
-    GitTreeEntryTableModel(GIT::Repository* repo, const GIT::ObjectId& commitId, QObject* parent = nullptr);
+    TreeEntryTableModel(GIT::Repository* repo, const GIT::ObjectId& commitId, QObject* parent = nullptr);
 
 private:
     GIT::Repository* _repo;
@@ -18,17 +18,17 @@ private:
     class TreeBaseItem : public AbstractModelItem
     {
     public:
-        explicit TreeBaseItem(const EntityMetadata& metadata, GitTreeEntryTableModel* model) :
+        explicit TreeBaseItem(const EntityMetadata& metadata, TreeEntryTableModel* model) :
             AbstractModelItem(metadata, model) {}
 
     protected:
-        GIT::Repository* repo() const { return static_cast<GitTreeEntryTableModel*>(model())->_repo; }
+        GIT::Repository* repo() const { return static_cast<TreeEntryTableModel*>(model())->_repo; }
     };
 
     class TreeChangeEntryItem : public TreeBaseItem
     {
     public:
-        explicit TreeChangeEntryItem(const GIT::TreeChangeEntry& treeChangeEntry, GitTreeEntryTableModel* model) :
+        explicit TreeChangeEntryItem(const GIT::TreeChangeEntry& treeChangeEntry, TreeEntryTableModel* model) :
             TreeBaseItem(EntityMetadata(GitEntities::IndexEntry), model),
             _treeChangeEntry(treeChangeEntry) {}
 
@@ -39,4 +39,4 @@ private:
     };
 };
 
-#endif // GITTREEENTRYTABLEMODEL_H
+#endif // TREEENTRYTABLEMODEL_H

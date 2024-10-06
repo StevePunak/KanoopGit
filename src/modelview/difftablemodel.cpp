@@ -1,4 +1,4 @@
-#include "gitdifftablemodel.h"
+#include "difftablemodel.h"
 #include "gitentities.h"
 #include "kanoopgittypes.h"
 #include <QFileInfo>
@@ -16,7 +16,7 @@ namespace Colors = QColorConstants::Svg;
 
 // --------------------- Tree to Tree Signature
 
-GitDiffTableModel::GitDiffTableModel(Repository* repo, const Tree& oldTree, const Tree& newTree, const DiffDelta& delta, QObject *parent) :
+DiffTableModel::DiffTableModel(Repository* repo, const Tree& oldTree, const Tree& newTree, const DiffDelta& delta, QObject *parent) :
     AbstractTableModel("difftable", parent),
     _repo(repo)
 {
@@ -52,7 +52,7 @@ GitDiffTableModel::GitDiffTableModel(Repository* repo, const Tree& oldTree, cons
     }
 }
 
-void GitDiffTableModel::commonInit(const DiffDelta& delta)
+void DiffTableModel::commonInit(const DiffDelta& delta)
 {
     appendColumnHeader(CH_Old, "Old");
     appendColumnHeader(CH_New, "New");
@@ -86,7 +86,7 @@ void GitDiffTableModel::commonInit(const DiffDelta& delta)
 
 // --------------------- Index to Workdir Signature
 
-GitDiffTableModel::GitDiffTableModel(GIT::Repository* repo, const GIT::DiffDelta& delta, QObject* parent) :
+DiffTableModel::DiffTableModel(GIT::Repository* repo, const GIT::DiffDelta& delta, QObject* parent) :
     AbstractTableModel("difftable", parent),
     _repo(repo)
 {
@@ -121,9 +121,9 @@ GitDiffTableModel::GitDiffTableModel(GIT::Repository* repo, const GIT::DiffDelta
     }
 }
 
-QModelIndexList GitDiffTableModel::nextDelta(int fromRow) const
+QModelIndexList DiffTableModel::nextDelta(int fromRow) const
 {
-    AbstractModelItem::List rootItems = GitDiffTableModel::rootItems();
+    AbstractModelItem::List rootItems = DiffTableModel::rootItems();
 
     if(fromRow < 0) {
         fromRow = 0;
@@ -165,9 +165,9 @@ QModelIndexList GitDiffTableModel::nextDelta(int fromRow) const
     return QModelIndexList();
 }
 
-QModelIndexList GitDiffTableModel::previousDelta(int fromRow) const
+QModelIndexList DiffTableModel::previousDelta(int fromRow) const
 {
-    AbstractModelItem::List rootItems = GitDiffTableModel::rootItems();
+    AbstractModelItem::List rootItems = DiffTableModel::rootItems();
 
     if(fromRow >= rootItems.count() - 1) {
         fromRow = rootItems.count() - 1;
@@ -210,7 +210,7 @@ QModelIndexList GitDiffTableModel::previousDelta(int fromRow) const
     return QModelIndexList();
 }
 
-void GitDiffTableModel::createTable(const QStringList& oldFileLines, const QStringList& newFileLines)
+void DiffTableModel::createTable(const QStringList& oldFileLines, const QStringList& newFileLines)
 {
     int oldLineNumber = 1;
     int newLineNumber = 1;
@@ -247,7 +247,7 @@ void GitDiffTableModel::createTable(const QStringList& oldFileLines, const QStri
     }
 }
 
-GitDiffTableModel::FileLineItem::FileLineItem(const QString& text, int oldLineNumber, int newLineNumber, const QChar& origin, GitDiffTableModel* model) :
+DiffTableModel::FileLineItem::FileLineItem(const QString& text, int oldLineNumber, int newLineNumber, const QChar& origin, DiffTableModel* model) :
     TableBaseItem(EntityMetadata(GitEntities::FileLine), model),
     _text(text), _oldLineNumber(oldLineNumber), _newLineNumber(newLineNumber), _origin(origin)
 {
@@ -256,7 +256,7 @@ GitDiffTableModel::FileLineItem::FileLineItem(const QString& text, int oldLineNu
     _font.setFixedPitch(true);
 }
 
-QVariant GitDiffTableModel::FileLineItem::data(const QModelIndex &index, int role) const
+QVariant DiffTableModel::FileLineItem::data(const QModelIndex &index, int role) const
 {
     QVariant result;
     switch(role) {

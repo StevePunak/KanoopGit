@@ -1,5 +1,5 @@
-#ifndef GITBRANCHTREEVIEW_H
-#define GITBRANCHTREEVIEW_H
+#ifndef BRANCHTREEVIEW_H
+#define BRANCHTREEVIEW_H
 #include <Kanoop/gui/treeviewbase.h>
 #include <git2qt.h>
 
@@ -7,11 +7,11 @@ namespace GIT {
 class Repository;
 }
 
-class GitBranchTreeView : public TreeViewBase
+class BranchTreeView : public TreeViewBase
 {
     Q_OBJECT
 public:
-    explicit GitBranchTreeView(QWidget* parent = nullptr);
+    explicit BranchTreeView(QWidget* parent = nullptr);
 
     void createModel(GIT::Repository* repo, GIT::BranchType typeToShow);
 
@@ -26,4 +26,4 @@ private slots:
     void onDoubleClicked(const QModelIndex& index);
 };
 
-#endif // GITBRANCHTREEVIEW_H
+#endif // BRANCHTREEVIEW_H

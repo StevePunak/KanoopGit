@@ -1,5 +1,5 @@
-#ifndef GITCOMMITTABLEVIEW_H
-#define GITCOMMITTABLEVIEW_H
+#ifndef COMMITTABLEVIEW_H
+#define COMMITTABLEVIEW_H
 #include <Kanoop/gui/tableviewbase.h>
 #include <git2qt.h>
 #include <QStyledItemDelegate>
@@ -10,12 +10,12 @@
 #include "kanoopgittypes.h"
 
 class BranchLabelWidget;
-class GitCommitTableView : public TableViewBase
+class CommitTableView : public TableViewBase
 {
     Q_OBJECT
 public:
-    explicit GitCommitTableView(QWidget* parent = nullptr);
-    virtual ~GitCommitTableView();
+    explicit CommitTableView(QWidget* parent = nullptr);
+    virtual ~CommitTableView();
 
     void createModel(GIT::Repository* repo);
 
@@ -80,7 +80,7 @@ private slots:
 class GitCommitGraphStyledItemDelegate : public QStyledItemDelegate
 {
 public:
-    GitCommitGraphStyledItemDelegate(GitCommitTableView* parent = nullptr);
+    GitCommitGraphStyledItemDelegate(CommitTableView* parent = nullptr);
 
     virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     static QPixmap createArc(int width, int height, GIT::GraphItemType type, const GitGraphPalette& palette);
@@ -96,9 +96,9 @@ private:
     void drawHorizontal(QPainter* painter, const Size& pixmapSize, int level, Geo::Direction direction) const;
 
     static double centerXForLevel(int level) { return (LevelWidth / 2) + (LevelWidth * (level - 1)); }
-    static Point centerPointForLevel(int level) { return Point(centerXForLevel(level), GitCommitTableView::RowHeight / 2); }
+    static Point centerPointForLevel(int level) { return Point(centerXForLevel(level), CommitTableView::RowHeight / 2); }
 
-    GitCommitTableView* _tableView;
+    CommitTableView* _tableView;
     GitGraphPalette _palette;
 
 public:
@@ -112,7 +112,7 @@ class GitBranchTagStyledItemDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 public:
-    GitBranchTagStyledItemDelegate(GitCommitTableView* parent = nullptr) :
+    GitBranchTagStyledItemDelegate(CommitTableView* parent = nullptr) :
         QStyledItemDelegate(parent),
         _tableView(parent) {}
 
@@ -125,8 +125,8 @@ private:
     QLineEdit* createBranchNameEditor(QWidget *parent, const QModelIndex &index) const;
     BranchLabelWidget* getBranchLabelWidget(QWidget *parent, const QModelIndex &index) const;
 
-    GitCommitTableView* _tableView;
+    CommitTableView* _tableView;
     GitGraphPalette _palette;
 };
 
-#endif // GITCOMMITTABLEVIEW_H
+#endif // COMMITTABLEVIEW_H

@@ -1,5 +1,5 @@
-#include "gitfilesystemtreeview.h"
-#include "gitfilesystemtreemodel.h"
+#include "filesystemtreeview.h"
+#include "filesystemtreemodel.h"
 #include "kanoopgittypes.h"
 #include "gitentities.h"
 
@@ -10,7 +10,7 @@
 
 using namespace GIT;
 
-GitFileSystemTreeView::GitFileSystemTreeView(QWidget *parent) :
+FileSystemTreeView::FileSystemTreeView(QWidget *parent) :
     TreeViewBase(parent)
 {
     header()->setVisible(true);
@@ -18,21 +18,21 @@ GitFileSystemTreeView::GitFileSystemTreeView(QWidget *parent) :
     setContextMenuPolicy(Qt::CustomContextMenu);
 }
 
-void GitFileSystemTreeView::createModel(Repository* repo)
+void FileSystemTreeView::createModel(Repository* repo)
 {
     if(model() != nullptr) {
         delete model();
     }
 
-    GitFileSystemTreeModel* treeModel = new GitFileSystemTreeModel(repo, this);
-    connect(this, &GitFileSystemTreeView::refresh, treeModel, &GitFileSystemTreeModel::refresh);
+    FileSystemTreeModel* treeModel = new FileSystemTreeModel(repo, this);
+    connect(this, &FileSystemTreeView::refresh, treeModel, &FileSystemTreeModel::refresh);
 
     setModel(treeModel);
 
-    connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &GitFileSystemTreeView::onCurrentIndexChanged);
+    connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &FileSystemTreeView::onCurrentIndexChanged);
 }
 
-void GitFileSystemTreeView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)
+void FileSystemTreeView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)
 {
     Q_UNUSED(previous);
     if(current.isValid()) {

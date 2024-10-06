@@ -1,13 +1,13 @@
-#ifndef GITTREEENTRYTABLEVIEW_H
-#define GITTREEENTRYTABLEVIEW_H
+#ifndef TREEENTRYTABLEVIEW_H
+#define TREEENTRYTABLEVIEW_H
 #include <Kanoop/gui/tableviewbase.h>
 #include <git2qt.h>
 
-class GitTreeEntryTableView : public TableViewBase
+class TreeEntryTableView : public TableViewBase
 {
     Q_OBJECT
 public:
-    explicit GitTreeEntryTableView(QWidget* parent = nullptr);
+    explicit TreeEntryTableView(QWidget* parent = nullptr);
 
     void createModel(GIT::Repository* repo, const GIT::ObjectId& commitId);
 
@@ -18,4 +18,4 @@ private slots:
     void onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous);
 };
 
-#endif // GITTREEENTRYTABLEVIEW_H
+#endif // TREEENTRYTABLEVIEW_H

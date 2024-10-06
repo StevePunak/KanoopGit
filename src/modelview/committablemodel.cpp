@@ -1,5 +1,5 @@
 #include "gitassets.h"
-#include "gitcommittablemodel.h"
+#include "committablemodel.h"
 #include "kanoopgittypes.h"
 #include <QFileInfo>
 
@@ -12,7 +12,7 @@
 
 using namespace GIT;
 
-GitCommitTableModel::GitCommitTableModel(Repository* repo, const GraphedCommit::List& commits, QObject *parent) :
+CommitTableModel::CommitTableModel(Repository* repo, const GraphedCommit::List& commits, QObject *parent) :
     AbstractTableModel("committable", parent),
     _repo(repo)
 {
@@ -40,7 +40,7 @@ GitCommitTableModel::GitCommitTableModel(Repository* repo, const GraphedCommit::
     }
 }
 
-QModelIndex GitCommitTableModel::findCommitIndex(const GIT::ObjectId& objectId) const
+QModelIndex CommitTableModel::findCommitIndex(const GIT::ObjectId& objectId) const
 {
     QModelIndex result;
     QModelIndex startSearchIndex = index(0, 0, QModelIndex());
@@ -51,7 +51,7 @@ QModelIndex GitCommitTableModel::findCommitIndex(const GIT::ObjectId& objectId) 
     return result;
 }
 
-Qt::ItemFlags GitCommitTableModel::flags(const QModelIndex &index) const
+Qt::ItemFlags CommitTableModel::flags(const QModelIndex &index) const
 {
     Qt::ItemFlags result = AbstractTableModel::flags(index);
     TableHeader headerInfo = columnHeader(index.column());
@@ -62,7 +62,7 @@ Qt::ItemFlags GitCommitTableModel::flags(const QModelIndex &index) const
     return result;
 }
 
-bool GitCommitTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
+bool CommitTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
     Q_UNUSED(index)
     if(role == CreateBranchRole) {
@@ -71,7 +71,7 @@ bool GitCommitTableModel::setData(const QModelIndex &index, const QVariant &valu
     return false;
 }
 
-GitCommitTableModel::CommitItem::CommitItem(const GIT::GraphedCommit &commit, GitCommitTableModel *model) :
+CommitTableModel::CommitItem::CommitItem(const GIT::GraphedCommit &commit, CommitTableModel *model) :
     TableBaseItem(EntityMetadata(GitEntities::Commit), model),
     _commit(commit), _isHeadCommit(false), _isDetachedHeadCommit(false)
 {
@@ -84,7 +84,7 @@ GitCommitTableModel::CommitItem::CommitItem(const GIT::GraphedCommit &commit, Gi
     }
 }
 
-QVariant GitCommitTableModel::CommitItem::data(const QModelIndex &index, int role) const
+QVariant CommitTableModel::CommitItem::data(const QModelIndex &index, int role) const
 {
     QVariant result;
     switch(role) {
@@ -135,7 +135,7 @@ QVariant GitCommitTableModel::CommitItem::data(const QModelIndex &index, int rol
     return result;
 }
 
-QVariant GitCommitTableModel::WorkInProgressItem::data(const QModelIndex& index, int role) const
+QVariant CommitTableModel::WorkInProgressItem::data(const QModelIndex& index, int role) const
 {
     QVariant result;
     TableHeader header = static_cast<AbstractTableModel*>(model())->columnHeader(index.column());
@@ -178,7 +178,7 @@ QVariant GitCommitTableModel::WorkInProgressItem::data(const QModelIndex& index,
 }
 
 
-QVariant GitCommitTableModel::StashItem::data(const QModelIndex& index, int role) const
+QVariant CommitTableModel::StashItem::data(const QModelIndex& index, int role) const
 {
     QVariant result;
     TableHeader header = static_cast<AbstractTableModel*>(model())->columnHeader(index.column());

@@ -50,26 +50,26 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
     ui->textDiffFileName->clear();
 
     // Wire up views to this widget
-    connect(ui->treeGitTree, &GitFileSystemTreeView::indexEntryClicked, this, &RepositoryWidget::onIndexEntryClicked);
-    connect(ui->treeGitTree, &GitFileSystemTreeView::folderClicked, this, &RepositoryWidget::onFolderClicked);
-    connect(ui->tableCommits, &GitCommitTableView::commitClicked, this, &RepositoryWidget::onCommitClicked);
-    connect(ui->tableCommits, &GitCommitTableView::stashClicked, this, &RepositoryWidget::onStashCommitClicked);
-    connect(ui->tableCommits, &GitCommitTableView::workInProgressClicked, this, &RepositoryWidget::onWorkInProgressClicked);
-    connect(ui->tableCommits, &GitCommitTableView::currentSelectionChanged, this, &RepositoryWidget::maybeEnableButtons);
-    connect(ui->tableCommits, &GitCommitTableView::createBranch, this, &RepositoryWidget::createBranch);
+    connect(ui->treeGitTree, &FileSystemTreeView::indexEntryClicked, this, &RepositoryWidget::onIndexEntryClicked);
+    connect(ui->treeGitTree, &FileSystemTreeView::folderClicked, this, &RepositoryWidget::onFolderClicked);
+    connect(ui->tableCommits, &CommitTableView::commitClicked, this, &RepositoryWidget::onCommitClicked);
+    connect(ui->tableCommits, &CommitTableView::stashClicked, this, &RepositoryWidget::onStashCommitClicked);
+    connect(ui->tableCommits, &CommitTableView::workInProgressClicked, this, &RepositoryWidget::onWorkInProgressClicked);
+    connect(ui->tableCommits, &CommitTableView::currentSelectionChanged, this, &RepositoryWidget::maybeEnableButtons);
+    connect(ui->tableCommits, &CommitTableView::createBranch, this, &RepositoryWidget::createBranch);
     connect(ui->leftSidebar, &LeftSidebarTreeView::referenceClicked, this, &RepositoryWidget::onReferenceClicked);
     connect(ui->leftSidebar, &LeftSidebarTreeView::localReferenceDoubleClicked, this, &RepositoryWidget::onLocalReferenceDoubleClicked);
     connect(ui->leftSidebar, &LeftSidebarTreeView::remoteReferenceDoubleClicked, this, &RepositoryWidget::onRemoteReferenceDoubleClicked);
     connect(ui->tableStagedFiles, &StatusEntryTableView::statusEntryClicked, this, &RepositoryWidget::onStagedStatusEntryClicked);
     connect(ui->tableUnstagedFiles, &StatusEntryTableView::statusEntryClicked, this, &RepositoryWidget::onUnstagedStatusEntryClicked);
-    connect(ui->tableTreeEntries, &GitTreeEntryTableView::treeChangeEntryClicked, this, &RepositoryWidget::onTreeChangeEntryClicked);
+    connect(ui->tableTreeEntries, &TreeEntryTableView::treeChangeEntryClicked, this, &RepositoryWidget::onTreeChangeEntryClicked);
     connect(ui->leftSidebar, &LeftSidebarTreeView::submoduleClicked, this, &RepositoryWidget::onSubmoduleClicked);
     connect(ui->leftSidebar, &LeftSidebarTreeView::submoduleDoubleClicked, this, &RepositoryWidget::submoduleDoubleClicked);
 
     // Context Menus
     connect(ui->tableStagedFiles, &StatusEntryTableView::customContextMenuRequested, this, &RepositoryWidget::onStagedFilesContextMenuRequested);
     connect(ui->tableUnstagedFiles, &StatusEntryTableView::customContextMenuRequested, this, &RepositoryWidget::onUnstagedFilesContextMenuRequested);
-    connect(ui->tableCommits, &GitCommitTableView::customContextMenuRequested, this, &RepositoryWidget::onCommitTableContextMenuRequested);
+    connect(ui->tableCommits, &CommitTableView::customContextMenuRequested, this, &RepositoryWidget::onCommitTableContextMenuRequested);
     connect(ui->leftSidebar, &LeftSidebarTreeView::customContextMenuRequested, this, &RepositoryWidget::onLeftSidebarCustomContextMenuRequested);
 
     // Actions

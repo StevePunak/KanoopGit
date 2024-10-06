@@ -1,4 +1,4 @@
-#include "gittreeentrytablemodel.h"
+#include "treeentrytablemodel.h"
 
 #include <QFileInfo>
 
@@ -10,7 +10,7 @@
 
 using namespace GIT;
 
-GitTreeEntryTableModel::GitTreeEntryTableModel(Repository* repo, const ObjectId& commitId, QObject *parent) :
+TreeEntryTableModel::TreeEntryTableModel(Repository* repo, const ObjectId& commitId, QObject *parent) :
     AbstractTableModel("committable", parent),
     _repo(repo)
 {
@@ -43,7 +43,7 @@ GitTreeEntryTableModel::GitTreeEntryTableModel(Repository* repo, const ObjectId&
     }
 }
 
-QVariant GitTreeEntryTableModel::TreeChangeEntryItem::data(const QModelIndex &index, int role) const
+QVariant TreeEntryTableModel::TreeChangeEntryItem::data(const QModelIndex &index, int role) const
 {
     QVariant result;
     switch(role) {

@@ -1,16 +1,16 @@
-#ifndef GITCOMMITTABLEMODEL_H
-#define GITCOMMITTABLEMODEL_H
+#ifndef COMMITTABLEMODEL_H
+#define COMMITTABLEMODEL_H
 #include <Kanoop/gui/abstracttablemodel.h>
 #include <Kanoop/gui/abstractmodelitem.h>
 #include <git2qt.h>
 #include "kanoopgittypes.h"
 #include "gitentities.h"
 
-class GitCommitTableModel : public AbstractTableModel
+class CommitTableModel : public AbstractTableModel
 {
     Q_OBJECT
 public:
-    GitCommitTableModel(GIT::Repository* repo, const GIT::GraphedCommit::List& commits, QObject* parent = nullptr);
+    CommitTableModel(GIT::Repository* repo, const GIT::GraphedCommit::List& commits, QObject* parent = nullptr);
 
     QModelIndex findCommitIndex(const GIT::ObjectId& objectId) const;
 
@@ -28,20 +28,20 @@ private:
     class TableBaseItem : public AbstractModelItem
     {
     public:
-        explicit TableBaseItem(const EntityMetadata& metadata, GitCommitTableModel* model) :
+        explicit TableBaseItem(const EntityMetadata& metadata, CommitTableModel* model) :
             AbstractModelItem(metadata, model) {}
 
     protected:
-        GIT::Repository* repo() const { return static_cast<GitCommitTableModel*>(model())->_repo; }
+        GIT::Repository* repo() const { return static_cast<CommitTableModel*>(model())->_repo; }
     };
 
     class CommitItem : public TableBaseItem
     {
     public:
-        explicit CommitItem(const GIT::GraphedCommit& commit, GitCommitTableModel* model);
+        explicit CommitItem(const GIT::GraphedCommit& commit, CommitTableModel* model);
 
     protected:
-        explicit CommitItem(const EntityMetadata& metadata, const GIT::GraphedCommit& commit, GitCommitTableModel* model) :
+        explicit CommitItem(const EntityMetadata& metadata, const GIT::GraphedCommit& commit, CommitTableModel* model) :
             TableBaseItem(metadata, model),
             _commit(commit),
             _isHeadCommit(false),
@@ -59,7 +59,7 @@ private:
     class WorkInProgressItem : public TableBaseItem
     {
     public:
-        explicit WorkInProgressItem(const GIT::StatusEntry::List& statusEntries, GitCommitTableModel* model) :
+        explicit WorkInProgressItem(const GIT::StatusEntry::List& statusEntries, CommitTableModel* model) :
             TableBaseItem(EntityMetadata(GitEntities::WorkInProgress), model),
             _statusEntries(statusEntries) {}
 
@@ -72,7 +72,7 @@ private:
     class StashItem : public CommitItem
     {
     public:
-        explicit StashItem(const GIT::GraphedCommit& commit, const GIT::Stash& stash, GitCommitTableModel* model) :
+        explicit StashItem(const GIT::GraphedCommit& commit, const GIT::Stash& stash, CommitTableModel* model) :
             CommitItem(EntityMetadata(GitEntities::Stash), commit, model),
             _stash(stash) {}
 
@@ -83,4 +83,4 @@ private:
     };
 };
 
-#endif // GITCOMMITTABLEMODEL_H
+#endif // COMMITTABLEMODEL_H
