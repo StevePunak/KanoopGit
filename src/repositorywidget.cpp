@@ -282,7 +282,6 @@ void RepositoryWidget::onRefreshWidgets()
     {
         GIT::StatusEntry::List entries;
         entries.appendIfNotPresent(status.modified());
-        entries.appendIfNotPresent(status.added());
         entries.appendIfNotPresent(status.untracked());
         entries.appendIfNotPresent(status.removed());
         entries.appendIfNotPresent(status.renamedInWorkDir());
@@ -291,6 +290,7 @@ void RepositoryWidget::onRefreshWidgets()
     {
         GIT::StatusEntry::List entries;
         entries.appendIfNotPresent(status.staged());
+        entries.appendIfNotPresent(status.added());
         entries.appendIfNotPresent(status.renamedInIndex());
         ui->tableStagedFiles->createModel(_repo, entries);
     }
