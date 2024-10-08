@@ -17,8 +17,11 @@ public:
     bool isSpinning() const;
     int spinnerValue() const;
 
+    bool isSelected() const { return _selected; }
+
 public slots:
     void setSpinning(bool value);
+    void setSelected(bool value);
 
     void setSpinnerVisible(bool value);
     void hideSpinnerIn(const TimeSpan& delay);
@@ -26,11 +29,13 @@ public slots:
     void setSpinnerValue(int value);
 
 private:
-    virtual void paintEvent(QPaintEvent* event) override;
+    void setForegroundColor(const QColor& color);
+    void setBackgroundColor(const QColor& color);
 
     GIT::Repository* _submoduleRepo = nullptr;
     GIT::Submodule _submodule;
     int _commitsBehind = 0;
+    bool _selected = false;
 
     SpinnerWidget* _spinner = nullptr;
     Label* _nameLabel = nullptr;

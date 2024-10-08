@@ -46,10 +46,18 @@ void CommitTableView::createModel(Repository* repo)
         delete model();
     }
 
+logText(LVL_DEBUG, "Point 1-1");
+
     _repo = repo;
     _commits = repo->commitGraph();
-    _workInProgress = repo->status().entries();
-    CommitTableModel* tableModel = new CommitTableModel(repo, _commits, this);
+logText(LVL_DEBUG, "Point 1-2");
+    StatusOptions options;
+    options.setExcludeSubmodules(false);
+    options.setShow(StatusShowIndexOnly);
+    _workInProgress = repo->status(options).entries();
+logText(LVL_DEBUG, "Point 1-3");
+    CommitTableModel* tableModel = new CommitTableModel(repo, _commits, _workInProgress, this);
+logText(LVL_DEBUG, "Point 1-4");
     setModel(tableModel);
 
     connect(tableModel, &CommitTableModel::createBranch, this, &CommitTableView::createBranch);

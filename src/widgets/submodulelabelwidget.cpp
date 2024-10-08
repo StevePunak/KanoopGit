@@ -19,14 +19,21 @@ SubmoduleLabelWidget::SubmoduleLabelWidget(GIT::Repository* repo, const GIT::Sub
     _submodule(submodule)
 {
     if(submodule.isWorkdirInitialized()) {
+Log::logText(LVL_DEBUG, QString("%1  %2  p1").arg(__FUNCTION__).arg(submodule.name()));
         QString path = PathUtil::combine(repo->localPath(), submodule.name());
         _submoduleRepo = new Repository(path);
         Commit headCommit = _submoduleRepo->headCommit();
+        Commit otherCommit = _submoduleRepo->findCommit(_submodule.headCommitId());
+        _commitsBehind = _submoduleRepo->commitDistance(headCommit, otherCommit);
+Log::logText(LVL_DEBUG, QString("%1  %2  p2").arg(__FUNCTION__).arg(submodule.name()));
+#if 0
         Commit::List allCommits = _submoduleRepo->allCommits();
+Log::logText(LVL_DEBUG, QString("%1  %2  p3").arg(__FUNCTION__).arg(submodule.name()));
         int idx1 = allCommits.indexOf(headCommit);
         int idx2 = allCommits.indexOfObjectId(_submodule.headCommitId());
         _commitsBehind = idx2 - idx1;
-        Log::logText(LVL_DEBUG, QString("%1 idx1: %2  idx2: %3").arg(submodule.name()).arg(idx1).arg(idx2));
+Log::logText(LVL_DEBUG, QString("%1  %2  p4").arg(__FUNCTION__).arg(submodule.name()));
+#endif
     }
 
     QFont f = font();
@@ -39,6 +46,7 @@ SubmoduleLabelWidget::SubmoduleLabelWidget(GIT::Repository* repo, const GIT::Sub
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
     layout->addWidget(_nameLabel);
 
     _rightLabel = new Label(this);
@@ -52,6 +60,14 @@ SubmoduleLabelWidget::SubmoduleLabelWidget(GIT::Repository* repo, const GIT::Sub
     _spinner->setVisible(false);
 
     layout->addWidget(_spinner);
+    if(_submodule.isWorkdirInitialized() == false) {
+        setForegroundColor(Colors::darkorange);
+    }
+    else if(_commitsBehind != 0) {
+        _rightLabel->setText(QString("%1 %2").arg(_commitsBehind).arg(Unicode::specialCharacter(Unicode::ArrowUp)));
+        _rightLabel->setVisible(true);
+        setForegroundColor(Colors::saddlebrown);
+    }
 
     setLayout(layout);
 }
@@ -78,6 +94,13 @@ void SubmoduleLabelWidget::setSpinning(bool value)
     _spinner->setSpinning(value);
 }
 
+void SubmoduleLabelWidget::setSelected(bool value)
+{
+    _selected = value;
+    QColor backColor = _selected ? palette().color(QPalette::Highlight) : palette().color(QPalette::Window);
+    setBackgroundColor(backColor);
+}
+
 void SubmoduleLabelWidget::setSpinnerVisible(bool value)
 {
     _spinner->setVisible(value);
@@ -93,20 +116,15 @@ void SubmoduleLabelWidget::setSpinnerValue(int value)
     _spinner->setValue(value);
 }
 
-void SubmoduleLabelWidget::paintEvent(QPaintEvent* event)
+void SubmoduleLabelWidget::setForegroundColor(const QColor& color)
 {
-    QColor color = Colors::black;
-    if(_submodule.isWorkdirInitialized() == false) {
-        color = Colors::darkorange;
-    }
-    else if(_submoduleRepo != nullptr) {
-        if(_commitsBehind != 0) {
-            _rightLabel->setText(QString("%1 %2").arg(_commitsBehind).arg(Unicode::specialCharacter(Unicode::ArrowUp)));
-            _rightLabel->setVisible(true);
-            color = Colors::saddlebrown;
-        }
-    }
-
     _nameLabel->setForegroundColor(color);
-    QWidget::paintEvent(event);
+    _rightLabel->setForegroundColor(color);
 }
+
+void SubmoduleLabelWidget::setBackgroundColor(const QColor& color)
+{
+    _nameLabel->setBackgroundColor(color);
+    _rightLabel->setBackgroundColor(color);
+}
+

@@ -10,7 +10,7 @@ class CommitTableModel : public AbstractTableModel
 {
     Q_OBJECT
 public:
-    CommitTableModel(GIT::Repository* repo, const GIT::GraphedCommit::List& commits, QObject* parent = nullptr);
+    CommitTableModel(GIT::Repository* repo, const GIT::GraphedCommit::List& commits, const GIT::StatusEntry::List statusEntries, QObject* parent = nullptr);
 
     QModelIndex findCommitIndex(const GIT::ObjectId& objectId) const;
 

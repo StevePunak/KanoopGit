@@ -41,6 +41,7 @@ void LeftSidebarTreeView::createModel(GIT::Repository* repo)
 
     _repo = repo;
 
+logText(LVL_DEBUG, "Point 3-1");
     LeftSidebarTreeModel* treeModel = new LeftSidebarTreeModel(repo, this);
     setModel(treeModel);
 
@@ -59,6 +60,7 @@ void LeftSidebarTreeView::createModel(GIT::Repository* repo)
         expandRecursively(treeModel->submodulesIndex());
     }
 
+logText(LVL_DEBUG, "Point 3-2");
     setItemDelegateForColumn(0, new SubmoduleStyledItemDelegate(this));
 
     // Create submodule widgets
@@ -67,6 +69,7 @@ void LeftSidebarTreeView::createModel(GIT::Repository* repo)
         _submoduleWidgets.insert(submodule.name(), labelWidget);
     }
 
+logText(LVL_DEBUG, "Point 3-3");
     for(const QModelIndex& index : treeModel->submoduleIndexes()) {
         openPersistentEditor(index);
     }
@@ -80,10 +83,12 @@ void LeftSidebarTreeView::createModel(GIT::Repository* repo)
         LocalBranchLabelWidget* labelWidget = new LocalBranchLabelWidget(_repo, reference);
         _localBranchWidgets.insert(reference.canonicalName(), labelWidget);
     }
+logText(LVL_DEBUG, "Point 3-4");
 
     for(const QModelIndex& index : treeModel->localBranchIndexes()) {
         openPersistentEditor(index);
     }
+logText(LVL_DEBUG, "Point 3-5");
 }
 
 void LeftSidebarTreeView::setSubmoduleSpinning(const GIT::Submodule& submodule, bool value)
@@ -263,6 +268,10 @@ void SubmoduleStyledItemDelegate::paintSubmodule(QPainter* painter, const QStyle
         return;
     }
 
+    widget->setSelected((option.state & QStyle::State_Selected) != 0);
+
+    Q_UNUSED(painter)
+#if 0
     Rectangle rect = option.rect;
     painter->save();
 
@@ -271,6 +280,7 @@ void SubmoduleStyledItemDelegate::paintSubmodule(QPainter* painter, const QStyle
     widget->render(painter, QPoint(), QRegion(), QWidget::DrawChildren);
 
     painter->restore();
+#endif
 }
 
 void SubmoduleStyledItemDelegate::paintLocalBranch(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const

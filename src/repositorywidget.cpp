@@ -23,6 +23,8 @@
 
 #include <dialogs/repooptionsdialog.h>
 
+#include <widgets/toastwidgetcontainer.h>
+
 using namespace GIT;
 namespace Colors = QColorConstants::Svg;
 
@@ -41,10 +43,12 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
 
     initializeBase();
 
+Log::logText(LVL_DEBUG, QString("%1   5-1").arg(__FUNCTION__));
     // Load views
     ui->treeGitTree->createModel(_repo);
     ui->tableCommits->createModel(_repo);
     ui->leftSidebar->createModel(_repo);
+Log::logText(LVL_DEBUG, QString("%1   5-2").arg(__FUNCTION__));
 
     // Some initial values
     ui->textDiffFileName->clear();
@@ -117,10 +121,14 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
     // Validation wiring
     connect(ui->textStageCommitMessage, &QPlainTextEdit::textChanged, this, &RepositoryWidget::maybeEnableButtons);
 
+    // Toast
+    createToastContainer();
+
     // Set correct starting pages
     ui->stackedWidget->setCurrentWidget(ui->pageIndexEntry);
     ui->tabWidget->setCurrentWidget(ui->tabCommits);
 
+Log::logText(LVL_DEBUG, QString("%1   5-3").arg(__FUNCTION__));
     // Set current commit
     if(_repo->headCommit().objectId().isValid()) {
         ui->tableCommits->selectCommit(_repo->headCommit().objectId());
@@ -131,6 +139,7 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
 
     // Set button enablements and text
     maybeEnableButtons();
+Log::logText(LVL_DEBUG, QString("%1   5-4").arg(__FUNCTION__));
 }
 
 RepositoryWidget::~RepositoryWidget()
@@ -154,6 +163,12 @@ void RepositoryWidget::initializeCredentials()
     }
     _credentialResolver.setCredentials(_config.credentials());
     _repo->setCredentialResolver(&_credentialResolver);
+}
+
+void RepositoryWidget::createToastContainer()
+{
+    _toastContainer = new ToastWidgetContainer(this);
+    _toastContainer->show();
 }
 
 void RepositoryWidget::refreshWidgets()
@@ -261,6 +276,18 @@ void RepositoryWidget::showSubmodulesCustomContextMenu()
     menu.exec(QCursor::pos());
 }
 
+void RepositoryWidget::resizeEvent(QResizeEvent* event)
+{
+    ComplexWidget::resizeEvent(event);
+
+    // resize the toast container
+    QSize size(ToastWidth, event->size().height() / 2);
+    QPoint pos(0, size.height());
+    logText(LVL_DEBUG, QString("Resized toast container to %1 at %2").arg(Size(size).toString()).arg(Point(pos).toString()));
+    _toastContainer->move(pos);
+    _toastContainer->resize(size);
+}
+
 void RepositoryWidget::switchToDiffView()
 {
     ui->tabWidget->setCurrentWidget(ui->tabDiffs);
@@ -278,7 +305,10 @@ void RepositoryWidget::switchToCommitView()
 void RepositoryWidget::onRefreshWidgets()
 {
     logText(LVL_DEBUG, __FUNCTION__);
-    GIT::RepositoryStatus status = _repo->status();
+    StatusOptions statusOptions;
+    statusOptions.setExcludeSubmodules(false);
+    statusOptions.setShow(StatusShowIndexOnly);
+    GIT::RepositoryStatus status = _repo->status(statusOptions);
     {
         GIT::StatusEntry::List entries;
         entries.appendIfNotPresent(status.modified());
@@ -453,6 +483,7 @@ void RepositoryWidget::onStagedStatusEntryClicked(const GIT::StatusEntry& status
         ui->pushStageDiffFile->setText("Unstage File");
         ui->pushStageDiffFile->setProperty(StageUnstageProperty.toUtf8().constData(), UnstageFile);
         switchToDiffView();
+        ui->tableDiffs->scrollToNextDelta();
     }
 }
 
@@ -467,6 +498,7 @@ void RepositoryWidget::onUnstagedStatusEntryClicked(const GIT::StatusEntry& stat
     ui->pushStageDiffFile->setText("Stage File");
     ui->pushStageDiffFile->setProperty(StageUnstageProperty.toUtf8().constData(), StageFile);
     switchToDiffView();
+    ui->tableDiffs->scrollToNextDelta();
 }
 
 void RepositoryWidget::onTreeChangeEntryClicked(const GIT::TreeChangeEntry& treeChangeEntry)
@@ -988,13 +1020,8 @@ void RepositoryWidget::onSubmoduleUpdaterFinished()
 
 void RepositoryWidget::doDebugThing()
 {
-    if(_repo->submodules().count() == 0) {
-        return;
-    }
+    _toastContainer->displayToast("Succesfuly pushed", Colors::lightgreen);
 
-    Submodule submodule = _repo->submodules().first();
-    ui->leftSidebar->setSubmoduleSpinning(submodule, true);
-    ui->leftSidebar->setSubmoduleSpinnerValue(submodule, 10);
 #if 0
     GraphedCommit::List commits = _repo->commitGraph();
     QStringList headers = {

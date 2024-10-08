@@ -9,6 +9,8 @@
 #include <gitcredentialresolver.h>
 #include <submoduleupdateprogresscallback.h>
 
+
+class ToastWidgetContainer;
 namespace Ui {
 class RepositoryWidget;
 }
@@ -43,6 +45,7 @@ public slots:
 
 private:
     void initializeCredentials();
+    void createToastContainer();
     void updateCommitShaWidget(const GIT::ObjectId& objectId);
     void updateParentsShaWidget(const GIT::ObjectId& objectId);
     void updateParentsShaWidget(const GIT::ObjectId::List& objectIds);
@@ -52,10 +55,14 @@ private:
     void showSubmoduleCustomContextMenu(const GIT::Submodule& submodule);
     void showSubmodulesCustomContextMenu();
 
+    // QWidget interface
+    virtual void resizeEvent(QResizeEvent* event) override;
+
     Ui::RepositoryWidget *ui;
     GIT::Repository* _repo;
     RepoConfig _config;
     bool _filesystemWatchEnabled = true;
+    ToastWidgetContainer* _toastContainer = nullptr;
 
     GitCredentialResolver _credentialResolver;
     SubmoduleUpdateProgressCallback _submoduleUpdateProgressCallback;
@@ -63,6 +70,7 @@ private:
     static const QString StageUnstageProperty;
     static const QString ReferenceProperty;
     static const QString SubmoduleProperty;
+    static const int ToastWidth = 300;
 
     enum StageType { StageTypeInvalid, StageFile, UnstageFile };
 

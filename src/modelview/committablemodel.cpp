@@ -12,7 +12,7 @@
 
 using namespace GIT;
 
-CommitTableModel::CommitTableModel(Repository* repo, const GraphedCommit::List& commits, QObject *parent) :
+CommitTableModel::CommitTableModel(Repository* repo, const GraphedCommit::List& commits, const StatusEntry::List statusEntries, QObject *parent) :
     AbstractTableModel("committable", parent),
     _repo(repo)
 {
@@ -22,7 +22,6 @@ CommitTableModel::CommitTableModel(Repository* repo, const GraphedCommit::List& 
     appendColumnHeader(CH_Timestamp, "Timestamp");
     appendColumnHeader(CH_SHA, "SHA");
 
-    StatusEntry::List statusEntries = _repo->status().entries();
     if(statusEntries.count() > 0) {
         appendRootItem(new WorkInProgressItem(statusEntries, this));
     }
