@@ -37,10 +37,7 @@ QVariant StatusEntryTableModel::StatusEntryItem::data(const QModelIndex &index, 
         case Qt::DecorationRole:
         {
             FileStatuses status = _statusEntry.status();
-            if(status.testFlag(RenamedInWorkdir) || status.testFlag(RenamedInIndex)) {
-                result = Resources::getIcon(GitAssets::RenameFile);
-            }
-            else if(status.testFlag(ModifiedInIndex) || status.testFlag(ModifiedInWorkdir)) {
+            if(status.testFlag(ModifiedInIndex) || status.testFlag(ModifiedInWorkdir)) {
                 result = Resources::getIcon(GitAssets::Pencil);
             }
             else if(status.testFlag(DeletedFromIndex) || status.testFlag(DeletedFromWorkdir)) {
@@ -48,6 +45,9 @@ QVariant StatusEntryTableModel::StatusEntryItem::data(const QModelIndex &index, 
             }
             else if(status.testFlag(NewInIndex) || status.testFlag(NewInWorkdir)) {
                 result = Resources::getIcon(GitAssets::PlusGreen);
+            }
+            else if(status.testFlag(RenamedInWorkdir) || status.testFlag(RenamedInIndex)) {
+                result = Resources::getIcon(GitAssets::RenameFile);
             }
             break;
         }

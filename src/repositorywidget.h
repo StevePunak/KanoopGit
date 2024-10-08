@@ -10,7 +10,7 @@
 #include <submoduleupdateprogresscallback.h>
 
 
-class ToastWidgetContainer;
+class ToastManager;
 namespace Ui {
 class RepositoryWidget;
 }
@@ -62,7 +62,7 @@ private:
     GIT::Repository* _repo;
     RepoConfig _config;
     bool _filesystemWatchEnabled = true;
-    ToastWidgetContainer* _toastContainer = nullptr;
+    ToastManager* _toastManager = nullptr;
 
     GitCredentialResolver _credentialResolver;
     SubmoduleUpdateProgressCallback _submoduleUpdateProgressCallback;

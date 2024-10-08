@@ -23,7 +23,7 @@
 
 #include <dialogs/repooptionsdialog.h>
 
-#include <widgets/toastwidgetcontainer.h>
+#include <Kanoop/gui/widgets/toastmanager.h>
 
 using namespace GIT;
 namespace Colors = QColorConstants::Svg;
@@ -167,8 +167,7 @@ void RepositoryWidget::initializeCredentials()
 
 void RepositoryWidget::createToastContainer()
 {
-    _toastContainer = new ToastWidgetContainer(this);
-    _toastContainer->show();
+    _toastManager = new ToastManager(this);
 }
 
 void RepositoryWidget::refreshWidgets()
@@ -284,8 +283,8 @@ void RepositoryWidget::resizeEvent(QResizeEvent* event)
     QSize size(ToastWidth, event->size().height() / 2);
     QPoint pos(0, size.height());
     logText(LVL_DEBUG, QString("Resized toast container to %1 at %2").arg(Size(size).toString()).arg(Point(pos).toString()));
-    _toastContainer->move(pos);
-    _toastContainer->resize(size);
+    _toastManager->move(pos);
+    _toastManager->resize(size);
 }
 
 void RepositoryWidget::switchToDiffView()
@@ -307,13 +306,13 @@ void RepositoryWidget::onRefreshWidgets()
     logText(LVL_DEBUG, __FUNCTION__);
     StatusOptions statusOptions;
     statusOptions.setExcludeSubmodules(false);
-    statusOptions.setShow(StatusShowIndexOnly);
+    statusOptions.setShow(StatusShowIndexAndWorkDir);
     GIT::RepositoryStatus status = _repo->status(statusOptions);
     {
         GIT::StatusEntry::List entries;
         entries.appendIfNotPresent(status.modified());
         entries.appendIfNotPresent(status.untracked());
-        entries.appendIfNotPresent(status.removed());
+        entries.appendIfNotPresent(status.missing());
         entries.appendIfNotPresent(status.renamedInWorkDir());
         ui->tableUnstagedFiles->createModel(_repo, entries);
     }
@@ -322,6 +321,7 @@ void RepositoryWidget::onRefreshWidgets()
         entries.appendIfNotPresent(status.staged());
         entries.appendIfNotPresent(status.added());
         entries.appendIfNotPresent(status.renamedInIndex());
+        entries.appendIfNotPresent(status.removed());
         ui->tableStagedFiles->createModel(_repo, entries);
     }
 
@@ -942,6 +942,7 @@ void RepositoryWidget::pushToRemote()
         else if(_repo->push(_repo->currentBranch()) == false) {
             throw CommonException(_repo->errorText());
         }
+        _toastManager->message("Successfully pushed to remote");
     }
     catch(const CommonException& e)
     {
@@ -1020,7 +1021,13 @@ void RepositoryWidget::onSubmoduleUpdaterFinished()
 
 void RepositoryWidget::doDebugThing()
 {
-    _toastContainer->displayToast("Succesfuly pushed", Colors::lightgreen);
+    static int count = 0;
+    if((++count & 0x01) != 0) {
+        _toastManager->message(QString("%1 Succesfuly pushed some stuff from my desktop to somewhere else on the screen").arg(count));
+    }
+    else {
+        _toastManager->errorMessage(QString("%1 Failed to pushed some stuff from my desktop to somewhere else on the screen").arg(count));
+    }
 
 #if 0
     GraphedCommit::List commits = _repo->commitGraph();
