@@ -11,6 +11,8 @@ class LocalBranchLabelWidget : public QWidget
 public:
     explicit LocalBranchLabelWidget(GIT::Repository* repo, const GIT::Reference& reference, QWidget *parent = nullptr);
 
+    void setBold(bool value);
+
 private:
     GIT::Reference _reference;
 

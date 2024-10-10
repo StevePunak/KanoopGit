@@ -19,6 +19,9 @@ public:
 
     bool isSelected() const { return _selected; }
 
+    bool paintComplete() const { return _paintComplete; }
+    void setPaintComplete(bool value) { _paintComplete = value; }
+
 public slots:
     void setSpinning(bool value);
     void setSelected(bool value);
@@ -35,9 +38,12 @@ private:
     GIT::Repository* _submoduleRepo = nullptr;
     GIT::Submodule _submodule;
     int _commitsBehind = 0;
+    bool _indexAddedButNotInHead = false;
     bool _selected = false;
+    bool _paintComplete = false;
 
     SpinnerWidget* _spinner = nullptr;
+    Label* _iconLabel = nullptr;
     Label* _nameLabel = nullptr;
     Label* _rightLabel = nullptr;
     QIcon _icon;

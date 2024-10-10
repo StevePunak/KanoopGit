@@ -257,6 +257,8 @@ void SubmoduleStyledItemDelegate::paint(QPainter* painter, const QStyleOptionVie
 
 void SubmoduleStyledItemDelegate::paintSubmodule(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
+    Q_UNUSED(painter)
+
     // Draw the label
     QString name = index.data(Qt::DisplayRole).toString();
     if(name.isEmpty() == true) {
@@ -268,23 +270,16 @@ void SubmoduleStyledItemDelegate::paintSubmodule(QPainter* painter, const QStyle
         return;
     }
 
-    widget->setSelected((option.state & QStyle::State_Selected) != 0);
-
-    Q_UNUSED(painter)
-#if 0
-    Rectangle rect = option.rect;
-    painter->save();
-
-    painter->translate(rect.topLeft());
-    widget->resize(rect.size().toSize());
-    widget->render(painter, QPoint(), QRegion(), QWidget::DrawChildren);
-
-    painter->restore();
-#endif
+    bool isSelected = (option.state & QStyle::State_Selected) != 0;
+    if(isSelected != widget->isSelected()) {
+        widget->setSelected(isSelected);
+    }
 }
 
 void SubmoduleStyledItemDelegate::paintLocalBranch(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
+    Q_UNUSED(painter) Q_UNUSED(option)
+
     // Draw the label
     QString name = index.data(CanonicalNameRole).toString();
     if(name.isEmpty() == true) {
@@ -296,14 +291,8 @@ void SubmoduleStyledItemDelegate::paintLocalBranch(QPainter* painter, const QSty
         return;
     }
 
-    Rectangle rect = option.rect;
-    painter->save();
-
-    painter->translate(rect.topLeft());
-    widget->resize(rect.size().toSize());
-    widget->render(painter, QPoint(), QRegion(), QWidget::DrawChildren);
-
-    painter->restore();
+    bool currentBranch = index.data(IsCurrentBranchRole).toBool();
+    widget->setBold(currentBranch);
 }
 
 QWidget* SubmoduleStyledItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const

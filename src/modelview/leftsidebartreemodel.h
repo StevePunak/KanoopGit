@@ -72,6 +72,7 @@ private:
 
     private:
         GIT::Submodule _submodule;
+        bool _isInitialized = false;
     };
 
     class FolderItem : public TreeBaseItem

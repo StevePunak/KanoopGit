@@ -253,6 +253,7 @@ LeftSidebarTreeModel::SubmoduleItem::SubmoduleItem(const GIT::Submodule& submodu
     TreeBaseItem(EntityMetadata(GitEntities::Submodule, submodule.toVariant()), model),
     _submodule(submodule)
 {
+    _isInitialized = _submodule.isWorkdirInitialized();
 }
 
 QVariant LeftSidebarTreeModel::SubmoduleItem::data(const QModelIndex& index, int role) const
@@ -268,6 +269,9 @@ QVariant LeftSidebarTreeModel::SubmoduleItem::data(const QModelIndex& index, int
             if(_submodule.isWorkdirInitialized() == false) {
                 result = Colors::darkorange;
             }
+            break;
+        case IsSubmoduleInitializedRole:
+            result = _isInitialized;
             break;
         default:
             break;
@@ -337,6 +341,9 @@ QVariant LeftSidebarTreeModel::ReferenceItem::data(const QModelIndex& index, int
                 font.setBold(true);
                 result = font;
             }
+            break;
+        case IsCurrentBranchRole:
+            result = _isCurrentBranch;
             break;
         case ReferenceRole:
             result = _reference.toVariant();

@@ -435,6 +435,8 @@ void RepositoryWidget::onLocalReferenceDoubleClicked(const GIT::Reference &refer
             throw CommonException(_repo->errorText());
         }
         refreshWidgets();
+
+        _toastManager->message(QString("Checked out %1").arg(reference.friendlyName()));
     }
     catch(const CommonException& e)
     {
@@ -908,13 +910,16 @@ void RepositoryWidget::pullFromRemote()
 {
     try
     {
-        if(_repo->pull() == false) {
-            throw CommonException(_repo->errorText());
-        }
+        Signature signature = _repo->config()->buildSignature();
+        MergeResult result = _repo->pull(signature);
+        Q_UNUSED(result) // TODO
+
+        _toastManager->message("Successfully pulled from remote");
     }
     catch(const CommonException& e)
     {
-        QMessageBox::warning(this, "Pull Failed", e.message());
+        _toastManager->errorMessage(e.message());
+        // QMessageBox::warning(this, "Pull Failed", e.message());
     }
     refreshWidgets();
 }

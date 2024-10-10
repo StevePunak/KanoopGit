@@ -3,7 +3,7 @@
 #include <credentialset.h>
 #include <git2qt.h>
 
-class GitCredentialResolver : public GIT::CredentialResolver
+class GitCredentialResolver : public GIT::AbstractCredentialResolver
 {
 public:
     GitCredentialResolver() {}

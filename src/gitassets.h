@@ -28,6 +28,7 @@ public:
         KanoopGitLogo,
         LedRed,
         MinusRed,
+        OrangeRefresh,
         Pencil,
         PlusGreen,
         PlusWhiteOnGrey,
@@ -64,6 +65,7 @@ private:
             insert(KanoopGitLogo,                   "kanoop-git-logo.png");
             insert(LedRed,                          "led-red.png");
             insert(MinusRed,                        "x-white-on-red.png");
+            insert(OrangeRefresh,                   "orange-refresh.png");
             insert(Pencil,                          "pencil.png");
             insert(PlusGreen,                       "plus-green.png");
             insert(PlusWhiteOnGrey,                 "plus-white-on-grey.png");

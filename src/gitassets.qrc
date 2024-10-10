@@ -29,5 +29,6 @@
         <file>assets/submodules.png</file>
         <file>assets/arrow-down.png</file>
         <file>assets/arrow-up.png</file>
+        <file>assets/orange-refresh.png</file>
     </qresource>
 </RCC>

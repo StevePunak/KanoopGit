@@ -50,3 +50,11 @@ LocalBranchLabelWidget::LocalBranchLabelWidget(GIT::Repository* repo, const GIT:
 
     setLayout(layout);
 }
+
+void LocalBranchLabelWidget::setBold(bool value)
+{
+    QFont font = LocalBranchLabelWidget::font();
+    font.setBold(value);
+    _nameLabel->setFont(font);
+    _rightLabel->setFont(font);
+}
