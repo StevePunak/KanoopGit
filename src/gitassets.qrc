@@ -19,5 +19,16 @@
         <file>assets/debug.png</file>
         <file>assets/pull.png</file>
         <file>assets/push.png</file>
+        <file>assets/computer.png</file>
+        <file>assets/cloud.png</file>
+        <file>assets/security.png</file>
+        <file>assets/settings.png</file>
+        <file>assets/kanoop-git-logo.png</file>
+        <file>assets/drop-down-ind-down.png</file>
+        <file>assets/drop-down-ind-up.png</file>
+        <file>assets/submodules.png</file>
+        <file>assets/arrow-down.png</file>
+        <file>assets/arrow-up.png</file>
+        <file>assets/orange-refresh.png</file>
     </qresource>
 </RCC>

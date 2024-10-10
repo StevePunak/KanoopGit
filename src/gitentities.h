@@ -12,13 +12,18 @@ public:
         InvalidEntity = 0,
 
         Commit,
+        Credentials,
         File,
         FileLine,
         Folder,
         IndexEntry,
+        PlaceHolder,
         Reference,
+        Remote,
         Repository,
         Stash,
+        Submodule,
+        TitleItem,
         WorkInProgress,
     };
 
@@ -29,13 +34,18 @@ private:
         EntityTypeToStringMap()
         {
             insert(Commit,          "Commit");
+            insert(Credentials,     "Credentials");
             insert(File,            "File");
             insert(FileLine,        "FileLine");
             insert(Folder,          "Folder");
             insert(IndexEntry,      "IndexEntry");
+            insert(PlaceHolder,     "PlaceHolder");
             insert(Reference,       "Reference");
+            insert(Remote,          "Remote");
             insert(Repository,      "Repository");
             insert(Stash,           "Stash");
+            insert(Submodule,       "Submodule");
+            insert(TitleItem,       "TitleItem");
             insert(WorkInProgress,  "WorkInProgress");
         }
     };

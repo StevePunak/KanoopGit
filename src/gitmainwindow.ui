@@ -11,7 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Kanoop Git</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="gitassets.qrc">
+    <normaloff>:/assets/kanoop-git-logo.png</normaloff>:/assets/kanoop-git-logo.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -35,7 +39,7 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="QTabWidget" name="tabWidgetRepos">
+         <widget class="TabWidget" name="tabWidgetRepos">
           <widget class="QWidget" name="tabOpenOptions">
            <attribute name="icon">
             <iconset>
@@ -145,6 +149,13 @@
              </layout>
             </item>
             <item>
+             <widget class="QProgressBar" name="progressCloneProgress">
+              <property name="value">
+               <number>24</number>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="verticalSpacer_4">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
@@ -206,16 +217,68 @@
      <height>23</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="actionOpenRepository"/>
+    <addaction name="actionCloneRepository"/>
+    <addaction name="separator"/>
+    <addaction name="actionPreferences"/>
+   </widget>
+   <addaction name="menu_File"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionOpenRepository">
+   <property name="text">
+    <string>Open Repository</string>
+   </property>
+  </action>
+  <action name="actionCloneRepository">
+   <property name="text">
+    <string>Clone Repository</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="actionCopyPathToClipboard">
+   <property name="text">
+    <string>Copy path to clipboard</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionCopyUrlToClipboard">
+   <property name="text">
+    <string>Copy url to clipboard</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
    <class>RecentReposTableView</class>
    <extends>QTableView</extends>
-   <header>recentrepostableview.h</header>
+   <header>modelview/recentrepostableview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>TabWidget</class>
+   <extends>QTabWidget</extends>
+   <header>Kanoop/gui/tabwidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="gitassets.qrc"/>
+ </resources>
  <connections/>
 </ui>
