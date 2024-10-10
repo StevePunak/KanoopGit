@@ -37,7 +37,6 @@ private:
 
     GIT::Repository* _submoduleRepo = nullptr;
     GIT::Submodule _submodule;
-    int _commitsBehind = 0;
     bool _indexAddedButNotInHead = false;
     bool _selected = false;
     bool _paintComplete = false;

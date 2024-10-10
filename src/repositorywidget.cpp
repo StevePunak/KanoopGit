@@ -555,15 +555,7 @@ void RepositoryWidget::onTreeChangeEntryClicked(const GIT::TreeChangeEntry& tree
 
 void RepositoryWidget::onSubmoduleClicked(const GIT::Submodule& submodule)
 {
-    QList<Submodule::SubmoduleStatus> allStatuses = Submodule::getSubmoduleStatusValues();
-    Submodule::SubmoduleStatuses moduleStatus = submodule.status();
-    QString str;
-    QTextStream output(&str);
-    for(Submodule::SubmoduleStatus status : allStatuses) {
-        if(moduleStatus & status) {
-            output << getSubmoduleStatusString(status) << ' ';
-        }
-    }
+    QString str = submodule.statusDebugString(submodule.status());
     logText(LVL_DEBUG, QString("%1 (%2)").arg(submodule.name()).arg(str));
     logText(LVL_DEBUG, QString("%1 head: %2  idx: %3").arg(submodule.name()).arg(submodule.headCommitId().toString()).arg(submodule.indexCommitId().toString()));
 }
@@ -950,7 +942,7 @@ void RepositoryWidget::pushToRemote()
         else if(_repo->push(_repo->currentBranch()) == false) {
             throw CommonException(_repo->errorText());
         }
-        _toastManager->message("Successfully pushed to remote");
+        _toastManager->message(QString("Successfully pushed %1 to remote").arg(branch.friendlyName()));
     }
     catch(const CommonException& e)
     {
