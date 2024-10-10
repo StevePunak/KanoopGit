@@ -1,0 +1,34 @@
+<RCC>
+    <qresource prefix="/">
+        <file>assets/window-close.png</file>
+        <file>assets/check-green.png</file>
+        <file>assets/copy.png</file>
+        <file>assets/dash-blue-on-white.png</file>
+        <file>assets/dash-white-on-grey.png</file>
+        <file>assets/file.png</file>
+        <file>assets/led-red.png</file>
+        <file>assets/pencil.png</file>
+        <file>assets/plus-green.png</file>
+        <file>assets/plus-white-on-grey.png</file>
+        <file>assets/rename-file.png</file>
+        <file>assets/stash-pop.png</file>
+        <file>assets/stash.png</file>
+        <file>assets/warning-red.png</file>
+        <file>assets/x-white-on-red.png</file>
+        <file>assets/branch.png</file>
+        <file>assets/debug.png</file>
+        <file>assets/pull.png</file>
+        <file>assets/push.png</file>
+        <file>assets/computer.png</file>
+        <file>assets/cloud.png</file>
+        <file>assets/security.png</file>
+        <file>assets/settings.png</file>
+        <file>assets/kanoop-git-logo.png</file>
+        <file>assets/drop-down-ind-down.png</file>
+        <file>assets/drop-down-ind-up.png</file>
+        <file>assets/submodules.png</file>
+        <file>assets/arrow-down.png</file>
+        <file>assets/arrow-up.png</file>
+        <file>assets/orange-refresh.png</file>
+    </qresource>
+</RCC>
