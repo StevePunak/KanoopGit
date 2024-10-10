@@ -124,6 +124,8 @@ Log::logText(LVL_DEBUG, QString("%1   5-2").arg(__FUNCTION__));
     // Toast
     createToastContainer();
 
+    onRefreshWidgets();
+
     // Set correct starting pages
     ui->stackedWidget->setCurrentWidget(ui->pageIndexEntry);
     ui->tabWidget->setCurrentWidget(ui->tabCommits);
@@ -903,6 +905,7 @@ void RepositoryWidget::onCommitChangesClicked()
     if(commit.isValid() == false) {
         QMessageBox::warning(this, "Error", QString("Failed to commit files: %1").arg(_repo->errorText()), QMessageBox::Ok);
     }
+    switchToCommitView();
     refreshWidgets();
 }
 

@@ -53,7 +53,7 @@ logText(LVL_DEBUG, "Point 1-1");
 logText(LVL_DEBUG, "Point 1-2");
     StatusOptions options;
     options.setExcludeSubmodules(false);
-    options.setShow(StatusShowIndexOnly);
+    options.setShow(StatusShowIndexAndWorkDir);
     _workInProgress = repo->status(options).entries();
 logText(LVL_DEBUG, "Point 1-3");
     CommitTableModel* tableModel = new CommitTableModel(repo, _commits, _workInProgress, this);
