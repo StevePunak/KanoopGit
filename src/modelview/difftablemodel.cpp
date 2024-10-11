@@ -16,7 +16,7 @@ namespace Colors = QColorConstants::Svg;
 
 // --------------------- Tree to Tree Signature
 
-DiffTableModel::DiffTableModel(Repository* repo, const Tree& oldTree, const Tree& newTree, const DiffDelta& delta, QObject *parent) :
+DiffTableModel::DiffTableModel(Repository* repo, const TreeEntry& oldEntry, const TreeEntry& newEntry, const DiffDelta& delta, QObject *parent) :
     AbstractTableModel("difftable", parent),
     _repo(repo)
 {
@@ -24,10 +24,6 @@ DiffTableModel::DiffTableModel(Repository* repo, const Tree& oldTree, const Tree
 
     try
     {
-
-        TreeEntry oldEntry = oldTree.findEntryByPath(delta.oldFile().path());
-        TreeEntry newEntry = newTree.findEntryByPath(delta.newFile().path());
-
         if(oldEntry.isValid() == false || newEntry.isValid() == false) {
             throw CommonException("No tree entry found");
         }
@@ -50,6 +46,16 @@ DiffTableModel::DiffTableModel(Repository* repo, const Tree& oldTree, const Tree
     {
         logText(LVL_ERROR, e.message());
     }
+}
+
+// --------------------- Index to Workdir Signature
+
+DiffTableModel::DiffTableModel(GIT::Repository* repo, const GIT::DiffDelta& delta, QObject* parent) :
+    AbstractTableModel("difftable", parent),
+    _repo(repo)
+{
+    commonInit(delta);
+    loadDiffToCurrent(delta);
 }
 
 void DiffTableModel::commonInit(const DiffDelta& delta)
@@ -84,14 +90,8 @@ void DiffTableModel::commonInit(const DiffDelta& delta)
 
 }
 
-// --------------------- Index to Workdir Signature
-
-DiffTableModel::DiffTableModel(GIT::Repository* repo, const GIT::DiffDelta& delta, QObject* parent) :
-    AbstractTableModel("difftable", parent),
-    _repo(repo)
+void DiffTableModel::loadDiffToCurrent(const DiffDelta& delta)
 {
-    commonInit(delta);
-
     try
     {
         Tree tree = _repo->head().tip().tree();
@@ -111,7 +111,7 @@ DiffTableModel::DiffTableModel(GIT::Repository* repo, const GIT::DiffDelta& delt
         QStringList newFileLines;
         QString localPath = PathUtil::combine(_repo->localPath(), delta.newFile().path());
         if(FileUtil::readAllLines(localPath, newFileLines) == false) {
-            throw CommonException("File n ot found");
+            throw CommonException("File not found");
         }
         createTable(oldFileLines, newFileLines);
     }
@@ -233,18 +233,51 @@ void DiffTableModel::createTable(const QStringList& oldFileLines, const QStringL
             continue;
         }
 
-        while(_oldDiffLines.contains(oldLineNumber)) {
-            DiffLine diffLine = _oldDiffLines.value(oldLineNumber);
-            appendRootItem(new FileLineItem(StringUtil::trimEnd(diffLine.content()), oldLineNumber, 0, diffLine.origin(), this));
-            oldLineNumber++;
-        }
-
-        while(_newDiffLines.contains(newLineNumber)) {
-            DiffLine diffLine = _newDiffLines.value(newLineNumber);
-            appendRootItem(new FileLineItem(StringUtil::trimEnd(diffLine.content()), 0, newLineNumber, diffLine.origin(), this));
-            newLineNumber++;
-        }
+        processLines(_oldDiffLines, oldLineNumber);
+        processLines(_newDiffLines, newLineNumber);
     }
+}
+
+void DiffTableModel::processLines(QMap<int, GIT::DiffLine>& lines, int& lineNumber)
+{
+    if(lines.contains(lineNumber)) {
+        DiffLineGroup group;
+        while(lines.contains(lineNumber)) {
+            DiffLine diffLine = lines.value(lineNumber);
+            if(group.isValid() == false) {
+                group = DiffLineGroup(rootItemCount(), diffLine.origin(), colorForOrigin(diffLine.origin()));
+            }
+            else if(group.origin() != diffLine.origin()) {
+                _lineGroups.append(group);
+                group = DiffLineGroup(rootItemCount(), diffLine.origin(), colorForOrigin(diffLine.origin()));
+            }
+            else {
+                group.incrementCount();
+            }
+            appendRootItem(new FileLineItem(StringUtil::trimEnd(diffLine.content()), lineNumber, 0, diffLine.origin(), this));
+            lineNumber++;
+        }
+        _lineGroups.append(group);
+    }
+}
+
+QColor DiffTableModel::colorForOrigin(const QChar& origin)
+{
+    QColor result;
+    switch(origin.toLatin1()) {
+    case '+':
+        result = Colors::lightgreen;
+        break;
+    case '-':
+        result = Colors::lightsalmon;
+        break;
+    case 0:
+        break;
+    default:
+        result = Colors::red;   // don't understand it
+        break;
+    }
+    return result;
 }
 
 DiffTableModel::FileLineItem::FileLineItem(const QString& text, int oldLineNumber, int newLineNumber, const QChar& origin, DiffTableModel* model) :
@@ -293,11 +326,8 @@ QVariant DiffTableModel::FileLineItem::data(const QModelIndex &index, int role) 
         result = _font;
         break;
     case Qt::BackgroundRole:
-        if(_origin == '+') {
-            result = Colors::lightgreen;
-        }
-        else if(_origin == '-') {
-            result = Colors::lightsalmon;
+        if(_origin.isNull() == false) {
+            result = static_cast<DiffTableModel*>(model())->colorForOrigin(_origin);
         }
         break;
     case Qt::DecorationRole:

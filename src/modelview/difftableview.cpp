@@ -9,6 +9,8 @@
 
 #include <Kanoop/geometry/rectangle.h>
 
+#include <widgets/diffscrollbar.h>
+
 using namespace GIT;
 namespace Colors = QColorConstants::Svg;
 
@@ -17,9 +19,11 @@ DiffTableView::DiffTableView(QWidget *parent) :
 {
     setContextMenuPolicy(Qt::CustomContextMenu);
     setSelectionMode(SingleSelection);
+    _scrollBar = new DiffScrollBar(this);
+    setVerticalScrollBar(_scrollBar);
 }
 
-void DiffTableView::createModelTreeToTree(Repository* repo, const Tree& oldTree, const Tree& newTree, const DiffDelta& delta)
+void DiffTableView::createModelForSingleDelta(Repository* repo, const TreeEntry& oldEntry, const TreeEntry& newEntry, const DiffDelta& delta)
 {
     if(model() != nullptr) {
         delete model();
@@ -28,8 +32,9 @@ void DiffTableView::createModelTreeToTree(Repository* repo, const Tree& oldTree,
     _delta = delta;
     _lastDeltaRow = -1;
 
-    DiffTableModel* tableModel = new DiffTableModel(repo, oldTree, newTree, delta, this);
+    DiffTableModel* tableModel = new DiffTableModel(repo, oldEntry, newEntry, delta, this);
     setModel(tableModel);
+    _scrollBar->setLineGroups(tableModel->lineGroups(), tableModel->rowCount());
 
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &DiffTableView::onCurrentIndexChanged);
 
@@ -47,6 +52,7 @@ void DiffTableView::createModelIndexToWorkDir(GIT::Repository* repo, const GIT::
 
     DiffTableModel* tableModel = new DiffTableModel(repo, delta, this);
     setModel(tableModel);
+    _scrollBar->setLineGroups(tableModel->lineGroups(), tableModel->rowCount());
 
     connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &DiffTableView::onCurrentIndexChanged);
 

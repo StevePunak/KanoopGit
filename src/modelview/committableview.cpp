@@ -101,7 +101,9 @@ void CommitTableView::selectCommit(const GIT::ObjectId& objectId)
 {
     QModelIndex index = findCommit(objectId);
     if(index.isValid()) {
-        selectRow(index.row());
+        QModelIndex bottomLeft = sourceModel()->index(index.row(), sourceModel()->columnCount() - 1);
+        QItemSelection selection(index, bottomLeft);
+        selectionModel()->select(selection, QItemSelectionModel::Select);
     }
 }
 

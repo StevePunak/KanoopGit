@@ -58,6 +58,9 @@ GitMainWindow::GitMainWindow(QWidget *parent) :
     connect(ui->tabWidgetRepos, &TabWidget::tabCustomContextMenuRequested, this, &GitMainWindow::onTabBarContextMenuRequested);
     connect(&_progressCallback, &CloneProgressCallback::progress, this, &GitMainWindow::onCloneProgress);
 
+    // Debug
+    connect(ui->actionCloseTab, &QAction::triggered, this, &GitMainWindow::onDebugCloseTab);
+
     // Load models
     ui->tableRecentRepos->createModel(Settings::instance()->recentFiles());
     ui->stackedMain->setCurrentWidget(ui->pageRepos);
@@ -126,11 +129,11 @@ RepositoryContainer* GitMainWindow::openRepository(const QString& path)
 void GitMainWindow::closeRepository(int tabIndex)
 {
     RepositoryContainer* repoWidget = dynamic_cast<RepositoryContainer*>(ui->tabWidgetRepos->widget(tabIndex));
+    ui->tabWidgetRepos->removeTab(tabIndex);
     if(repoWidget != nullptr) {
         Settings::instance()->removeOpenRepo(repoWidget->primaryRepo()->localPath());
         delete repoWidget;
     }
-    ui->tabWidgetRepos->removeTab(tabIndex);
 }
 
 void GitMainWindow::onCloneRepoClicked()
@@ -270,6 +273,11 @@ void GitMainWindow::onPreferencesClicked()
 {
     PreferencesDialog dlg(this);
     dlg.exec();
+}
+
+void GitMainWindow::onDebugCloseTab()
+{
+    ui->tabWidgetRepos->removeTab(1);
 }
 
 void GitMainWindow::onCloneProgress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects)

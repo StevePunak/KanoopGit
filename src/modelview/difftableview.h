@@ -3,13 +3,14 @@
 #include <Kanoop/gui/tableviewbase.h>
 #include <git2qt.h>
 
+class DiffScrollBar;
 class DiffTableView : public TableViewBase
 {
     Q_OBJECT
 public:
     explicit DiffTableView(QWidget* parent = nullptr);
 
-    void createModelTreeToTree(GIT::Repository* repo, const GIT::Tree& oldTree, const GIT::Tree& newTree, const GIT::DiffDelta& delta);
+    void createModelForSingleDelta(GIT::Repository* repo, const GIT::TreeEntry& oldEntry, const GIT::TreeEntry& newEntry, const GIT::DiffDelta& delta);
     void createModelIndexToWorkDir(GIT::Repository* repo, const GIT::DiffDelta& delta);
 
     void scrollToNextDelta();
@@ -23,6 +24,7 @@ public:
 private:
     GIT::DiffDelta _delta;
     int _lastDeltaRow = -1;
+    DiffScrollBar* _scrollBar;
 
 signals:
 

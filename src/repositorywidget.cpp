@@ -530,19 +530,19 @@ void RepositoryWidget::onTreeChangeEntryClicked(const GIT::TreeChangeEntry& tree
             throw CommonException("Failed to find parent commit (2)");
         }
 
-        Tree oldTree = parentCommit.tree();
-        Tree newTree = selectedCommit.tree();
-
         CompareOptions compareOptions;
         compareOptions.setSimilarity(SimilarityOptions::renames());
         compareOptions.setContextLines(0);
-        DiffDelta::List deltas = _repo->diffTreeToTree(oldTree, newTree, compareOptions);
+        DiffDelta::List deltas = _repo->diffCommitToCommit(parentCommit, selectedCommit, compareOptions);
         DiffDelta delta = deltas.findFirstByPath(treeChangeEntry.path());
         if(delta.isValid() == false) {
             throw CommonException("Failed to find delta");
         }
 
-        ui->tableDiffs->createModelTreeToTree(_repo, oldTree, newTree, delta);
+        TreeEntry oldEntry = TreeEntry::findForCommit(parentCommit, delta.oldFile().path());
+        TreeEntry newEntry = TreeEntry::findForCommit(selectedCommit, delta.newFile().path());
+
+        ui->tableDiffs->createModelForSingleDelta(_repo, oldEntry, newEntry, delta);
         ui->tableDiffs->scrollToNextDelta();
         ui->pushStageDiffFile->setProperty(StageUnstageProperty.toUtf8().constData(), StageTypeInvalid);
         switchToDiffView();

@@ -37,6 +37,7 @@ private slots:
     void onCopyUrlToClipboard();
     void onCopyPathToClipboard();
     void onPreferencesClicked();
+    void onDebugCloseTab();
 
     // Double-clicks
     void onRecentRepoDoubleClicked(const QModelIndex &index);

@@ -21,9 +21,7 @@ TreeEntryTableModel::TreeEntryTableModel(Repository* repo, const ObjectId& commi
         if(parents.count() == 1) {
             Commit parentCommit = _repo->findCommit(thisCommit.parents().at(0).objectId());
             if(parentCommit.isValid()) {
-                Tree thisTree = thisCommit.tree();
-                Tree parentTree = parentCommit.tree();
-                TreeChanges changes = repo->diff()->compare(parentTree, thisTree);
+                TreeChanges changes = repo->diff()->compare(parentCommit, thisCommit, CompareOptions(), DiffModifier::DiffModNone);
                 for(const TreeChangeEntry& entry : changes) {
                     appendRootItem(new TreeChangeEntryItem(entry, this));
                 }
@@ -31,10 +29,8 @@ TreeEntryTableModel::TreeEntryTableModel(Repository* repo, const ObjectId& commi
 
         }
         else if(parents.count() > 1) {
-            Tree thisTree = thisCommit.tree();
             for(const Commit& parentCommit : parents) {
-                Tree parentTree = parentCommit.tree();
-                TreeChanges changes = repo->diff()->compare(parentTree, thisTree);
+                TreeChanges changes = repo->diff()->compare(parentCommit, thisCommit, CompareOptions(), DiffModifier::DiffModNone);
                 for(const TreeChangeEntry& entry : changes) {
                     appendRootItem(new TreeChangeEntryItem(entry, this));
                 }
