@@ -21,11 +21,13 @@ public:
 
     QModelIndex findCommit(const GIT::ObjectId& objectId) const;
     void selectCommit(const GIT::ObjectId& objectId);
+    void selectWorkInProgress();
 
     GIT::Stash currentSelectedStash() const;
     GIT::GraphedCommit currentSelectedCommit() const;
 
     int selectedCount() const;
+    bool hasWorkInProgress() const;
 
     GitEntities::Type currentMetadataType() const;
 
@@ -46,9 +48,6 @@ private:
 
     // Calls for friend class
     BranchTagLabelWidget* getBranchLabelWidget(const GIT::ObjectId& objectId) const { return _branchLabelWidgets.value(objectId); }
-
-    // Widget overrides
-    virtual void mousePressEvent(QMouseEvent *event) override;
 
     GIT::Repository* _repo;
     bool _editingBranchName;

@@ -13,7 +13,7 @@ public:
     CommitTableModel(GIT::Repository* repo, const GIT::GraphedCommit::List& commits, const GIT::StatusEntry::List statusEntries, QObject* parent = nullptr);
 
     QModelIndex findCommitIndex(const GIT::ObjectId& objectId) const;
-
+    QModelIndex findWorkInProgress() const;
 
 protected:
     virtual Qt::ItemFlags flags(const QModelIndex &index) const override;

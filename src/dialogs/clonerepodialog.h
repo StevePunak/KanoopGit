@@ -2,7 +2,6 @@
 #define CLONEREPODIALOG_H
 
 #include <Kanoop/gui/dialog.h>
-
 #include <credentialset.h>
 
 namespace Ui {
@@ -18,6 +17,7 @@ public:
     ~CloneRepoDialog();
 
     QString localPath() const;
+    void setLocalPath(const QString& localPath);
     QString url() const { return _url; }
     CredentialSet credentials() const;
 

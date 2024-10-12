@@ -49,7 +49,7 @@ logText(LVL_DEBUG, "Point 3-1");
 
     RepoConfig config = Settings::instance()->repoConfig(_repo->localPath());
     if(config.localBranchesVisible()) {
-        expandRecursively(treeModel->localBranchesIndex());
+        expandLocalBranches();
     }
 
     if(config.remoteBranchesVisible()) {
@@ -124,6 +124,33 @@ void LeftSidebarTreeView::hideAllSubmoduleSpinners()
     for(SubmoduleLabelWidget* widget : qAsConst(_submoduleWidgets)) {
         widget->setSpinning(false);
     }
+}
+
+void LeftSidebarTreeView::expandLocalBranches()
+{
+    LeftSidebarTreeModel* treeModel = dynamic_cast<LeftSidebarTreeModel*>(sourceModel());
+    if(treeModel == nullptr) {
+        return;
+    }
+    expandRecursively(treeModel->localBranchesIndex());
+}
+
+void LeftSidebarTreeView::expandRemoteBranches()
+{
+    LeftSidebarTreeModel* treeModel = dynamic_cast<LeftSidebarTreeModel*>(sourceModel());
+    if(treeModel == nullptr) {
+        return;
+    }
+    expandRecursively(treeModel->remoteBranchesIndex());
+}
+
+void LeftSidebarTreeView::expandSubmodules()
+{
+    LeftSidebarTreeModel* treeModel = dynamic_cast<LeftSidebarTreeModel*>(sourceModel());
+    if(treeModel == nullptr) {
+        return;
+    }
+    expandRecursively(treeModel->submodulesIndex());
 }
 
 void LeftSidebarTreeView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)

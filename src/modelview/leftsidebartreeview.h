@@ -19,6 +19,10 @@ public:
     void setSubmoduleSpinnerValue(const GIT::Submodule& submodule, int value);
     void hideAllSubmoduleSpinners();
 
+    void expandLocalBranches();
+    void expandRemoteBranches();
+    void expandSubmodules();
+
 private:
     SubmoduleLabelWidget* getSubmoduleWidget(const QString& name) { return _submoduleWidgets.value(name); }
     LocalBranchLabelWidget* getLocalBranchWidget(const QString& canonicalName) { return _localBranchWidgets.value(canonicalName); }

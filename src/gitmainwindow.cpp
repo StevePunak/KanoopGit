@@ -119,9 +119,10 @@ RepositoryContainer* GitMainWindow::openRepository(const QString& path)
     ui->tabWidgetRepos->tabBar()->setTabButton(index, QTabBar::RightSide, closeButton);
     ui->tabWidgetRepos->tabBar()->setTabToolTip(index, path);
 
-    ui->tableRecentRepos->createModel(Settings::instance()->recentFiles());
-
     Settings::instance()->saveOpenRepo(path);
+    Settings::instance()->pushRecentFile(path);
+
+    ui->tableRecentRepos->createModel(Settings::instance()->recentFiles());
 
     return repoWidget;
 }

@@ -46,7 +46,7 @@
      </widget>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>3</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tabCommits">
        <attribute name="title">
@@ -151,7 +151,7 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
-         <widget class="FileSystemTreeView" name="treeGitTree"/>
+         <widget class="FileSystemTreeView" name="treeFileSystem"/>
         </item>
        </layout>
       </widget>
@@ -783,6 +783,14 @@
   <action name="actionInitializeAllSubmodules">
    <property name="text">
     <string>Initialize all submodules</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionAddSubmodule">
+   <property name="text">
+    <string>Add Submodule</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

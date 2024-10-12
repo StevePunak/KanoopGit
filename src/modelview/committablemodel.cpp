@@ -50,6 +50,17 @@ QModelIndex CommitTableModel::findCommitIndex(const GIT::ObjectId& objectId) con
     return result;
 }
 
+QModelIndex CommitTableModel::findWorkInProgress() const
+{
+    QModelIndex result;
+    QModelIndex startSearchIndex = index(0, 0, QModelIndex());
+    QModelIndexList found = match(startSearchIndex, KANOOP::EntityTypeRole, GitEntities::WorkInProgress, 1, Qt::MatchRecursive | Qt::MatchWrap);
+    if(found.count() > 0) {
+        result = found.at(0);
+    }
+    return result;
+}
+
 Qt::ItemFlags CommitTableModel::flags(const QModelIndex &index) const
 {
     Qt::ItemFlags result = AbstractTableModel::flags(index);

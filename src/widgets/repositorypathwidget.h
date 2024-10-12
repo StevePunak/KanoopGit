@@ -46,7 +46,10 @@ private:
     QList<PathPart> _pathParts;
 
 signals:
-    void closeClicked();
+    void closeClicked(const QString& buttonText);
+
+private slots:
+    void onCloseClicked();
 };
 
 #endif // REPOSITORYPATHWIDGET_H

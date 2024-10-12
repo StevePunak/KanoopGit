@@ -66,7 +66,7 @@ void RepositoryPathWidget::createLayout()
             Label* titleLabel = new Label("Submodule", this);
             titleLabel->setFontPointSize(SmallTextSize);
             ButtonLabel* nameLabel = new ButtonLabel(pathPart.text(), this);
-            connect(nameLabel, &ButtonLabel::clicked, this, &RepositoryPathWidget::closeClicked);
+            connect(nameLabel, &ButtonLabel::clicked, this, &RepositoryPathWidget::onCloseClicked);
             nameLabel->setButtonAlignment(Qt::AlignLeft);
             nameLabel->setIcon(Resources::getIcon(Resources::CloseButton));
             newLayout->addWidget(titleLabel, 0, col);
@@ -79,4 +79,14 @@ void RepositoryPathWidget::createLayout()
     }
     setLayout(newLayout);
 
+}
+
+void RepositoryPathWidget::onCloseClicked()
+{
+    ButtonLabel* buttonLabel = dynamic_cast<ButtonLabel*>(sender());
+    if(buttonLabel == nullptr) {
+        return;
+    }
+
+    emit closeClicked(buttonLabel->text());
 }

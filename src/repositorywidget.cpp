@@ -21,6 +21,7 @@
 
 #include <Kanoop/gui/resources.h>
 
+#include <dialogs/clonerepodialog.h>
 #include <dialogs/repooptionsdialog.h>
 
 #include <Kanoop/gui/widgets/toastmanager.h>
@@ -43,19 +44,16 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
 
     initializeBase();
 
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+
 Log::logText(LVL_DEBUG, QString("%1   5-1").arg(__FUNCTION__));
-    // Load views
-    ui->treeGitTree->createModel(_repo);
-    ui->tableCommits->createModel(_repo);
-    ui->leftSidebar->createModel(_repo);
-Log::logText(LVL_DEBUG, QString("%1   5-2").arg(__FUNCTION__));
 
     // Some initial values
     ui->textDiffFileName->clear();
 
     // Wire up views to this widget
-    connect(ui->treeGitTree, &FileSystemTreeView::indexEntryClicked, this, &RepositoryWidget::onIndexEntryClicked);
-    connect(ui->treeGitTree, &FileSystemTreeView::folderClicked, this, &RepositoryWidget::onFolderClicked);
+    connect(ui->treeFileSystem, &FileSystemTreeView::indexEntryClicked, this, &RepositoryWidget::onIndexEntryClicked);
+    connect(ui->treeFileSystem, &FileSystemTreeView::folderClicked, this, &RepositoryWidget::onFolderClicked);
     connect(ui->tableCommits, &CommitTableView::commitClicked, this, &RepositoryWidget::onCommitClicked);
     connect(ui->tableCommits, &CommitTableView::stashClicked, this, &RepositoryWidget::onStashCommitClicked);
     connect(ui->tableCommits, &CommitTableView::workInProgressClicked, this, &RepositoryWidget::onWorkInProgressClicked);
@@ -90,6 +88,7 @@ Log::logText(LVL_DEBUG, QString("%1   5-2").arg(__FUNCTION__));
     connect(ui->actionInitializeSubmodule, &QAction::triggered, this, &RepositoryWidget::onInitializeSubmoduleClicked);
     connect(ui->actionDeleteSubmodule, &QAction::triggered, this, &RepositoryWidget::onDeleteSubmoduleClicked);
     connect(ui->actionInitializeAllSubmodules, &QAction::triggered, this, &RepositoryWidget::onInitializeAllSubmodulesClicked);
+    connect(ui->actionAddSubmodule, &QAction::triggered, this, &RepositoryWidget::onAddSubmoduleClicked);
 
     // Pushbuttons
     connect(ui->pushStageAll, &QPushButton::clicked, this, &RepositoryWidget::onStageAllChangesClicked);
@@ -124,6 +123,7 @@ Log::logText(LVL_DEBUG, QString("%1   5-2").arg(__FUNCTION__));
     // Toast
     createToastContainer();
 
+    _refreshItems = RefreshAll;
     onRefreshWidgets();
 
     // Set correct starting pages
@@ -132,8 +132,12 @@ Log::logText(LVL_DEBUG, QString("%1   5-2").arg(__FUNCTION__));
 
 Log::logText(LVL_DEBUG, QString("%1   5-3").arg(__FUNCTION__));
     // Set current commit
-    if(_repo->headCommit().objectId().isValid()) {
+    if(ui->tableCommits->hasWorkInProgress()) {
+        ui->tableCommits->selectWorkInProgress();
+    }
+    else if(_repo->headCommit().objectId().isValid()) {
         ui->tableCommits->selectCommit(_repo->headCommit().objectId());
+        onCommitClicked(_repo->headCommit());
     }
 
     // Set up credentials resolver
@@ -142,6 +146,9 @@ Log::logText(LVL_DEBUG, QString("%1   5-3").arg(__FUNCTION__));
     // Set button enablements and text
     maybeEnableButtons();
 Log::logText(LVL_DEBUG, QString("%1   5-4").arg(__FUNCTION__));
+
+QApplication::restoreOverrideCursor();
+
 }
 
 RepositoryWidget::~RepositoryWidget()
@@ -172,9 +179,34 @@ void RepositoryWidget::createToastContainer()
     _toastManager = new ToastManager(this);
 }
 
-void RepositoryWidget::refreshWidgets()
+void RepositoryWidget::refreshWidgets(RefreshItems refreshItems)
 {
+    _refreshItems = refreshItems;
     QTimer::singleShot(0, this, &RepositoryWidget::onRefreshWidgets);
+}
+
+void RepositoryWidget::refreshStatusEntries()
+{
+    StatusOptions statusOptions;
+    statusOptions.setExcludeSubmodules(false);
+    statusOptions.setShow(StatusShowIndexAndWorkDir);
+    GIT::RepositoryStatus status = _repo->status(statusOptions);
+    {
+        GIT::StatusEntry::List entries;
+        entries.appendIfNotPresent(status.modified());
+        entries.appendIfNotPresent(status.untracked());
+        entries.appendIfNotPresent(status.missing());
+        entries.appendIfNotPresent(status.renamedInWorkDir());
+        ui->tableUnstagedFiles->createModel(_repo, entries);
+    }
+    {
+        GIT::StatusEntry::List entries;
+        entries.appendIfNotPresent(status.staged());
+        entries.appendIfNotPresent(status.added());
+        entries.appendIfNotPresent(status.renamedInIndex());
+        entries.appendIfNotPresent(status.removed());
+        ui->tableStagedFiles->createModel(_repo, entries);
+    }
 }
 
 void RepositoryWidget::updateCommitShaWidget(const GIT::ObjectId& objectId)
@@ -272,6 +304,7 @@ void RepositoryWidget::showSubmodulesCustomContextMenu()
     ui->actionInitializeAllSubmodules->setEnabled(uninitialized > 0);
 
     QMenu menu(this);
+    menu.addAction(ui->actionAddSubmodule);
     menu.addAction(ui->actionInitializeAllSubmodules);
 
     menu.exec(QCursor::pos());
@@ -284,7 +317,6 @@ void RepositoryWidget::resizeEvent(QResizeEvent* event)
     // resize the toast container
     QSize size(ToastWidth, event->size().height() / 2);
     QPoint pos(0, size.height());
-    logText(LVL_DEBUG, QString("Resized toast container to %1 at %2").arg(Size(size).toString()).arg(Point(pos).toString()));
     _toastManager->move(pos);
     _toastManager->resize(size);
 }
@@ -306,30 +338,22 @@ void RepositoryWidget::switchToCommitView()
 void RepositoryWidget::onRefreshWidgets()
 {
     logText(LVL_DEBUG, __FUNCTION__);
-    StatusOptions statusOptions;
-    statusOptions.setExcludeSubmodules(false);
-    statusOptions.setShow(StatusShowIndexAndWorkDir);
-    GIT::RepositoryStatus status = _repo->status(statusOptions);
-    {
-        GIT::StatusEntry::List entries;
-        entries.appendIfNotPresent(status.modified());
-        entries.appendIfNotPresent(status.untracked());
-        entries.appendIfNotPresent(status.missing());
-        entries.appendIfNotPresent(status.renamedInWorkDir());
-        ui->tableUnstagedFiles->createModel(_repo, entries);
-    }
-    {
-        GIT::StatusEntry::List entries;
-        entries.appendIfNotPresent(status.staged());
-        entries.appendIfNotPresent(status.added());
-        entries.appendIfNotPresent(status.renamedInIndex());
-        entries.appendIfNotPresent(status.removed());
-        ui->tableStagedFiles->createModel(_repo, entries);
+
+    if(_refreshItems & RefreshStatusEntries) {
+        refreshStatusEntries();
     }
 
-    ui->treeGitTree->createModel(_repo);
-    ui->tableCommits->createModel(_repo);
-    ui->leftSidebar->createModel(_repo);
+    if(_refreshItems & RefreshFileSystemTree) {
+        ui->treeFileSystem->createModel(_repo);
+    }
+
+    if(_refreshItems & RefreshCommitTable) {
+        ui->tableCommits->createModel(_repo);
+    }
+
+    if(_refreshItems & RefreshLeftSidebar) {
+        ui->leftSidebar->createModel(_repo);
+    }
 
     maybeEnableButtons();
 }
@@ -340,7 +364,7 @@ void RepositoryWidget::createBranch(const QString &branchName)
     if(branch.isNull()) {
         QMessageBox::warning(this, "Failed to create branch", _repo->errorText());
     }
-    refreshWidgets();
+    refreshWidgets(RefreshAll);
 }
 
 void RepositoryWidget::keyPressEvent(QKeyEvent* event)
@@ -381,7 +405,7 @@ void RepositoryWidget::onRepositoryFileSystemChanged()
         return;
     }
     logText(LVL_DEBUG, "Repo file system change notification");
-    refreshWidgets();
+    refreshWidgets(RefreshAll);
 }
 
 void RepositoryWidget::onFolderClicked(const QString& folderPath)
@@ -419,7 +443,7 @@ void RepositoryWidget::onStashCommitClicked(const GIT::Stash& stash)
 
 void RepositoryWidget::onWorkInProgressClicked()
 {
-    refreshWidgets();
+    refreshWidgets(RefreshStatusEntries);
     ui->stackedWidget->setCurrentWidget(ui->pageStageAndCommit);
     maybeEnableButtons();
 }
@@ -436,7 +460,7 @@ void RepositoryWidget::onLocalReferenceDoubleClicked(const GIT::Reference &refer
         if(_repo->checkoutLocalBranch(reference.friendlyName()) == false) {
             throw CommonException(_repo->errorText());
         }
-        refreshWidgets();
+        refreshWidgets(RefreshAll);
 
         _toastManager->message(QString("Checked out %1").arg(reference.friendlyName()));
     }
@@ -453,7 +477,7 @@ void RepositoryWidget::onRemoteReferenceDoubleClicked(const GIT::Reference& refe
         if(_repo->checkoutRemoteBranch(reference.friendlyName()) == false) {
             throw CommonException(_repo->errorText());
         }
-        refreshWidgets();
+        refreshWidgets(RefreshAll);
     }
     catch(const CommonException& e)
     {
@@ -784,7 +808,7 @@ void RepositoryWidget::onDeleteLocalBranchClicked()
     if(_repo->deleteLocalBranch(reference) == false) {
         QMessageBox::warning(this, "Failed to delete branch", _repo->errorText());
     }
-    refreshWidgets();
+    refreshWidgets(RefreshLeftSidebar);
 }
 
 void RepositoryWidget::onRenameLocalBranchClicked()
@@ -830,7 +854,29 @@ void RepositoryWidget::onInitializeSubmoduleClicked()
 
 void RepositoryWidget::onDeleteSubmoduleClicked()
 {
-    UNIMPLEMENTED
+    QAction* action = dynamic_cast<QAction*>(sender());
+    if(action == nullptr) {
+        return;
+    }
+    try
+    {
+        Submodule submodule = Submodule::fromVariant(action->property(SubmoduleProperty.toUtf8().constData()));
+        if(submodule.isNull()) {
+            throw CommonException("Invalid submodule (bug)");
+        }
+
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+        bool result = _repo->deleteSubmodule(submodule);
+        QApplication::restoreOverrideCursor();
+        if(result == false) {
+            throw CommonException(_repo->errorText());
+        }
+        _toastManager->message(QString("Deleted submodule %1").arg(submodule.name()));
+    }
+    catch(const CommonException& e)
+    {
+        _toastManager->errorMessage(e.message());
+    }
 }
 
 void RepositoryWidget::onInitializeAllSubmodulesClicked()
@@ -843,6 +889,33 @@ void RepositoryWidget::onInitializeAllSubmodulesClicked()
     connect(cloner, &SubmoduleCloner::submoduleFinished, this, &RepositoryWidget::onSubmoduleUpdateFinished);
     connect(cloner, &SubmoduleCloner::finished, this, &RepositoryWidget::onSubmoduleUpdaterFinished);
     cloner->start();
+}
+
+void RepositoryWidget::onAddSubmoduleClicked()
+{
+    try
+    {
+        CloneRepoDialog dlg(this);
+        dlg.setLocalPath(_repo->localPath());
+        if(dlg.exec() == QDialog::Accepted) {
+            QApplication::setOverrideCursor(Qt::WaitCursor);
+            if(_repo->addSubmodule(dlg.url(), dlg.localPath()) == false) {
+                throw CommonException(_repo->errorText());
+            }
+
+            refreshWidgets(RefreshLeftSidebar);
+            QApplication::restoreOverrideCursor();
+
+            ui->leftSidebar->expandSubmodules();
+
+            Submodule submodule = _repo->submodules().findByUrl(dlg.url());
+            _toastManager->message(QString("Successfully added submodule %1").arg(submodule.name()));
+        }
+    }
+    catch(const CommonException& e)
+    {
+        _toastManager->errorMessage(e.message());
+    }
 }
 
 void RepositoryWidget::onStageAllChangesClicked()
@@ -877,7 +950,7 @@ void RepositoryWidget::onStageDiffFileClicked()
     }
 
     ui->tabWidget->setCurrentWidget(ui->tabCommits);
-    refreshWidgets();
+    refreshWidgets(RefreshStatusEntries);
 }
 
 void RepositoryWidget::onUnstageAllChangesClicked()
@@ -898,7 +971,7 @@ void RepositoryWidget::onCommitChangesClicked()
         QMessageBox::warning(this, "Error", QString("Failed to commit files: %1").arg(_repo->errorText()), QMessageBox::Ok);
     }
     switchToCommitView();
-    refreshWidgets();
+    refreshWidgets(RefreshAll);
 }
 
 void RepositoryWidget::pullFromRemote()
@@ -916,7 +989,7 @@ void RepositoryWidget::pullFromRemote()
         _toastManager->errorMessage(e.message());
         // QMessageBox::warning(this, "Pull Failed", e.message());
     }
-    refreshWidgets();
+    refreshWidgets(RefreshLeftSidebar | RefreshCommitTable);
 }
 
 void RepositoryWidget::pushToRemote()
@@ -948,7 +1021,7 @@ void RepositoryWidget::pushToRemote()
     {
         QMessageBox::warning(this, "Push Failed", e.message());
     }
-    refreshWidgets();
+    refreshWidgets(RefreshLeftSidebar);
     QApplication::restoreOverrideCursor();
 }
 

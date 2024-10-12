@@ -65,4 +65,17 @@ enum FileTypes
     RepoDirectory       = 4,
 };
 
+enum RefreshItem
+{
+    RefreshNone =                   0x0000,
+    RefreshStatusEntries =          0x0001,
+    RefreshFileSystemTree =         0x0002,
+    RefreshCommitTable =            0x0004,
+    RefreshLeftSidebar =            0x0008,
+
+    RefreshAll = (RefreshStatusEntries | RefreshFileSystemTree | RefreshCommitTable | RefreshLeftSidebar),
+};
+Q_DECLARE_FLAGS(RefreshItems, RefreshItem)
+Q_DECLARE_OPERATORS_FOR_FLAGS(RefreshItems)
+
 #endif // KANOOPGITTYPES_H

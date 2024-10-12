@@ -1,9 +1,11 @@
 #include "repositorycontainer.h"
 #include "repositorywidget.h"
+#include "settings.h"
 #include "ui_repositorycontainer.h"
 
 #include <Kanoop/commonexception.h>
 #include <Kanoop/pathutil.h>
+#include <Kanoop/stringutil.h>
 
 #include <QMessageBox>
 #include <QPushButton>
@@ -25,6 +27,7 @@ RepositoryContainer::RepositoryContainer(const QString& path, QWidget *parent) :
     if(Repository::isRepository(path)) {
         _primaryRepo = new Repository(path);
         openRepository(_primaryRepo);
+        openPersistedSubmodules();
     }
 }
 
@@ -47,8 +50,8 @@ void RepositoryContainer::openRepository(GIT::Repository* repo)
         // Open repository
         _workingRepo = _repos.value(repo->localPath());
         if(_workingRepo == nullptr) {
-            _workingRepo = new Repository(repo->localPath());
-            _repos.insert(repo->localPath(), _workingRepo);
+            _workingRepo = repo;
+            _repos.insert(repo->localPath(), repo);
         }
 
         // Create the widget
@@ -64,7 +67,7 @@ void RepositoryContainer::openRepository(GIT::Repository* repo)
         connect(ui->pushDebug, &QPushButton::clicked, _repoWidget, &RepositoryWidget::doDebugThing);
 
         connect(_repoWidget, &RepositoryWidget::validate, this, &RepositoryContainer::maybeEnableButtons);
-        connect(_repoWidget, &RepositoryWidget::submoduleDoubleClicked, this, &RepositoryContainer::onSubmoduleDoubleClicked);
+        connect(_repoWidget, &RepositoryWidget::submoduleDoubleClicked, this, &RepositoryContainer::onOpenSubmoduleClicked);
 
         ui->stackedWidget->addWidget(_repoWidget);
         ui->stackedWidget->setCurrentWidget(_repoWidget);
@@ -74,6 +77,34 @@ void RepositoryContainer::openRepository(GIT::Repository* repo)
     catch(CommonException& e)
     {
         QMessageBox::warning(this, "Error", e.message());
+    }
+}
+
+void RepositoryContainer::openSubmoduleFromStack()
+{
+    QStringList stack = _submoduleStack;
+    stack.prepend(_primaryRepo->localPath());
+    QString path = PathUtil::combine(stack);
+    if(Repository::isRepository(path)) {
+        Repository* repo = new Repository(path);
+        openRepository(repo);
+    }
+}
+
+void RepositoryContainer::openPersistedSubmodules()
+{
+    RepoConfig config = Settings::instance()->repoConfig(_primaryRepo->localPath());
+    if(config.openedSubmodule().isEmpty()) {
+        return;
+    }
+
+    QStringList parts = config.openedSubmodule().split('/');
+    for(const QString& part : parts) {
+        Submodule submodule = _workingRepo->submodules().findByName(part);
+        if(submodule.isNull()) {
+            return;
+        }
+        openSubmodule(submodule);
     }
 }
 
@@ -99,8 +130,22 @@ void RepositoryContainer::initializePathWidget()
     }
 }
 
-void RepositoryContainer::onSubmoduleDoubleClicked(const Submodule& submodule)
+void RepositoryContainer::persistSubmodulePath() const
 {
+    QString submodulePath = StringUtil::toDelimitedString(_submoduleStack, '/');
+    RepoConfig config = Settings::instance()->repoConfig(_primaryRepo->localPath());
+    config.setOpenedSubmodule(submodulePath);
+    Settings::instance()->saveRepoConfig(config);
+}
+
+void RepositoryContainer::onOpenSubmoduleClicked(const GIT::Submodule& submodule)
+{
+    openSubmodule(submodule);
+}
+
+Repository* RepositoryContainer::openSubmodule(const Submodule& submodule)
+{
+    Repository* repo = nullptr;
     try
     {
         QStringList stack = _submoduleStack;
@@ -117,13 +162,18 @@ void RepositoryContainer::onSubmoduleDoubleClicked(const Submodule& submodule)
 
         _submoduleStack.append(submodule.path());
 
-        Repository* repo = new Repository(path);
+        persistSubmodulePath();
+
+        repo = new Repository(path);
         openRepository(repo);
     }
     catch(const CommonException& e)
     {
         QMessageBox::warning(this, "Error", e.message());
+        _submoduleStack = QStringList();
+        persistSubmodulePath();
     }
+    return repo;
 }
 
 void RepositoryContainer::maybeEnableButtons()
@@ -134,10 +184,20 @@ void RepositoryContainer::maybeEnableButtons()
     ui->pushPopStash->setEnabled(_repoWidget->isOnStash());
 }
 
-void RepositoryContainer::onPathWidgetCloseClicked()
+void RepositoryContainer::onPathWidgetCloseClicked(const QString& text)
 {
     if(_workingRepo != nullptr && _workingRepo != _primaryRepo) {
+        while(_submoduleStack.length() > 0 && _submoduleStack.last() != text) {
+            _submoduleStack.pop_back();
+        }
         _submoduleStack.pop_back();
-        openRepository(_primaryRepo);
+        persistSubmodulePath();
+
+        if(_submoduleStack.isEmpty()) {
+            openRepository(_primaryRepo);
+        }
+        else {
+            openSubmoduleFromStack();
+        }
     }
 }

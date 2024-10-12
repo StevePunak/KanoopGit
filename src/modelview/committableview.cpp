@@ -107,6 +107,22 @@ void CommitTableView::selectCommit(const GIT::ObjectId& objectId)
     }
 }
 
+void CommitTableView::selectWorkInProgress()
+{
+    CommitTableModel* tableModel = static_cast<CommitTableModel*>(sourceModel());
+    if(tableModel == nullptr) {
+        return;
+    }
+    QModelIndex index = tableModel->findWorkInProgress();
+    if(index.isValid() == false) {
+        return;
+    }
+    QModelIndex bottomLeft = sourceModel()->index(index.row(), sourceModel()->columnCount() - 1);
+    QItemSelection selection(index, bottomLeft);
+    selectionModel()->select(selection, QItemSelectionModel::Select);
+    emit workInProgressClicked();
+}
+
 Stash CommitTableView::currentSelectedStash() const
 {
     Stash stash;
@@ -133,6 +149,15 @@ int CommitTableView::selectedCount() const
     return result;
 }
 
+bool CommitTableView::hasWorkInProgress() const
+{
+    CommitTableModel* tableModel = static_cast<CommitTableModel*>(sourceModel());
+    if(tableModel != nullptr) {
+        return tableModel->findWorkInProgress().isValid();
+    }
+    return false;
+}
+
 GitEntities::Type CommitTableView::currentMetadataType() const
 {
     GitEntities::Type type = GitEntities::InvalidEntity;
@@ -150,18 +175,6 @@ void CommitTableView::createPixmaps()
     Size pixmapSize(RowHeight / 2, RowHeight / 2);
     _cloudPixmap = _cloudPixmap.scaled(pixmapSize.toSize());
     _computerPixmap = _computerPixmap.scaled(pixmapSize.toSize());
-}
-
-void CommitTableView::mousePressEvent(QMouseEvent *event)
-{
-    TableViewBase::mousePressEvent(event);
-#if 0
-    QModelIndex index = indexAt(event->pos());
-    if(index.column() == sourceModel()->columnForHeader(CH_BranchOrTag) && index.data(Qt::DisplayRole).toString().isEmpty() == false) {
-        logText(LVL_DEBUG, "Show the dropdown");
-        edit(index);
-    }
-#endif
 }
 
 void CommitTableView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)

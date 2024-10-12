@@ -1,6 +1,8 @@
 #ifndef REPOSITORYCONTAINER_H
 #define REPOSITORYCONTAINER_H
 
+#include "repoconfig.h"
+
 #include <Kanoop/gui/complexwidget.h>
 #include <git2qt.h>
 
@@ -22,9 +24,13 @@ public:
 
 private:
     void openRepository(GIT::Repository* repo);
+    void openSubmoduleFromStack();
+    void openPersistedSubmodules();
+    GIT::Repository* openSubmodule(const GIT::Submodule& submodule);
     void clearStackedWidget();
     void setRepoWidget();
     void initializePathWidget();
+    void persistSubmodulePath() const;
 
     Ui::RepositoryContainer *ui;
 
@@ -36,9 +42,9 @@ private:
     QMap<QString, GIT::Repository*> _repos;
 
 private slots:
-    void onSubmoduleDoubleClicked(const GIT::Submodule& submodule);
+    void onOpenSubmoduleClicked(const GIT::Submodule& submodule);
     void maybeEnableButtons();
-    void onPathWidgetCloseClicked();
+    void onPathWidgetCloseClicked(const QString& text);
 };
 
 #endif // REPOSITORYCONTAINER_H

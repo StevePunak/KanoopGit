@@ -8,6 +8,7 @@
 #include <git2qt.h>
 #include <gitcredentialresolver.h>
 #include <submoduleupdateprogresscallback.h>
+#include <kanoopgittypes.h>
 
 
 class ToastManager;
@@ -63,6 +64,7 @@ private:
     RepoConfig _config;
     bool _filesystemWatchEnabled = true;
     ToastManager* _toastManager = nullptr;
+    RefreshItems _refreshItems = RefreshNone;
 
     GitCredentialResolver _credentialResolver;
     SubmoduleUpdateProgressCallback _submoduleUpdateProgressCallback;
@@ -75,7 +77,8 @@ private:
     enum StageType { StageTypeInvalid, StageFile, UnstageFile };
 
 private slots:
-    void refreshWidgets();
+    void refreshWidgets(RefreshItems refreshItems);
+    void refreshStatusEntries();
     void maybeEnableButtons();
     void onRepositoryFileSystemChanged();
     void switchToDiffView();
@@ -125,6 +128,7 @@ private slots:
     void onInitializeSubmoduleClicked();
     void onDeleteSubmoduleClicked();
     void onInitializeAllSubmodulesClicked();
+    void onAddSubmoduleClicked();
 
     // Pushbuttons
     void onStageAllChangesClicked();
