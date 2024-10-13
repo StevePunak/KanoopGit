@@ -68,7 +68,7 @@ void DiffTableView::scrollToNextDelta()
     QModelIndexList indexes = static_cast<DiffTableModel*>(sourceModel())->nextDelta(_lastDeltaRow);
     if(indexes.count() > 0) {
         _lastDeltaRow = indexes.last().row();
-        scrollTo(indexes.last());
+        scrollTo(indexes.last(), PositionAtCenter);
     }
 }
 
@@ -81,7 +81,7 @@ void DiffTableView::scrollToPreviousDelta()
     QModelIndexList indexes = static_cast<DiffTableModel*>(sourceModel())->previousDelta(_lastDeltaRow);
     if(indexes.count() > 0) {
         _lastDeltaRow = indexes.first().row();
-        scrollTo(indexes.first());
+        scrollTo(indexes.first(), PositionAtCenter);
     }
 }
 

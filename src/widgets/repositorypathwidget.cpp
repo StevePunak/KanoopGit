@@ -68,6 +68,7 @@ void RepositoryPathWidget::createLayout()
             ButtonLabel* nameLabel = new ButtonLabel(pathPart.text(), this);
             connect(nameLabel, &ButtonLabel::clicked, this, &RepositoryPathWidget::onCloseClicked);
             nameLabel->setButtonAlignment(Qt::AlignLeft);
+            nameLabel->setForegroundColor(Qt::blue);
             nameLabel->setIcon(Resources::getIcon(Resources::CloseButton));
             newLayout->addWidget(titleLabel, 0, col);
             newLayout->addWidget(nameLabel, 1, col);

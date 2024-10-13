@@ -85,8 +85,8 @@ public:
     static QPixmap createArc(int width, int height, GIT::GraphItemType type, const GitGraphPalette& palette);
 
 private:
-    QPixmap createCommitPixmap(const GIT::GraphedCommit& commit, const Size& size, bool isRepoHead) const;
-    QPixmap createWorkInProgressPixmap(const Size& size) const;
+    QPixmap createCommitPixmap(const GIT::GraphedCommit& commit, const Size& size, bool isRepoHead, const QStyleOptionViewItem& option) const;
+    QPixmap createWorkInProgressPixmap(const Size& size, const QStyleOptionViewItem& option) const;
     void drawCommitDot(QPainter* painter, const Size& size, const GIT::GraphedCommit& commit) const;
     void drawMergeDot(QPainter* painter, const Size& size, const GIT::GraphedCommit& commit) const;
     void drawCurvedConnector(QPainter* painter, const Size& pixmapSize, int level, GIT::GraphItemType type, const GIT::GraphedCommit& commit) const;

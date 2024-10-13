@@ -243,14 +243,14 @@ void GitCommitGraphStyledItemDelegate::paint(QPainter* painter, const QStyleOpti
         if(commit.isValid() == false) {
             return;
         }
-        QPixmap pixmap = createCommitPixmap(commit, drawRect.size(), isRepoHead);
+        QPixmap pixmap = createCommitPixmap(commit, drawRect.size(), isRepoHead, option);
         painter->drawPixmap(drawRect.x(), drawRect.y(), pixmap);
         break;
     }
 
     case GitEntities::WorkInProgress:
     {
-        QPixmap pixmap = createWorkInProgressPixmap(drawRect.size());
+        QPixmap pixmap = createWorkInProgressPixmap(drawRect.size(), option);
         painter->drawPixmap(drawRect.x(), drawRect.y(), pixmap);
         break;
     }
@@ -302,10 +302,14 @@ QPixmap GitCommitGraphStyledItemDelegate::createArc(int width, int height, GIT::
     return result;
 }
 
-QPixmap GitCommitGraphStyledItemDelegate::createCommitPixmap(const GIT::GraphedCommit& commit, const Size& size, bool isRepoHead) const
+QPixmap GitCommitGraphStyledItemDelegate::createCommitPixmap(const GIT::GraphedCommit& commit, const Size& size, bool isRepoHead, const QStyleOptionViewItem& option) const
 {
     QPixmap pixmap(size.toSize());
     pixmap.fill();
+
+    if(option.state & QStyle::State_Selected) {
+        pixmap.fill(option.palette.color(QPalette::Highlight));
+    }
 
     QPainter painter(&pixmap);
 
@@ -368,10 +372,16 @@ QPixmap GitCommitGraphStyledItemDelegate::createCommitPixmap(const GIT::GraphedC
     return pixmap;
 }
 
-QPixmap GitCommitGraphStyledItemDelegate::createWorkInProgressPixmap(const Size& size) const
+QPixmap GitCommitGraphStyledItemDelegate::createWorkInProgressPixmap(const Size& size, const QStyleOptionViewItem& option) const
 {
     QPixmap pixmap(size.toSize());
-    pixmap.fill();
+
+    if(option.state & QStyle::State_Selected) {
+        pixmap.fill(option.palette.color(QPalette::Highlight));
+    }
+    else {
+        pixmap.fill();
+    }
 
     QPainter painter(&pixmap);
 
