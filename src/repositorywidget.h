@@ -47,6 +47,7 @@ public slots:
 private:
     void initializeCredentials();
     void createToastContainer();
+    void setWidgetStylesheets();
     void updateCommitShaWidget(const GIT::ObjectId& objectId);
     void updateParentsShaWidget(const GIT::ObjectId& objectId);
     void updateParentsShaWidget(const GIT::ObjectId::List& objectIds);
@@ -55,8 +56,10 @@ private:
     void showLocalBranchCustomContextMenu(const GIT::Reference& reference);
     void showSubmoduleCustomContextMenu(const GIT::Submodule& submodule);
     void showSubmodulesCustomContextMenu();
+    void showCommitTableContextMenu(const QPoint& pos);
 
-    // QWidget interface
+    // Widget overrides
+    virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void resizeEvent(QResizeEvent* event) override;
 
     Ui::RepositoryWidget *ui;
@@ -69,6 +72,7 @@ private:
     GitCredentialResolver _credentialResolver;
     SubmoduleUpdateProgressCallback _submoduleUpdateProgressCallback;
 
+    static const QString CommitProperty;
     static const QString StageUnstageProperty;
     static const QString ReferenceProperty;
     static const QString SubmoduleProperty;
@@ -91,9 +95,6 @@ private slots:
 
     // Slots for views
     void createBranch(const QString& branchName);
-
-    // Widget overrides
-    virtual void keyPressEvent(QKeyEvent* event) override;
 
     // Widget clicks
     void onFolderClicked(const QString& folderPath);
@@ -129,12 +130,18 @@ private slots:
     void onDeleteSubmoduleClicked();
     void onInitializeAllSubmodulesClicked();
     void onAddSubmoduleClicked();
+    void onAmendCommitMessageTriggered();
+    void onCreateTagHereTriggered();
+    void onCreateAnnotatedTagHereTriggered();
+    void onMergeIntoCurrentBranchTriggered();
+    void onResetBranchTriggered();
 
     // Pushbuttons
     void onStageAllChangesClicked();
     void onStageDiffFileClicked();
     void onUnstageAllChangesClicked();
     void onCommitChangesClicked();
+    void onDiscardUnstagedClicked();
 
     void onNextDiffClicked();
     void onPreviousDiffClicked();

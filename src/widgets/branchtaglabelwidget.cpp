@@ -14,12 +14,16 @@
 #include <Kanoop/geometry/size.h>
 
 #include <Kanoop/gui/widgets/combobox.h>
+#include <Kanoop/gui/widgets/iconlabel.h>
 
 using namespace GIT;
 
-BranchTagLabelWidget::BranchTagLabelWidget(Repository* repo, const GIT::Reference::List &references, QWidget *parent) :
+BranchTagLabelWidget::BranchTagLabelWidget(Repository* repo, const ReferenceList& references, const AnnotatedTag::List& annotatedTags, const LightweightTag::List& lightweightTags, QWidget *parent) :
     QWidget(parent),
-    _repo(repo), _references(references)
+    _repo(repo),
+    _references(references),
+    _annotatedTags(annotatedTags),
+    _lightweightTags(lightweightTags)
 {
     BranchTagLabelWidget::setObjectName(BranchTagLabelWidget::metaObject()->className());
 
@@ -34,7 +38,7 @@ BranchTagLabelWidget::BranchTagLabelWidget(Repository* repo, const GIT::Referenc
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 
-    if(references.count() > 1) {
+    if(references.count() + _annotatedTags.count() + _lightweightTags.count() > 1) {
         _combo = new ComboBox(this);
         createPixmaps();
 
@@ -56,16 +60,29 @@ BranchTagLabelWidget::BranchTagLabelWidget(Repository* repo, const GIT::Referenc
             }
             row++;
         }
+        for(const AnnotatedTag& tag : _annotatedTags) {
+            _combo->addItem(QIcon(_tagPixmap), tag.shortName());
+        }
+        for(const LightweightTag& tag : _lightweightTags) {
+            _combo->addItem(QIcon(_tagPixmap), tag.shortName());
+        }
+
         _combo->setCurrentIndex(setIndex);
         layout->addWidget(_combo);
     }
-    else {
+    else if(references.count() > 0){
         Reference reference = _references.at(0);
-        _nameLabel = new QLabel(reference.friendlyName(), this);
+        _nameLabel = new IconLabel(reference.friendlyName(), this);
         createPixmaps();
         if(reference.targetObjectId() == headCommitId) {
             labelPixmap = _linePixmap;
         }
+        layout->addWidget(_nameLabel);
+    }
+    else if(annotatedTags.count() > 0 || lightweightTags.count() > 0) {
+        QString text = annotatedTags.count() > 0 ? annotatedTags.at(0).shortName() : lightweightTags.at(0).shortName();
+        _nameLabel = new IconLabel(text, Resources::getIcon(GitAssets::Tag), this);
+        createPixmaps();
         layout->addWidget(_nameLabel);
     }
 
@@ -104,6 +121,7 @@ void BranchTagLabelWidget::createPixmaps()
     double widgetHeight = labelWidget()->height() - 2;
     _cloudPixmap = Resources::getPixmap(GitAssets::Cloud);
     _computerPixmap = Resources::getPixmap(GitAssets::Computer);
+    _tagPixmap = Resources::getPixmap(GitAssets::Tag);
     Size pixmapSize(widgetHeight / 2, widgetHeight / 2);
     _cloudPixmap = _cloudPixmap.scaled(pixmapSize.toSize());
     _computerPixmap = _computerPixmap.scaled(pixmapSize.toSize());

@@ -26,7 +26,7 @@ private:
     void createRemoteBranchesLeaf();
     void createSubmodulesLeaf();
 
-    void loadBranches(AbstractModelItem* rootItem, const GIT::Reference::List& references, bool local);
+    void loadBranches(AbstractModelItem* rootItem, const GIT::ReferenceList& references, bool local);
     void ensureFolder(AbstractModelItem* rootItem, const QString& path);
 
     QModelIndex findBranchIndex(AbstractModelItem* rootItem, const QString& path) const;

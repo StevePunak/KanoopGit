@@ -75,9 +75,21 @@ Qt::ItemFlags CommitTableModel::flags(const QModelIndex &index) const
 bool CommitTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
     Q_UNUSED(index)
-    if(role == CreateBranchRole) {
+    switch(role) {
+    case CreateBranchRole:
         emit createBranch(value.toString());
+        break;
+    case ReferencesRole:
+    {
+        ReferenceList references = ReferenceList::fromVariant(value);
+        CommitItem* item = static_cast<CommitItem*>(index.internalPointer());
+        item->setReferences(references);
+        break;
     }
+    default:
+        break;
+    }
+
     return false;
 }
 
@@ -92,6 +104,8 @@ CommitTableModel::CommitItem::CommitItem(const GIT::GraphedCommit &commit, Commi
     if(repo()->head().isDetachedHead() && commit.objectId() == repo()->headCommit().objectId()) {
         _isDetachedHeadCommit = true;
     }
+
+    _hasTags = repo()->annotatedTags(commit.objectId()).count() > 0 || repo()->lightweightTags(commit.objectId()).count() > 0;
 }
 
 QVariant CommitTableModel::CommitItem::data(const QModelIndex &index, int role) const
@@ -127,8 +141,19 @@ QVariant CommitTableModel::CommitItem::data(const QModelIndex &index, int role) 
     case ObjectIdRole:
         result = _commit.objectId().toVariant();
         break;
+    case HasTagsRole:
+        result = _hasTags;
+        break;
     case IsRepoHeadCommitRole:
         result = _isHeadCommit;
+        break;
+    case ReferenceRole:
+        if(_references.count() > 0) {
+            result = _references.at(0).toVariant();
+        }
+        break;
+    case ReferencesRole:
+        result = _references.toVariant();
         break;
     case CommitRole:
         result = _commit.toVariant();

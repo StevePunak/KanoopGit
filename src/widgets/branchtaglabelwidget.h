@@ -6,13 +6,18 @@
 
 #include <modelview/gitgraphpalette.h>
 
+class IconLabel;
 class QLabel;
 class ComboBox;
 class BranchTagLabelWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit BranchTagLabelWidget(GIT::Repository* repo, const GIT::Reference::List& references, QWidget *parent = nullptr);
+    explicit BranchTagLabelWidget(GIT::Repository* repo,
+                                  const GIT::ReferenceList& references,
+                                  const GIT::AnnotatedTag::List& annotatedTags,
+                                  const GIT::LightweightTag::List& lightweightTags,
+                                  QWidget *parent = nullptr);
 
     QString currentReferenceFriendlyName() const;
     QString firstReferenceName() const;
@@ -22,15 +27,18 @@ private:
     QWidget* labelWidget() const;
 
     GIT::Repository* _repo;
-    GIT::Reference::List _references;
+    GIT::ReferenceList _references;
+    GIT::AnnotatedTag::List _annotatedTags;
+    GIT::LightweightTag::List _lightweightTags;
     GitGraphPalette _graphPalette;
 
     ComboBox* _combo = nullptr;
-    QLabel* _nameLabel = nullptr;
+    IconLabel* _nameLabel = nullptr;
     QLabel* _lineLabel = nullptr;
 
     QPixmap _cloudPixmap;
     QPixmap _computerPixmap;
+    QPixmap _tagPixmap;
     QPixmap _linePixmap;
     QPixmap _noLinePixmap;
 

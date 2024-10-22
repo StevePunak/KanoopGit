@@ -78,14 +78,38 @@ logText(LVL_DEBUG, "Point 1-4");
         detachedHeadCommit = _repo->headCommit();
     }
 
+    // Index the tags
+    QMap<ObjectId, AnnotatedTag::List> annotatedTags;
+    for(const AnnotatedTag& tag : _repo->annotatedTags()) {
+        annotatedTags[tag.targetObjectId()].append(tag);
+    }
+
+    QMap<ObjectId, LightweightTag::List> lightweightTags;
+    for(const LightweightTag& tag : _repo->lightweightTags()) {
+        lightweightTags[tag.targetObjectId()].append(tag);
+    }
+
     // Create branch/tag widgets
     for(const GraphedCommit& commit : _commits) {
         bool thisIsDetachedHead = detachedHeadCommit.isValid() && commit.objectId() == detachedHeadCommit.objectId();
-        if(commit.isHead() == true || thisIsDetachedHead) {
-            Reference::List references = _repo->references().findByTargetObjectId(commit.objectId());
-            BranchTagLabelWidget* labelWidget = new BranchTagLabelWidget(_repo, references);
+        BranchTagLabelWidget* labelWidget = nullptr;
+        if(commit.isHead() == true || thisIsDetachedHead || lightweightTags.count() > 0 || annotatedTags.count() > 0) {
+            ReferenceList references;
+            if(commit.isHead() || thisIsDetachedHead) {
+                references = _repo->references().findByTargetObjectId(commit.objectId());
+            }
+            AnnotatedTag::List annotated = annotatedTags.value(commit.objectId());
+            LightweightTag::List lightweight = lightweightTags.value(commit.objectId());
+
+            labelWidget = new BranchTagLabelWidget(_repo, references, annotated, lightweight);
             labelWidget->setFixedWidth(300);
+            labelWidget->setFixedHeight(RowHeight);
             _branchLabelWidgets.insert(commit.objectId(), labelWidget);
+
+            QModelIndex commitIndex = tableModel->findCommitIndex(commit.objectId());
+            if(commitIndex.isValid()) {
+                tableModel->setData(commitIndex, references.toVariant(), ReferencesRole);
+            }
         }
     }
 
@@ -530,7 +554,8 @@ void GitBranchTagStyledItemDelegate::paint(QPainter *painter, const QStyleOption
 
     // Draw the label
     QString text = index.data(Qt::DisplayRole).toString();
-    if(text.isEmpty() == true) {
+    bool hasTags = index.data(HasTagsRole).toBool();
+    if(text.isEmpty() == true && hasTags == false) {
         return;
     }
 

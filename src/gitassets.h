@@ -40,6 +40,8 @@ public:
         Stash,
         StashPop,
         Submodules,
+        Tag,
+        Trash,
         WarningRed,
         WindowClose,
     };
@@ -77,6 +79,8 @@ private:
             insert(Stash,                           "stash.png");
             insert(StashPop,                        "stash-pop.png");
             insert(Submodules,                      "submodules.png");
+            insert(Tag,                             "tag.png");
+            insert(Trash,                           "trash.png");
             insert(WarningRed,                      "warning-red.png");
             insert(WindowClose,                     "window-close.png");
         }

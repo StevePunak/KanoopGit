@@ -15,7 +15,6 @@ public:
     QModelIndex findCommitIndex(const GIT::ObjectId& objectId) const;
     QModelIndex findWorkInProgress() const;
 
-protected:
     virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
     virtual bool setData(const QModelIndex &index, const QVariant &value, int role) override;
 
@@ -40,12 +39,16 @@ private:
     public:
         explicit CommitItem(const GIT::GraphedCommit& commit, CommitTableModel* model);
 
+        GIT::ReferenceList references() const { return _references; }
+        void setReferences(const GIT::ReferenceList& value) { _references = value; }
+
     protected:
         explicit CommitItem(const EntityMetadata& metadata, const GIT::GraphedCommit& commit, CommitTableModel* model) :
             TableBaseItem(metadata, model),
             _commit(commit),
             _isHeadCommit(false),
-            _isDetachedHeadCommit(false) {}
+            _isDetachedHeadCommit(false),
+            _hasTags(false) {}
 
 
         virtual QVariant data(const QModelIndex &index, int role) const override;
@@ -54,6 +57,8 @@ private:
         GIT::GraphedCommit _commit;
         bool _isHeadCommit;
         bool _isDetachedHeadCommit;
+        bool _hasTags;
+        GIT::ReferenceList _references;
     };
 
     class WorkInProgressItem : public TableBaseItem

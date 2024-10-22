@@ -21,14 +21,19 @@
 
 #include <Kanoop/gui/resources.h>
 
+#include <dialogs/amendcommitmessagedialog.h>
 #include <dialogs/clonerepodialog.h>
+#include <dialogs/createtagdialog.h>
 #include <dialogs/repooptionsdialog.h>
 
 #include <Kanoop/gui/widgets/toastmanager.h>
 
+#include <Kanoop/gui/utility/stylesheet.h>
+
 using namespace GIT;
 namespace Colors = QColorConstants::Svg;
 
+const QString RepositoryWidget::CommitProperty          = "commit";
 const QString RepositoryWidget::StageUnstageProperty    = "stage_unstage";
 const QString RepositoryWidget::ReferenceProperty       = "reference";
 const QString RepositoryWidget::SubmoduleProperty       = "submodule";
@@ -43,6 +48,9 @@ RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
     ui->setupUi(this);
 
     initializeBase();
+
+    // Set any custom sstylesheets
+    setWidgetStylesheets();
 
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
@@ -89,6 +97,13 @@ Log::logText(LVL_DEBUG, QString("%1   5-1").arg(__FUNCTION__));
     connect(ui->actionDeleteSubmodule, &QAction::triggered, this, &RepositoryWidget::onDeleteSubmoduleClicked);
     connect(ui->actionInitializeAllSubmodules, &QAction::triggered, this, &RepositoryWidget::onInitializeAllSubmodulesClicked);
     connect(ui->actionAddSubmodule, &QAction::triggered, this, &RepositoryWidget::onAddSubmoduleClicked);
+    connect(ui->actionAmendCommitMessage, &QAction::triggered, this, &RepositoryWidget::onAmendCommitMessageTriggered);
+    connect(ui->actionCreateTagHere, &QAction::triggered, this, &RepositoryWidget::onCreateTagHereTriggered);
+    connect(ui->actionCreateAnnotatedTagHere, &QAction::triggered, this, &RepositoryWidget::onCreateAnnotatedTagHereTriggered);
+    connect(ui->actionMergeIntoCurrentBranch, &QAction::triggered, this, &RepositoryWidget::onMergeIntoCurrentBranchTriggered);
+    connect(ui->actionResetHard, &QAction::triggered, this, &RepositoryWidget::onResetBranchTriggered);
+    connect(ui->actionResetSoft, &QAction::triggered, this, &RepositoryWidget::onResetBranchTriggered);
+    connect(ui->actionResetMixed, &QAction::triggered, this, &RepositoryWidget::onResetBranchTriggered);
 
     // Pushbuttons
     connect(ui->pushStageAll, &QPushButton::clicked, this, &RepositoryWidget::onStageAllChangesClicked);
@@ -98,6 +113,7 @@ Log::logText(LVL_DEBUG, QString("%1   5-1").arg(__FUNCTION__));
     connect(ui->pushNextDiff, &QToolButton::clicked, this, &RepositoryWidget::onNextDiffClicked);
     connect(ui->pushPreviousDiff, &QToolButton::clicked, this, &RepositoryWidget::onPreviousDiffClicked);
     connect(ui->pushCloseDiff, &QToolButton::clicked, this, &RepositoryWidget::switchToCommitView);
+    connect(ui->pushDiscardUnstaged, &QToolButton::clicked, this, &RepositoryWidget::onDiscardChangesClicked);
 
     // Debug stuff
     connect(ui->textStartAngle, &QLineEdit::textChanged, this, &RepositoryWidget::drawDebugArc);
@@ -123,6 +139,7 @@ Log::logText(LVL_DEBUG, QString("%1   5-1").arg(__FUNCTION__));
     // Toast
     createToastContainer();
 
+    // Refresh will load everything up
     _refreshItems = RefreshAll;
     onRefreshWidgets();
 
@@ -177,6 +194,10 @@ void RepositoryWidget::initializeCredentials()
 void RepositoryWidget::createToastContainer()
 {
     _toastManager = new ToastManager(this);
+}
+
+void RepositoryWidget::setWidgetStylesheets()
+{
 }
 
 void RepositoryWidget::refreshWidgets(RefreshItems refreshItems)
@@ -310,6 +331,106 @@ void RepositoryWidget::showSubmodulesCustomContextMenu()
     menu.exec(QCursor::pos());
 }
 
+void RepositoryWidget::showCommitTableContextMenu(const QPoint& pos)
+{
+    QModelIndex index = ui->tableCommits->indexAt(pos);
+    if(index.isValid() == false) {
+        return;
+    }
+
+    GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
+
+    QMenu menu(this);
+    menu.addAction(ui->actionApplyStash);
+    menu.addAction(ui->actionPopStash);
+    menu.addAction(ui->actionDeleteStash);
+    menu.addSeparator();
+    menu.addAction(ui->actionAmendCommitMessage);
+    menu.addSeparator();
+    menu.addAction(ui->actionCreateTagHere);
+    menu.addAction(ui->actionCreateAnnotatedTagHere);
+
+    GraphedCommit commit = GraphedCommit::fromVariant(index.data(CommitRole));
+    Reference reference = Reference::fromVariant(index.data(ReferenceRole));
+    Branch currentBranch = _repo->currentBranch();
+
+    // Maybe show merge menu
+    if(commit.isHead() &&
+            reference.isNull() == false &&
+            reference.isRemote() == false &&
+            commit.isReachableFrom(_repo->headCommit()) == false) {
+        menu.addSeparator();
+        QString text = QString("Merge %1 into %2").arg(reference.friendlyName()).arg(currentBranch.friendlyName());
+        ui->actionMergeIntoCurrentBranch->setText(text);
+        ui->actionMergeIntoCurrentBranch->setProperty(CommitProperty.toUtf8().constData(), commit.toVariant());
+        ui->actionMergeIntoCurrentBranch->setProperty(ReferenceProperty.toUtf8().constData(), reference.toVariant());
+
+        menu.addAction(ui->actionMergeIntoCurrentBranch);
+    }
+
+    // Maybe show reset menu
+    GraphedCommit headCommit = _repo->headCommit();
+    if(commit != headCommit && commit.isReachableFrom(headCommit)) {
+        QString text = QString("Reset %1 to this commit").arg(currentBranch.friendlyName());
+        QMenu* subMenu = menu.addMenu(text);
+        subMenu->addAction(ui->actionResetSoft);
+        subMenu->addAction(ui->actionResetMixed);
+        subMenu->addAction(ui->actionResetHard);
+        ui->actionResetSoft->setProperty(CommitProperty.toUtf8().constData(), commit.toVariant());
+        ui->actionResetMixed->setProperty(CommitProperty.toUtf8().constData(), commit.toVariant());
+        ui->actionResetHard->setProperty(CommitProperty.toUtf8().constData(), commit.toVariant());
+    }
+
+    // Enable as appropriate
+    ui->actionApplyStash->setEnabled(type == GitEntities::Stash);
+    ui->actionPopStash->setEnabled(type == GitEntities::Stash);
+    ui->actionDeleteStash->setEnabled(type == GitEntities::Stash);
+
+    ui->actionCreateTagHere->setEnabled(false);
+    ui->actionCreateAnnotatedTagHere->setEnabled(false);
+
+
+    ui->actionAmendCommitMessage->setEnabled(false);
+    if(type == GitEntities::Commit) {
+        Commit commit = ui->tableCommits->currentSelectedCommit();
+
+        ui->actionCreateTagHere->setEnabled(true);
+        ui->actionCreateTagHere->setProperty(CommitProperty.toUtf8().constData(), commit.toVariant());
+
+        ui->actionCreateAnnotatedTagHere->setEnabled(true);
+        ui->actionCreateAnnotatedTagHere->setProperty(CommitProperty.toUtf8().constData(), commit.toVariant());
+
+        // Amend is leaving the old commit available in the log reachable from HEAD
+        // Until I figure out why, this option is disabled
+#if 0
+        if(commit.objectId() == _repo->headCommit().objectId()) {
+            ui->actionAmendCommitMessage->setEnabled(true);
+            ui->actionAmendCommitMessage->setProperty(CommitProperty.toUtf8().constData(), commit.toVariant());
+        }
+#endif
+    }
+    menu.exec(QCursor::pos());
+}
+
+void RepositoryWidget::keyPressEvent(QKeyEvent* event)
+{
+    ComplexWidget::keyPressEvent(event);
+    switch(event->key()) {
+    case Qt::Key_Escape:
+        if(ui->frameBranches->isVisible() == false) {
+            switchToCommitView();
+        }
+        break;
+
+    case Qt::Key_F5:
+        refreshWidgets(RefreshAll);
+        break;
+
+    default:
+        break;
+    }
+}
+
 void RepositoryWidget::resizeEvent(QResizeEvent* event)
 {
     ComplexWidget::resizeEvent(event);
@@ -367,14 +488,6 @@ void RepositoryWidget::createBranch(const QString &branchName)
     refreshWidgets(RefreshAll);
 }
 
-void RepositoryWidget::keyPressEvent(QKeyEvent* event)
-{
-    ComplexWidget::keyPressEvent(event);
-    if(event->key() == Qt::Key_Escape && ui->frameBranches->isVisible() == false) {
-        switchToCommitView();
-    }
-}
-
 void RepositoryWidget::maybeEnableButtons()
 {
     int stagedFileCount = ui->tableStagedFiles->entries().count();
@@ -385,6 +498,7 @@ void RepositoryWidget::maybeEnableButtons()
     ui->pushNextDiff->setEnabled(ui->tableDiffs->hasNextDelta());
     ui->pushPreviousDiff->setEnabled(ui->tableDiffs->hasPreviousDelta());
     ui->pushStageDiffFile->setVisible(ui->pushStageDiffFile->property(StageUnstageProperty.toUtf8().constData()) != StageTypeInvalid);
+    ui->pushDiscardUnstaged->setVisible(unstagedFileCount > 0);
 
     // Potentially change the text of some widgets
     if(stagedFileCount > 0 && ui->textStageCommitMessage->toPlainText().length() == 0) {
@@ -396,6 +510,9 @@ void RepositoryWidget::maybeEnableButtons()
     else {
         ui->pushCommitChanges->setText("Stage some files or changes");
     }
+
+    ui->pushDiscardUnstaged->setToolTip(QString("Discard changes to %1 files").arg(unstagedFileCount));
+
     emit validate();
 }
 
@@ -642,24 +759,7 @@ void RepositoryWidget::onUnstagedFilesContextMenuRequested()
 
 void RepositoryWidget::onCommitTableContextMenuRequested(const QPoint& pos)
 {
-    QModelIndex index = ui->tableCommits->indexAt(pos);
-    if(index.isValid() == false) {
-        return;
-    }
-
-    GitEntities::Type type = (GitEntities::Type)index.data(KANOOP::MetadataTypeRole).toInt();
-
-    QMenu menu(this);
-    menu.addAction(ui->actionApplyStash);
-    menu.addAction(ui->actionPopStash);
-    menu.addAction(ui->actionDeleteStash);
-
-    // Enable as appropriate
-    ui->actionApplyStash->setEnabled(type == GitEntities::Stash);
-    ui->actionPopStash->setEnabled(type == GitEntities::Stash);
-    ui->actionDeleteStash->setEnabled(type == GitEntities::Stash);
-
-    menu.exec(QCursor::pos());
+    showCommitTableContextMenu(pos);
 }
 
 void RepositoryWidget::onLeftSidebarCustomContextMenuRequested(const QPoint &pos)
@@ -758,7 +858,22 @@ void RepositoryWidget::stashChanges()
 
 void RepositoryWidget::onDiscardChangesClicked()
 {
-    UNIMPLEMENTED
+    StatusEntry::List entries = ui->tableUnstagedFiles->selectedEntries();
+    QMessageBox dlg(QMessageBox::Warning, "Warning", QString("Discard %1 files?").arg(entries.count()), QMessageBox::Yes | QMessageBox::No);
+    dlg.setDefaultButton(QMessageBox::No);
+    if(dlg.exec() != QMessageBox::Yes) {
+        return;
+    }
+
+    QStringList paths = entries.paths();
+    if(_repo->restore(paths) == true) {
+        _toastManager->message(QString("Discarded %1 files"));
+    }
+    else {
+        _toastManager->errorMessage(QString("Error: %1").arg(_repo->errorText()));
+    }
+    switchToCommitView();
+    refreshWidgets(RefreshCommitTable | RefreshStatusEntries);
 }
 
 void RepositoryWidget::onApplyStashClicked()
@@ -918,6 +1033,139 @@ void RepositoryWidget::onAddSubmoduleClicked()
     }
 }
 
+void RepositoryWidget::onAmendCommitMessageTriggered()
+{
+    QAction* action = dynamic_cast<QAction*>(sender());
+    if(action == nullptr) {
+        return;
+    }
+
+    Commit commit = Commit::fromVariant(action->property(CommitProperty.toUtf8().constData()));
+    if(commit.isValid() == false) {
+        return;
+    }
+
+    AmendCommitMessageDialog dlg(commit, this);
+    if(dlg.exec() == QDialog::Accepted) {
+        Commit amendedCommit = _repo->amendCommitMessage(commit, dlg.message());
+        if(amendedCommit.isValid()) {
+            ui->textCommitMessage->setPlainText(dlg.message());
+            refreshWidgets(RefreshCommitTable);
+            _toastManager->message("Commit amended");
+        }
+        else {
+            _toastManager->errorMessage(QString("Failed to amend commit: %1").arg(_repo->errorText()));
+        }
+    }
+}
+
+void RepositoryWidget::onCreateTagHereTriggered()
+{
+    QAction* action = dynamic_cast<QAction*>(sender());
+    if(action == nullptr) {
+        return;
+    }
+
+    Commit commit = Commit::fromVariant(action->property(CommitProperty.toUtf8().constData()));
+    if(commit.isValid() == false) {
+        return;
+    }
+
+    CreateTagDialog dlg(false, this);
+    if(dlg.exec() == QDialog::Accepted) {
+        if(_repo->createLightweightTag(dlg.name(), commit)) {
+            _toastManager->message(QString("Created tag %1").arg(dlg.name()));
+            refreshWidgets(RefreshLeftSidebar | RefreshCommitTable);
+        }
+        else {
+            _toastManager->errorMessage(QString("Failed to create tag. %1").arg(_repo->errorText()));
+        }
+    }
+}
+
+void RepositoryWidget::onCreateAnnotatedTagHereTriggered()
+{
+    QAction* action = dynamic_cast<QAction*>(sender());
+    if(action == nullptr) {
+        return;
+    }
+
+    Commit commit = Commit::fromVariant(action->property(CommitProperty.toUtf8().constData()));
+    if(commit.isValid() == false) {
+        return;
+    }
+
+    CreateTagDialog dlg(true, this);
+    if(dlg.exec() == QDialog::Accepted) {
+        if(_repo->createAnnotatedTag(dlg.name(), dlg.message(), _repo->config()->buildSignature(), commit)) {
+            _toastManager->message(QString("Created tag %1").arg(dlg.name()));
+            refreshWidgets(RefreshLeftSidebar | RefreshCommitTable);
+        }
+        else {
+            _toastManager->errorMessage(QString("Failed to create tag. %1").arg(_repo->errorText()));
+        }
+    }
+}
+
+void RepositoryWidget::onMergeIntoCurrentBranchTriggered()
+{
+    QAction* action = dynamic_cast<QAction*>(sender());
+    if(action == nullptr) {
+        return;     // bug
+    }
+
+    GraphedCommit commit = GraphedCommit::fromVariant(action->property(CommitProperty.toUtf8().constData()));
+    if(commit.isValid() == false) {
+        return;     // bug
+    }
+
+    MergeOptions options;
+    options.setFastForwardStrategy(NoFastForward);
+
+    QString message = QString("Merge branch '%1' into %2").arg(commit.friendlyBranchName()).arg(_repo->currentBranch().friendlyName());
+    MergeResult result = _repo->merge(commit, _repo->config()->buildSignature(), message, options);
+    if(result.isValid()) {
+        _toastManager->message(QString("Merged branch '%1' into %2").arg(commit.friendlyBranchName()).arg(_repo->currentBranch().friendlyName()));
+        refreshWidgets(RefreshAll);
+    }
+    else {
+        _toastManager->errorMessage(QString("Failed to merge: %1").arg(_repo->errorText()));
+    }
+}
+
+void RepositoryWidget::onResetBranchTriggered()
+{
+    QAction* action = dynamic_cast<QAction*>(sender());
+    if(action == nullptr) {
+        return;     // bug
+    }
+
+    GraphedCommit commit = GraphedCommit::fromVariant(action->property(CommitProperty.toUtf8().constData()));
+    if(commit.isValid() == false) {
+        return;     // bug
+    }
+    ResetMode mode;
+    if(action == ui->actionResetHard) {
+        mode = ResetHard;
+    }
+    else if(action == ui->actionResetMixed) {
+        mode = ResetMixed;
+    }
+    else if(action == ui->actionResetSoft) {
+        mode = ResetSoft;
+    }
+    else {
+        return; // bug
+    }
+
+    if(_repo->resetCommit(commit, mode)) {
+        refreshWidgets(RefreshCommitTable);
+    }
+    else {
+        _toastManager->errorMessage(QString("Failed to perform reset: %1").arg(_repo->errorText()));
+    }
+}
+
 void RepositoryWidget::onStageAllChangesClicked()
 {
     StatusEntry::List entries = ui->tableUnstagedFiles->entries();
@@ -972,6 +1220,11 @@ void RepositoryWidget::onCommitChangesClicked()
     }
     switchToCommitView();
     refreshWidgets(RefreshAll);
+}
+
+void RepositoryWidget::onDiscardUnstagedClicked()
+{
+    UNIMPLEMENTED
 }
 
 void RepositoryWidget::pullFromRemote()

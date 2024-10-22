@@ -567,6 +567,17 @@
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <item>
+               <widget class="QToolButton" name="pushDiscardUnstaged">
+                <property name="text">
+                 <string>...</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="gitassets.qrc">
+                  <normaloff>:/assets/trash.png</normaloff>:/assets/trash.png</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QLabel" name="label_11">
                 <property name="text">
                  <string>Unstaged Files</string>
@@ -791,6 +802,62 @@
   <action name="actionAddSubmodule">
    <property name="text">
     <string>Add Submodule</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionAmendCommitMessage">
+   <property name="text">
+    <string>Amend Commit Message</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionCreateTagHere">
+   <property name="text">
+    <string>Create tag here</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionCreateAnnotatedTagHere">
+   <property name="text">
+    <string>Create annotated tag here</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionMergeIntoCurrentBranch">
+   <property name="text">
+    <string>Merge Into Current Branch</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionResetSoft">
+   <property name="text">
+    <string>Soft - Keep all changes</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionResetHard">
+   <property name="text">
+    <string>Hard - discard all changes</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionResetMixed">
+   <property name="text">
+    <string>Mixed - keep working copy but reset index</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
