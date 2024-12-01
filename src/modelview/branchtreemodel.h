@@ -14,7 +14,7 @@ public slots:
     void refresh();
 
 private:
-    void loadBranches(const GIT::Reference::List& references);
+    void loadBranches(const GIT::ReferenceList& references);
     void ensureFolder(const QString& path);
     QModelIndex findBranchIndex(const QString& path) const;
     QModelIndex findReferenceIndex(const GIT::ObjectId& objectId) const;

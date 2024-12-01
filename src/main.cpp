@@ -3,9 +3,9 @@
 #include "gitmainwindow.h"
 #include "splashscreen.h"
 
-#include <QApplication>
 #include <QTimer>
 
+#include "gitapplication.h"
 #include "repoconfig.h"
 #include "settings.h"
 
@@ -18,11 +18,7 @@ void registerMetaTypes()
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
-
-    app.setOrganizationName("Kanoop");
-    app.setApplicationDisplayName("Kanoop Git");
-    app.setApplicationVersion(QT_STRINGIFY(KANOOPGIT_VERSION));
+    GitApplication app(argc, argv);
 
     registerMetaTypes();
 
@@ -35,6 +31,7 @@ int main(int argc, char *argv[])
     splash->show();
 
     GitMainWindow mainWindow;
+    QObject::connect(&mainWindow, &GitMainWindow::preferencesChanged, &app, &GitApplication::onPreferencesChanged);
     QTimer::singleShot(1000, splash, &SplashScreen::close);
     QTimer::singleShot(1000, &mainWindow, &GitMainWindow::show);
 

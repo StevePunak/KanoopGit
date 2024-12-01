@@ -16,6 +16,11 @@ public:
     QColor headCommitLineColor() const;
     QColor stashBorderColor() const;
     QColor stashFillColor() const;
+    QColor leftSidebarTitleColor() const;
+    QColor submoduleNeedsRefreshColor() const;
+    QColor submoduleUninitializedColor() const;
+    QColor diffPlusColor() const;
+    QColor diffMinusColor() const;
     int headCommitLineWidth() const { return 2; }
 
 };

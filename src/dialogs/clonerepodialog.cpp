@@ -51,6 +51,12 @@ QString CloneRepoDialog::localPath() const
     return path;
 }
 
+void CloneRepoDialog::setLocalPath(const QString& localPath)
+{
+    ui->textLocalPath->setText(localPath);
+    ui->textLocalPath->setEnabled(false);
+}
+
 CredentialSet CloneRepoDialog::credentials() const
 {
     return ui->credentialsWidget->credentials();

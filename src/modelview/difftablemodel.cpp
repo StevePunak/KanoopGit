@@ -12,7 +12,8 @@
 #include <Kanoop/commonexception.h>
 
 using namespace GIT;
-namespace Colors = QColorConstants::Svg;
+
+GitGraphPalette DiffTableModel::_palette;
 
 // --------------------- Tree to Tree Signature
 
@@ -266,15 +267,15 @@ QColor DiffTableModel::colorForOrigin(const QChar& origin)
     QColor result;
     switch(origin.toLatin1()) {
     case '+':
-        result = Colors::lightgreen;
+        result = _palette.diffPlusColor();
         break;
     case '-':
-        result = Colors::lightsalmon;
+        result = _palette.diffMinusColor();
         break;
     case 0:
         break;
     default:
-        result = Colors::red;   // don't understand it
+        result = Qt::red;   // don't understand it
         break;
     }
     return result;

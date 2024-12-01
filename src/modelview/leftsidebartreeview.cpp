@@ -49,7 +49,7 @@ logText(LVL_DEBUG, "Point 3-1");
 
     RepoConfig config = Settings::instance()->repoConfig(_repo->localPath());
     if(config.localBranchesVisible()) {
-        expandRecursively(treeModel->localBranchesIndex());
+        expandLocalBranches();
     }
 
     if(config.remoteBranchesVisible()) {
@@ -126,6 +126,41 @@ void LeftSidebarTreeView::hideAllSubmoduleSpinners()
     }
 }
 
+void LeftSidebarTreeView::expandLocalBranches()
+{
+    LeftSidebarTreeModel* treeModel = dynamic_cast<LeftSidebarTreeModel*>(sourceModel());
+    if(treeModel == nullptr) {
+        return;
+    }
+    expandRecursively(treeModel->localBranchesIndex());
+}
+
+void LeftSidebarTreeView::expandRemoteBranches()
+{
+    LeftSidebarTreeModel* treeModel = dynamic_cast<LeftSidebarTreeModel*>(sourceModel());
+    if(treeModel == nullptr) {
+        return;
+    }
+    expandRecursively(treeModel->remoteBranchesIndex());
+}
+
+void LeftSidebarTreeView::expandSubmodules()
+{
+    LeftSidebarTreeModel* treeModel = dynamic_cast<LeftSidebarTreeModel*>(sourceModel());
+    if(treeModel == nullptr) {
+        return;
+    }
+    expandRecursively(treeModel->submodulesIndex());
+}
+
+void LeftSidebarTreeView::selectLocalBranchWidget(const QString& canonicalName)
+{
+    QList<LocalBranchLabelWidget*> widgets = _localBranchWidgets.values();
+    for(LocalBranchLabelWidget* widget : widgets) {
+        widget->setSelected(widget->reference().canonicalName() == canonicalName ? true : false);
+    }
+}
+
 void LeftSidebarTreeView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)
 {
     Q_UNUSED(previous);
@@ -141,6 +176,9 @@ void LeftSidebarTreeView::onCurrentIndexChanged(const QModelIndex& current, cons
         case GitEntities::Reference:
         {
             Reference reference = Reference::fromVariant(current.data(ReferenceRole));
+            if(reference.isLocal()) {
+                selectLocalBranchWidget(reference.canonicalName());
+            }
             if(reference.isNull() == false) {
                 emit referenceClicked(reference);
             }

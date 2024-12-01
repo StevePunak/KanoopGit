@@ -2,6 +2,7 @@
 #include <QFileInfo>
 #include <QStandardPaths>
 
+#include "gitgraphpalette.h"
 #include "kanoopgittypes.h"
 #include <Kanoop/gui/resources.h>
 #include <Kanoop/pathutil.h>
@@ -65,7 +66,7 @@ void LeftSidebarTreeModel::createRemoteBranchesLeaf()
 {
     TitleItem* titleItem = static_cast<TitleItem*>(appendRootItem(new TitleItem("Remote Branches", Resources::getIcon(GitAssets::Cloud), RemoteBranches, this)));
     for(const Remote& remote : _repo->remotes()) {
-        Reference::List references = _repo->remoteReferences(remote.name());
+        ReferenceList references = _repo->remoteReferences(remote.name());
         loadBranches(titleItem, references, false);
     }
 }
@@ -78,7 +79,7 @@ void LeftSidebarTreeModel::createSubmodulesLeaf()
     }
 }
 
-void LeftSidebarTreeModel::loadBranches(AbstractModelItem* rootItem, const GIT::Reference::List& references, bool local)
+void LeftSidebarTreeModel::loadBranches(AbstractModelItem* rootItem, const ReferenceList& references, bool local)
 {
     for(const Reference& reference : references) {
         if(reference.type() != DirectReferenceType) {
@@ -228,7 +229,7 @@ QVariant LeftSidebarTreeModel::TitleItem::data(const QModelIndex& index, int rol
             }
             break;
         case Qt::ForegroundRole:
-            result = Colors::darkblue;
+            result = GitGraphPalette().leftSidebarTitleColor();
             break;
         case Qt::FontRole:
             result = _font;

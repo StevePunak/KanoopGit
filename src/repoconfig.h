@@ -25,6 +25,9 @@ public:
     CredentialSet& credentialsRef() { return _credentials; }
     void setCredentials(CredentialSet value) { _credentials = value; }
 
+    QString openedSubmodule() const { return _openedSubmodule; }
+    void setOpenedSubmodule(QString value) { _openedSubmodule = value; }
+
     QVariant toVariant() const { return QVariant::fromValue<RepoConfig>(*this); }
     static RepoConfig fromVariant(const QVariant& value) { return value.value<RepoConfig>(); }
 
@@ -39,6 +42,7 @@ private:
     bool _remoteBranchesVisible = false;
     bool _submodulesVisible = false;
     CredentialSet _credentials;
+    QString _openedSubmodule;
 };
 
 QDataStream &operator<<(QDataStream &out, const RepoConfig &config);

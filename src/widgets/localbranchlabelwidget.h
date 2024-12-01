@@ -13,11 +13,17 @@ public:
 
     void setBold(bool value);
 
+    bool selected() const { return _selected; }
+    void setSelected(bool value);
+
+    GIT::Reference reference() const { return _reference; }
+
 private:
     GIT::Reference _reference;
 
     Label* _nameLabel = nullptr;
     Label* _rightLabel = nullptr;
+    bool _selected = false;
 
 signals:
 

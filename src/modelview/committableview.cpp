@@ -78,14 +78,38 @@ logText(LVL_DEBUG, "Point 1-4");
         detachedHeadCommit = _repo->headCommit();
     }
 
+    // Index the tags
+    QMap<ObjectId, AnnotatedTag::List> annotatedTags;
+    for(const AnnotatedTag& tag : _repo->annotatedTags()) {
+        annotatedTags[tag.targetObjectId()].append(tag);
+    }
+
+    QMap<ObjectId, LightweightTag::List> lightweightTags;
+    for(const LightweightTag& tag : _repo->lightweightTags()) {
+        lightweightTags[tag.targetObjectId()].append(tag);
+    }
+
     // Create branch/tag widgets
     for(const GraphedCommit& commit : _commits) {
         bool thisIsDetachedHead = detachedHeadCommit.isValid() && commit.objectId() == detachedHeadCommit.objectId();
-        if(commit.isHead() == true || thisIsDetachedHead) {
-            Reference::List references = _repo->references().findByTargetObjectId(commit.objectId());
-            BranchTagLabelWidget* labelWidget = new BranchTagLabelWidget(_repo, references);
+        BranchTagLabelWidget* labelWidget = nullptr;
+        if(commit.isHead() == true || thisIsDetachedHead || lightweightTags.count() > 0 || annotatedTags.count() > 0) {
+            ReferenceList references;
+            if(commit.isHead() || thisIsDetachedHead) {
+                references = _repo->references().findByTargetObjectId(commit.objectId());
+            }
+            AnnotatedTag::List annotated = annotatedTags.value(commit.objectId());
+            LightweightTag::List lightweight = lightweightTags.value(commit.objectId());
+
+            labelWidget = new BranchTagLabelWidget(_repo, references, annotated, lightweight);
             labelWidget->setFixedWidth(300);
+            labelWidget->setFixedHeight(RowHeight);
             _branchLabelWidgets.insert(commit.objectId(), labelWidget);
+
+            QModelIndex commitIndex = tableModel->findCommitIndex(commit.objectId());
+            if(commitIndex.isValid()) {
+                tableModel->setData(commitIndex, references.toVariant(), ReferencesRole);
+            }
         }
     }
 
@@ -97,14 +121,33 @@ QModelIndex CommitTableView::findCommit(const GIT::ObjectId& objectId) const
     return static_cast<CommitTableModel*>(sourceModel())->findCommitIndex(objectId);
 }
 
-void CommitTableView::selectCommit(const GIT::ObjectId& objectId)
+void CommitTableView::selectCommit(const GIT::ObjectId& objectId, bool ensureVisible)
 {
     QModelIndex index = findCommit(objectId);
     if(index.isValid()) {
         QModelIndex bottomLeft = sourceModel()->index(index.row(), sourceModel()->columnCount() - 1);
         QItemSelection selection(index, bottomLeft);
-        selectionModel()->select(selection, QItemSelectionModel::Select);
+        selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
+        if(ensureVisible) {
+            scrollTo(index, PositionAtCenter);
+        }
     }
+}
+
+void CommitTableView::selectWorkInProgress()
+{
+    CommitTableModel* tableModel = static_cast<CommitTableModel*>(sourceModel());
+    if(tableModel == nullptr) {
+        return;
+    }
+    QModelIndex index = tableModel->findWorkInProgress();
+    if(index.isValid() == false) {
+        return;
+    }
+    QModelIndex bottomLeft = sourceModel()->index(index.row(), sourceModel()->columnCount() - 1);
+    QItemSelection selection(index, bottomLeft);
+    selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
+    emit workInProgressClicked();
 }
 
 Stash CommitTableView::currentSelectedStash() const
@@ -133,6 +176,15 @@ int CommitTableView::selectedCount() const
     return result;
 }
 
+bool CommitTableView::hasWorkInProgress() const
+{
+    CommitTableModel* tableModel = static_cast<CommitTableModel*>(sourceModel());
+    if(tableModel != nullptr) {
+        return tableModel->findWorkInProgress().isValid();
+    }
+    return false;
+}
+
 GitEntities::Type CommitTableView::currentMetadataType() const
 {
     GitEntities::Type type = GitEntities::InvalidEntity;
@@ -150,18 +202,6 @@ void CommitTableView::createPixmaps()
     Size pixmapSize(RowHeight / 2, RowHeight / 2);
     _cloudPixmap = _cloudPixmap.scaled(pixmapSize.toSize());
     _computerPixmap = _computerPixmap.scaled(pixmapSize.toSize());
-}
-
-void CommitTableView::mousePressEvent(QMouseEvent *event)
-{
-    TableViewBase::mousePressEvent(event);
-#if 0
-    QModelIndex index = indexAt(event->pos());
-    if(index.column() == sourceModel()->columnForHeader(CH_BranchOrTag) && index.data(Qt::DisplayRole).toString().isEmpty() == false) {
-        logText(LVL_DEBUG, "Show the dropdown");
-        edit(index);
-    }
-#endif
 }
 
 void CommitTableView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)
@@ -230,14 +270,14 @@ void GitCommitGraphStyledItemDelegate::paint(QPainter* painter, const QStyleOpti
         if(commit.isValid() == false) {
             return;
         }
-        QPixmap pixmap = createCommitPixmap(commit, drawRect.size(), isRepoHead);
+        QPixmap pixmap = createCommitPixmap(commit, drawRect.size(), isRepoHead, option);
         painter->drawPixmap(drawRect.x(), drawRect.y(), pixmap);
         break;
     }
 
     case GitEntities::WorkInProgress:
     {
-        QPixmap pixmap = createWorkInProgressPixmap(drawRect.size());
+        QPixmap pixmap = createWorkInProgressPixmap(drawRect.size(), option);
         painter->drawPixmap(drawRect.x(), drawRect.y(), pixmap);
         break;
     }
@@ -289,10 +329,14 @@ QPixmap GitCommitGraphStyledItemDelegate::createArc(int width, int height, GIT::
     return result;
 }
 
-QPixmap GitCommitGraphStyledItemDelegate::createCommitPixmap(const GIT::GraphedCommit& commit, const Size& size, bool isRepoHead) const
+QPixmap GitCommitGraphStyledItemDelegate::createCommitPixmap(const GIT::GraphedCommit& commit, const Size& size, bool isRepoHead, const QStyleOptionViewItem& option) const
 {
     QPixmap pixmap(size.toSize());
-    pixmap.fill();
+    pixmap.fill(option.palette.color(QPalette::Window));
+
+    if(option.state & QStyle::State_Selected) {
+        pixmap.fill(option.palette.color(QPalette::Highlight));
+    }
 
     QPainter painter(&pixmap);
 
@@ -355,10 +399,16 @@ QPixmap GitCommitGraphStyledItemDelegate::createCommitPixmap(const GIT::GraphedC
     return pixmap;
 }
 
-QPixmap GitCommitGraphStyledItemDelegate::createWorkInProgressPixmap(const Size& size) const
+QPixmap GitCommitGraphStyledItemDelegate::createWorkInProgressPixmap(const Size& size, const QStyleOptionViewItem& option) const
 {
     QPixmap pixmap(size.toSize());
-    pixmap.fill();
+
+    if(option.state & QStyle::State_Selected) {
+        pixmap.fill(option.palette.color(QPalette::Highlight));
+    }
+    else {
+        pixmap.fill(option.palette.color(QPalette::Window));
+    }
 
     QPainter painter(&pixmap);
 
@@ -475,7 +525,7 @@ void GitCommitGraphStyledItemDelegate::drawVertical(QPainter* painter, const Siz
     }
 
     painter->save();
-    painter->setPen(QPen(QBrush(Colors::darkblue), 2));
+    painter->setPen(QPen(QBrush(_palette.graphLineColor()), 2));
     painter->drawLine(line.toQLine());
     painter->restore();
 }
@@ -493,7 +543,7 @@ void GitCommitGraphStyledItemDelegate::drawHorizontal(QPainter* painter, const S
     }
 
     painter->save();
-    painter->setPen(QPen(QBrush(Colors::darkgreen), 2));
+    painter->setPen(QPen(QBrush(_palette.graphLineColor()), 2));
     painter->drawLine(line.toQLine());
     painter->restore();
 }
@@ -507,7 +557,8 @@ void GitBranchTagStyledItemDelegate::paint(QPainter *painter, const QStyleOption
 
     // Draw the label
     QString text = index.data(Qt::DisplayRole).toString();
-    if(text.isEmpty() == true) {
+    bool hasTags = index.data(HasTagsRole).toBool();
+    if(text.isEmpty() == true && hasTags == false) {
         return;
     }
 

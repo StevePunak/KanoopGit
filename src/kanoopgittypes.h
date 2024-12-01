@@ -12,6 +12,7 @@ enum GitRoles
     CreateBranchRole,
     CommitRole,
     ControlTypeRole,
+    HasTagsRole,
     IsRepoHeadCommitRole,
     IsCurrentBranchRole,
     IsLocalReferenceRole,
@@ -19,6 +20,7 @@ enum GitRoles
     IsSubmoduleInitializedRole,
     ObjectIdRole,
     ReferenceRole,
+    ReferencesRole,
     RelativePathRole,
     RemoteNameRole,
     RepoPathRole,
@@ -38,6 +40,13 @@ enum ControlType
     Submodules,
 };
 
+enum PaletteType
+{
+    SystemPalette = 0,
+    FusionDark = 1,
+    FusionLight = 2,
+};
+
 enum ColHeaders
 {
     CH_Name = 1,
@@ -45,6 +54,8 @@ enum ColHeaders
     CH_Graph,
     CH_Message,
     CH_Timestamp,
+    CH_Commiter,
+    CH_Author,
     CH_SHA,
     CH_Old,
     CH_New,
@@ -64,5 +75,18 @@ enum FileTypes
     CloneToDirectory    = 3,
     RepoDirectory       = 4,
 };
+
+enum RefreshItem
+{
+    RefreshNone =                   0x0000,
+    RefreshStatusEntries =          0x0001,
+    RefreshFileSystemTree =         0x0002,
+    RefreshCommitTable =            0x0004,
+    RefreshLeftSidebar =            0x0008,
+
+    RefreshAll = (RefreshStatusEntries | RefreshFileSystemTree | RefreshCommitTable | RefreshLeftSidebar),
+};
+Q_DECLARE_FLAGS(RefreshItems, RefreshItem)
+Q_DECLARE_OPERATORS_FOR_FLAGS(RefreshItems)
 
 #endif // KANOOPGITTYPES_H

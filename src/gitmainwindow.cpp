@@ -71,6 +71,9 @@ GitMainWindow::GitMainWindow(QWidget *parent) :
 
     ui->progressCloneProgress->setVisible(false);
 
+    // Set font size etc.
+    onPreferencesChanged();
+
     openRecentRepos();
 }
 
@@ -110,6 +113,7 @@ RepositoryContainer* GitMainWindow::openRepository(const QString& path)
     }
 
     repoWidget = new RepositoryContainer(path, this);
+    connect(this, &GitMainWindow::preferencesChanged, repoWidget, &RepositoryContainer::onPreferencesChanged);
     QString title = QDir(path).dirName();
     int index = ui->tabWidgetRepos->addTab(repoWidget, title);
 
@@ -119,9 +123,10 @@ RepositoryContainer* GitMainWindow::openRepository(const QString& path)
     ui->tabWidgetRepos->tabBar()->setTabButton(index, QTabBar::RightSide, closeButton);
     ui->tabWidgetRepos->tabBar()->setTabToolTip(index, path);
 
-    ui->tableRecentRepos->createModel(Settings::instance()->recentFiles());
-
     Settings::instance()->saveOpenRepo(path);
+    Settings::instance()->pushRecentFile(path);
+
+    ui->tableRecentRepos->createModel(Settings::instance()->recentFiles());
 
     return repoWidget;
 }
@@ -134,6 +139,12 @@ void GitMainWindow::closeRepository(int tabIndex)
         Settings::instance()->removeOpenRepo(repoWidget->primaryRepo()->localPath());
         delete repoWidget;
     }
+}
+
+void GitMainWindow::onPreferencesChanged()
+{
+    MainWindowBase::onPreferencesChanged();
+    emit preferencesChanged();
 }
 
 void GitMainWindow::onCloneRepoClicked()
@@ -271,8 +282,9 @@ void GitMainWindow::onTabBarContextMenuRequested(int index)
 
 void GitMainWindow::onPreferencesClicked()
 {
-    PreferencesDialog dlg(this);
-    dlg.exec();
+    PreferencesDialog* dlg = new PreferencesDialog(this);
+    connect(dlg, &PreferencesDialog::preferencesChanged, this, &GitMainWindow::onPreferencesChanged);
+    dlg->show();
 }
 
 void GitMainWindow::onDebugCloseTab()

@@ -28,8 +28,11 @@ private:
 
 signals:
     void loaded();
+    void preferencesChanged();
 
 private slots:
+    virtual void onPreferencesChanged() override;
+
     // Actions
     void onCloneRepoClicked();
     void onOpenRepoClicked();

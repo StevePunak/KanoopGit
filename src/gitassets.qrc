@@ -30,5 +30,7 @@
         <file>assets/arrow-down.png</file>
         <file>assets/arrow-up.png</file>
         <file>assets/orange-refresh.png</file>
+        <file>assets/trash.png</file>
+        <file>assets/tag.png</file>
     </qresource>
 </RCC>

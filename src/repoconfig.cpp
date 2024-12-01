@@ -7,7 +7,8 @@ void RepoConfig::fromDataStream(QDataStream& in)
             >> _localBranchesVisible
             >> _remoteBranchesVisible
             >> _submodulesVisible
-            >> _credentials;
+            >> _credentials
+            >> _openedSubmodule;
 }
 
 void RepoConfig::toDataStream(QDataStream& out) const
@@ -16,7 +17,8 @@ void RepoConfig::toDataStream(QDataStream& out) const
         << _localBranchesVisible
         << _remoteBranchesVisible
         << _submodulesVisible
-        << _credentials;
+        << _credentials
+        << _openedSubmodule;
 }
 
 QDataStream& operator<<(QDataStream& out, const RepoConfig& config)

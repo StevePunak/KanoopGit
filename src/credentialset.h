@@ -8,6 +8,9 @@ class CredentialSet : public ISerializableToJsonObject,
 public:
     CredentialSet() {}
 
+    bool operator==(const CredentialSet& other) const;
+    bool operator!=(const CredentialSet& other) const { return !(*this == other); }
+
     virtual QJsonObject serializeToJsonObject() const override;
     virtual void deserializeFromJsonObject(const QJsonObject& jsonObject) override;
 

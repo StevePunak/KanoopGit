@@ -9,11 +9,12 @@
 
 #include <Kanoop/pathutil.h>
 
-#include <Kanoop/gui/utility/unicode.h>
+#include <Kanoop/utility/unicode.h>
 
 #include <Kanoop/gui/resources.h>
 
-namespace Colors = QColorConstants::Svg;
+#include <modelview/gitgraphpalette.h>
+
 using namespace GIT;
 
 SubmoduleLabelWidget::SubmoduleLabelWidget(GIT::Repository* repo, const GIT::Submodule& submodule, QWidget *parent) :
@@ -90,16 +91,17 @@ SubmoduleLabelWidget::SubmoduleLabelWidget(GIT::Repository* repo, const GIT::Sub
     _spinner->setVisible(false);
 
     layout->addWidget(_spinner);
+    GitGraphPalette localPalette;
     if(_submodule.isWorkdirInitialized() == false) {
-        setForegroundColor(Colors::darkred);
+        setForegroundColor(localPalette.submoduleUninitializedColor());
     }
     else if(commitsBehind != 0) {
         _rightLabel->setText(QString("%1 %2").arg(commitsBehind).arg(Unicode::specialCharacter(Unicode::ArrowUp)));
         _rightLabel->setVisible(true);
-        setForegroundColor(Colors::saddlebrown);
+        setForegroundColor(localPalette.submoduleNeedsRefreshColor());
     }
     else if(workDirDirty) {
-        setForegroundColor(Colors::saddlebrown);
+        setForegroundColor(localPalette.submoduleNeedsRefreshColor());
     }
 
     setLayout(layout);

@@ -13,6 +13,7 @@ public:
 
         Commit,
         Credentials,
+        Display,
         File,
         FileLine,
         Folder,
@@ -35,6 +36,7 @@ private:
         {
             insert(Commit,          "Commit");
             insert(Credentials,     "Credentials");
+            insert(Display,         "Display");
             insert(File,            "File");
             insert(FileLine,        "FileLine");
             insert(Folder,          "Folder");

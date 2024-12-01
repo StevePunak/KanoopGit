@@ -21,7 +21,7 @@ BranchTreeModel::BranchTreeModel(Repository* repo, BranchType typeToShow, QObjec
         break;
     case RemoteBranch:
         for(const Remote& remote : _repo->remotes()) {
-            Reference::List references = _repo->remoteReferences(remote.name());
+            ReferenceList references = _repo->remoteReferences(remote.name());
             loadBranches(references);
         }
         break;
@@ -39,7 +39,7 @@ void BranchTreeModel::refresh()
     emit dataChanged(topLeft, bottomRight);
 }
 
-void BranchTreeModel::loadBranches(const Reference::List& references)
+void BranchTreeModel::loadBranches(const ReferenceList& references)
 {
     for(const Reference& reference : references) {
         if(reference.type() != DirectReferenceType) {

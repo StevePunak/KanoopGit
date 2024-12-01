@@ -4,6 +4,15 @@
 
 const QString CredentialSet::DefaultName        = "default";
 
+bool CredentialSet::operator==(const CredentialSet& other) const
+{
+    return _name == other._name &&
+           _username == other._username &&
+           _password == other._password &&
+           _publicKeyFilename == other._publicKeyFilename &&
+           _privateKeyFilename == other._privateKeyFilename;
+}
+
 QJsonObject CredentialSet::serializeToJsonObject() const
 {
     QJsonObject jsonObject;
