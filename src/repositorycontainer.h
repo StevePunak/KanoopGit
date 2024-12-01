@@ -22,6 +22,8 @@ public:
     GIT::Repository* primaryRepo() const { return _primaryRepo; }
     GIT::Repository* workingRepo() const { return _workingRepo; }
 
+    QString getRemoteTrackingBranch(GIT::Repository* repo, const GIT::Branch& localBranch);
+
 private:
     void openRepository(GIT::Repository* repo);
     void openSubmoduleFromStack();

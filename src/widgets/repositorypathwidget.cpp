@@ -4,6 +4,7 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QToolButton>
+#include <gitassets.h>
 
 #include <Kanoop/gui/widgets/buttonlabel.h>
 #include <Kanoop/gui/widgets/label.h>
@@ -13,7 +14,7 @@
 using namespace GIT;
 
 RepositoryPathWidget::RepositoryPathWidget(QWidget* parent) :
-    QWidget(parent)
+    ComplexWidget(parent)
 {
 }
 
@@ -49,6 +50,7 @@ void RepositoryPathWidget::createLayout()
     }
 
     QGridLayout* newLayout = new QGridLayout(this);
+    newLayout->setContentsMargins(0, 0, 0, 0);
     for(int col = 0;col < _pathParts.count();col++) {
         PathPart pathPart = _pathParts[col];
         switch(pathPart.type()) {
@@ -68,8 +70,8 @@ void RepositoryPathWidget::createLayout()
             ButtonLabel* nameLabel = new ButtonLabel(pathPart.text(), this);
             connect(nameLabel, &ButtonLabel::clicked, this, &RepositoryPathWidget::onCloseClicked);
             nameLabel->setButtonAlignment(Qt::AlignLeft);
-            nameLabel->setForegroundColor(Qt::blue);
-            nameLabel->setIcon(Resources::getIcon(Resources::CloseButton));
+            // nameLabel->setForegroundColor(Qt::blue);
+            nameLabel->setIcon(Resources::getIcon(GitAssets::WindowClose));
             newLayout->addWidget(titleLabel, 0, col);
             newLayout->addWidget(nameLabel, 1, col);
             break;

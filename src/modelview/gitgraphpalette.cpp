@@ -1,5 +1,7 @@
 #include "gitgraphpalette.h"
 
+#include <settings.h>
+
 namespace Colors = QColorConstants::Svg;
 
 
@@ -30,7 +32,9 @@ QColor GitGraphPalette::commitDotFillColor() const
 
 QColor GitGraphPalette::graphLineColor() const
 {
-    return Colors::blue;
+    return Settings::instance()->isDarkMode()
+            ? Colors::lightblue
+            : Colors::blue;
 }
 
 QColor GitGraphPalette::headCommitLineColor() const
@@ -46,4 +50,39 @@ QColor GitGraphPalette::stashBorderColor() const
 QColor GitGraphPalette::stashFillColor() const
 {
     return Colors::white;
+}
+
+QColor GitGraphPalette::leftSidebarTitleColor() const
+{
+    return Settings::instance()->isDarkMode()
+            ? Colors::lightblue
+            : Colors::blue;
+}
+
+QColor GitGraphPalette::submoduleNeedsRefreshColor() const
+{
+    return Settings::instance()->isDarkMode()
+            ? Colors::orange
+            : Colors::darkorange;
+}
+
+QColor GitGraphPalette::submoduleUninitializedColor() const
+{
+    return Settings::instance()->isDarkMode()
+            ? Colors::red
+            : Colors::darkred;
+}
+
+QColor GitGraphPalette::diffPlusColor() const
+{
+    return Settings::instance()->isDarkMode()
+            ? Colors::darkgreen
+            : Colors::lightgreen;
+}
+
+QColor GitGraphPalette::diffMinusColor() const
+{
+    return Settings::instance()->isDarkMode()
+            ? Colors::darksalmon
+            : Colors::lightsalmon;
 }

@@ -1,9 +1,10 @@
 #ifndef REPOSITORYPATHWIDGET_H
 #define REPOSITORYPATHWIDGET_H
 #include <git2qt.h>
-#include <QWidget>
 
-class RepositoryPathWidget : public QWidget
+#include <Kanoop/gui/complexwidget.h>
+
+class RepositoryPathWidget : public ComplexWidget
 {
     Q_OBJECT
 public:

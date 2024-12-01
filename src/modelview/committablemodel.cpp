@@ -19,6 +19,8 @@ CommitTableModel::CommitTableModel(Repository* repo, const GraphedCommit::List& 
     appendColumnHeader(CH_BranchOrTag, "Branch/Tag");
     appendColumnHeader(CH_Graph, "Graph");
     appendColumnHeader(CH_Message, "Message");
+    appendColumnHeader(CH_Author, "Author");
+    appendColumnHeader(CH_Commiter, "Commiter");
     appendColumnHeader(CH_Timestamp, "Timestamp");
     appendColumnHeader(CH_SHA, "SHA");
 
@@ -126,6 +128,12 @@ QVariant CommitTableModel::CommitItem::data(const QModelIndex &index, int role) 
             break;
         case CH_Message:
             result = _commit.shortMessage();
+            break;
+        case CH_Author:
+            result = _commit.author().name();
+            break;
+        case CH_Commiter:
+            result = _commit.committer().name();
             break;
         case CH_Timestamp:
             result = DateTimeUtil::toStandardString(_commit.timestamp(), false);

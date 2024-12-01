@@ -12,6 +12,7 @@
 
 
 class ToastManager;
+class RepositoryContainer;
 namespace Ui {
 class RepositoryWidget;
 }
@@ -24,7 +25,7 @@ class RepositoryWidget : public ComplexWidget
     Q_OBJECT
 
 public:
-    explicit RepositoryWidget(GIT::Repository* repo, QWidget *parent = nullptr);
+    explicit RepositoryWidget(GIT::Repository* repo, RepositoryContainer* parent = nullptr);
     ~RepositoryWidget();
 
     GIT::Repository* repository() const { return _repo; }
@@ -64,6 +65,7 @@ private:
 
     Ui::RepositoryWidget *ui;
     GIT::Repository* _repo;
+    RepositoryContainer* _parent = nullptr;
     RepoConfig _config;
     bool _filesystemWatchEnabled = true;
     ToastManager* _toastManager = nullptr;

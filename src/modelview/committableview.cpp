@@ -121,13 +121,16 @@ QModelIndex CommitTableView::findCommit(const GIT::ObjectId& objectId) const
     return static_cast<CommitTableModel*>(sourceModel())->findCommitIndex(objectId);
 }
 
-void CommitTableView::selectCommit(const GIT::ObjectId& objectId)
+void CommitTableView::selectCommit(const GIT::ObjectId& objectId, bool ensureVisible)
 {
     QModelIndex index = findCommit(objectId);
     if(index.isValid()) {
         QModelIndex bottomLeft = sourceModel()->index(index.row(), sourceModel()->columnCount() - 1);
         QItemSelection selection(index, bottomLeft);
-        selectionModel()->select(selection, QItemSelectionModel::Select);
+        selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
+        if(ensureVisible) {
+            scrollTo(index, PositionAtCenter);
+        }
     }
 }
 
@@ -143,7 +146,7 @@ void CommitTableView::selectWorkInProgress()
     }
     QModelIndex bottomLeft = sourceModel()->index(index.row(), sourceModel()->columnCount() - 1);
     QItemSelection selection(index, bottomLeft);
-    selectionModel()->select(selection, QItemSelectionModel::Select);
+    selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
     emit workInProgressClicked();
 }
 
@@ -329,7 +332,7 @@ QPixmap GitCommitGraphStyledItemDelegate::createArc(int width, int height, GIT::
 QPixmap GitCommitGraphStyledItemDelegate::createCommitPixmap(const GIT::GraphedCommit& commit, const Size& size, bool isRepoHead, const QStyleOptionViewItem& option) const
 {
     QPixmap pixmap(size.toSize());
-    pixmap.fill();
+    pixmap.fill(option.palette.color(QPalette::Window));
 
     if(option.state & QStyle::State_Selected) {
         pixmap.fill(option.palette.color(QPalette::Highlight));
@@ -404,7 +407,7 @@ QPixmap GitCommitGraphStyledItemDelegate::createWorkInProgressPixmap(const Size&
         pixmap.fill(option.palette.color(QPalette::Highlight));
     }
     else {
-        pixmap.fill();
+        pixmap.fill(option.palette.color(QPalette::Window));
     }
 
     QPainter painter(&pixmap);
@@ -522,7 +525,7 @@ void GitCommitGraphStyledItemDelegate::drawVertical(QPainter* painter, const Siz
     }
 
     painter->save();
-    painter->setPen(QPen(QBrush(Colors::darkblue), 2));
+    painter->setPen(QPen(QBrush(_palette.graphLineColor()), 2));
     painter->drawLine(line.toQLine());
     painter->restore();
 }
@@ -540,7 +543,7 @@ void GitCommitGraphStyledItemDelegate::drawHorizontal(QPainter* painter, const S
     }
 
     painter->save();
-    painter->setPen(QPen(QBrush(Colors::darkgreen), 2));
+    painter->setPen(QPen(QBrush(_palette.graphLineColor()), 2));
     painter->drawLine(line.toQLine());
     painter->restore();
 }

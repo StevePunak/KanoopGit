@@ -1,6 +1,7 @@
 #ifndef DIFFTABLEMODEL_H
 #define DIFFTABLEMODEL_H
 #include "difflinegroup.h"
+#include "gitgraphpalette.h"
 
 #include <Kanoop/gui/abstracttablemodel.h>
 #include <Kanoop/gui/abstractmodelitem.h>
@@ -32,6 +33,8 @@ private:
     QMap<int, GIT::DiffLine> _newDiffLines;
 
     QList<DiffLineGroup> _lineGroups;
+
+    static GitGraphPalette _palette;
 
     class TableBaseItem : public AbstractModelItem
     {

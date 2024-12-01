@@ -5,6 +5,7 @@
 #include <QMutex>
 
 const QString Settings::KEY_ACTIVE_REPO                 = "active_repo";
+const QString Settings::KEY_PALETTE_TYPE                = "palette_type";
 const QString Settings::KEY_CREDENTIALS                 = "creds";
 const QString Settings::KEY_OPEN_REPOS                  = "open_repos";
 const QString Settings::KEY_RECENT_FILES                = "recent_files";
@@ -94,6 +95,11 @@ RepoConfig Settings::repoConfig(const QString& repoPath) const
         }
     }
     return config;
+}
+
+bool Settings::isDarkMode() const
+{
+    return paletteType() == FusionDark;
 }
 
 void Settings::ensureValidDefaults()

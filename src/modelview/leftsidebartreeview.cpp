@@ -153,6 +153,14 @@ void LeftSidebarTreeView::expandSubmodules()
     expandRecursively(treeModel->submodulesIndex());
 }
 
+void LeftSidebarTreeView::selectLocalBranchWidget(const QString& canonicalName)
+{
+    QList<LocalBranchLabelWidget*> widgets = _localBranchWidgets.values();
+    for(LocalBranchLabelWidget* widget : widgets) {
+        widget->setSelected(widget->reference().canonicalName() == canonicalName ? true : false);
+    }
+}
+
 void LeftSidebarTreeView::onCurrentIndexChanged(const QModelIndex& current, const QModelIndex& previous)
 {
     Q_UNUSED(previous);
@@ -168,6 +176,9 @@ void LeftSidebarTreeView::onCurrentIndexChanged(const QModelIndex& current, cons
         case GitEntities::Reference:
         {
             Reference reference = Reference::fromVariant(current.data(ReferenceRole));
+            if(reference.isLocal()) {
+                selectLocalBranchWidget(reference.canonicalName());
+            }
             if(reference.isNull() == false) {
                 emit referenceClicked(reference);
             }

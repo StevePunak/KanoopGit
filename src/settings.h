@@ -5,8 +5,8 @@
 
 #include <Kanoop/gui/guisettings.h>
 #include <git2qt.h>
-
 #include <credentialset.h>
+#include <kanoopgittypes.h>
 
 class Settings : public GuiSettings
 {
@@ -33,6 +33,11 @@ public:
     RepoConfig repoConfig(GIT::Repository* repo) const { return repoConfig(repo->localPath()); }
     RepoConfig repoConfig(const QString& repoPath) const;
 
+    void setPaletteType(PaletteType value) { _settings.setValue(KEY_PALETTE_TYPE, value); }
+    PaletteType paletteType() const { return (PaletteType)_settings.value(KEY_PALETTE_TYPE).toInt(); }
+
+    bool isDarkMode() const;
+
 private:
     virtual void ensureValidDefaults() override;
 
@@ -41,6 +46,7 @@ private:
     static const QString KEY_ACTIVE_REPO;
     static const QString KEY_CREDENTIALS;
     static const QString KEY_OPEN_REPOS;
+    static const QString KEY_PALETTE_TYPE;
     static const QString KEY_RECENT_FILES;
 };
 

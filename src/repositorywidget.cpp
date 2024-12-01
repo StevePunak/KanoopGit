@@ -12,6 +12,7 @@
 #include "kanoopgittypes.h"
 #include "gitassets.h"
 #include "submodulecloner.h"
+#include "repositorycontainer.h"
 
 #include <Kanoop/geometry/rectangle.h>
 
@@ -38,10 +39,10 @@ const QString RepositoryWidget::StageUnstageProperty    = "stage_unstage";
 const QString RepositoryWidget::ReferenceProperty       = "reference";
 const QString RepositoryWidget::SubmoduleProperty       = "submodule";
 
-RepositoryWidget::RepositoryWidget(Repository* repo, QWidget *parent) :
+RepositoryWidget::RepositoryWidget(Repository* repo, RepositoryContainer* parent) :
     ComplexWidget("gittree", parent),
     ui(new Ui::RepositoryWidget),
-    _repo(repo)
+    _repo(repo), _parent(parent)
 {
     RepositoryWidget::setObjectName(RepositoryWidget::metaObject()->className());
 
@@ -284,13 +285,22 @@ void RepositoryWidget::showLocalBranchCustomContextMenu(const Reference& referen
         return;
     }
 
+    QMenu menu(this);
+
+    Branch clickedBranch = _repo->findLocalBranch(reference.friendlyName());
+    GraphedCommit clickedTip = clickedBranch.tip();
+
+    ui->actionMergeIntoCurrentBranch->setText(QString("Merge %1 into %2").arg(clickedBranch.friendlyName()).arg(_repo->currentBranch().friendlyName()));
+    ui->actionMergeIntoCurrentBranch->setData(clickedTip.toVariant());
+    menu.addAction(ui->actionMergeIntoCurrentBranch);
+    menu.addSeparator();
+
     ui->actionDeleteLocalBranch->setText(QString("Delete %1").arg(reference.friendlyName()));
     ui->actionRenameLocalBranch->setText(QString("Rename %1").arg(reference.friendlyName()));
 
     ui->actionDeleteLocalBranch->setProperty(ReferenceProperty.toUtf8().constData(), reference.toVariant());
     ui->actionRenameLocalBranch->setProperty(ReferenceProperty.toUtf8().constData(), reference.toVariant());
 
-    QMenu menu(this);
     menu.addAction(ui->actionDeleteLocalBranch);
     menu.addAction(ui->actionRenameLocalBranch);
 
@@ -362,8 +372,7 @@ void RepositoryWidget::showCommitTableContextMenu(const QPoint& pos)
         menu.addSeparator();
         QString text = QString("Merge %1 into %2").arg(reference.friendlyName()).arg(currentBranch.friendlyName());
         ui->actionMergeIntoCurrentBranch->setText(text);
-        ui->actionMergeIntoCurrentBranch->setProperty(CommitProperty.toUtf8().constData(), commit.toVariant());
-        ui->actionMergeIntoCurrentBranch->setProperty(ReferenceProperty.toUtf8().constData(), reference.toVariant());
+        ui->actionMergeIntoCurrentBranch->setData(commit.toVariant());
 
         menu.addAction(ui->actionMergeIntoCurrentBranch);
     }
@@ -859,6 +868,14 @@ void RepositoryWidget::stashChanges()
 void RepositoryWidget::onDiscardChangesClicked()
 {
     StatusEntry::List entries = ui->tableUnstagedFiles->selectedEntries();
+    if(entries.count() == 0) {
+        entries = ui->tableUnstagedFiles->entries();
+    }
+
+    if(entries.count() == 0) {
+        return;
+    }
+
     QMessageBox dlg(QMessageBox::Warning, "Warning", QString("Discard %1 files?").arg(entries.count()), QMessageBox::Yes | QMessageBox::No);
     dlg.setDefaultButton(QMessageBox::No);
     if(dlg.exec() != QMessageBox::Yes) {
@@ -867,7 +884,7 @@ void RepositoryWidget::onDiscardChangesClicked()
 
     QStringList paths = entries.paths();
     if(_repo->restore(paths) == true) {
-        _toastManager->message(QString("Discarded %1 files"));
+        _toastManager->message(QString("Discarded %1 files").arg(paths.count()));
     }
     else {
         _toastManager->errorMessage(QString("Error: %1").arg(_repo->errorText()));
@@ -1114,7 +1131,7 @@ void RepositoryWidget::onMergeIntoCurrentBranchTriggered()
         return;     // bug
     }
 
-    GraphedCommit commit = GraphedCommit::fromVariant(action->property(CommitProperty.toUtf8().constData()));
+    GraphedCommit commit = GraphedCommit::fromVariant(action->data());
     if(commit.isValid() == false) {
         return;     // bug
     }
@@ -1218,6 +1235,9 @@ void RepositoryWidget::onCommitChangesClicked()
     if(commit.isValid() == false) {
         QMessageBox::warning(this, "Error", QString("Failed to commit files: %1").arg(_repo->errorText()), QMessageBox::Ok);
     }
+    else {
+        ui->textStageCommitMessage->clear();
+    }
     switchToCommitView();
     refreshWidgets(RefreshAll);
 }
@@ -1231,10 +1251,18 @@ void RepositoryWidget::pullFromRemote()
 {
     try
     {
+        if(_repo->currentBranch().isTracking() == false) {
+            QString remoteBranchName = _parent->getRemoteTrackingBranch(_repo, _repo->currentBranch());
+            if(remoteBranchName.isEmpty()) {
+                throw CommonException("No tracking branch specified");
+            }
+            _repo->setUpstream(_repo->currentBranch().reference(), remoteBranchName);
+        }
         Signature signature = _repo->config()->buildSignature();
         MergeResult result = _repo->pull(signature);
-        Q_UNUSED(result) // TODO
-
+        if(result.isValid() == false) {
+            throw CommonException(QString("Pull failed: %1").arg(_repo->errorText()));
+        }
         _toastManager->message("Successfully pulled from remote");
     }
     catch(const CommonException& e)
@@ -1349,10 +1377,10 @@ void RepositoryWidget::doDebugThing()
 {
     static int count = 0;
     if((++count & 0x01) != 0) {
-        _toastManager->message(QString("%1 Succesfuly pushed some stuff from my desktop to somewhere else on the screen").arg(count));
+        ui->tableCommits->selectWorkInProgress();
     }
     else {
-        _toastManager->errorMessage(QString("%1 Failed to pushed some stuff from my desktop to somewhere else on the screen").arg(count));
+        ui->tableCommits->selectCommit(_repo->headCommit().objectId());
     }
 
 #if 0

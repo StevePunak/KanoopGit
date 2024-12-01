@@ -2,6 +2,7 @@
 #include <QFileInfo>
 #include <QStandardPaths>
 
+#include "gitgraphpalette.h"
 #include "kanoopgittypes.h"
 #include <Kanoop/gui/resources.h>
 #include <Kanoop/pathutil.h>
@@ -228,7 +229,7 @@ QVariant LeftSidebarTreeModel::TitleItem::data(const QModelIndex& index, int rol
             }
             break;
         case Qt::ForegroundRole:
-            result = Colors::darkblue;
+            result = GitGraphPalette().leftSidebarTitleColor();
             break;
         case Qt::FontRole:
             result = _font;

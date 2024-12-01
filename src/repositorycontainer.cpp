@@ -10,6 +10,8 @@
 #include <QMessageBox>
 #include <QPushButton>
 
+#include <widgets/getremotetrackingbranchwidget.h>
+
 using namespace GIT;
 
 RepositoryContainer::RepositoryContainer(const QString& path, QWidget *parent) :
@@ -24,17 +26,36 @@ RepositoryContainer::RepositoryContainer(const QString& path, QWidget *parent) :
 
     connect(ui->pathWidget, &RepositoryPathWidget::closeClicked, this, &RepositoryContainer::onPathWidgetCloseClicked);
 
+
     if(Repository::isRepository(path)) {
         _primaryRepo = new Repository(path);
         openRepository(_primaryRepo);
         openPersistedSubmodules();
     }
+
+    ui->stackedHeader->setCurrentWidget(ui->pageStandard);
 }
 
 RepositoryContainer::~RepositoryContainer()
 {
     delete ui;
     qDeleteAll(_repos);
+}
+
+QString RepositoryContainer::getRemoteTrackingBranch(Repository* repo, const GIT::Branch& localBranch)
+{
+
+    Q_UNUSED(localBranch)
+    GetRemoteTrackingBranchWidget widget(repo, localBranch.reference());
+    widget.resize(ui->stackedHeader->size());
+
+    QPoint where = ui->stackedHeader->pos();
+    where = mapToGlobal(where);
+    widget.move(where);
+    if(widget.exec() == QDialog::Accepted) {
+        return widget.remoteBranchName();
+    }
+    return QString();
 }
 
 void RepositoryContainer::openRepository(GIT::Repository* repo)

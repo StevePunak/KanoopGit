@@ -40,6 +40,13 @@ enum ControlType
     Submodules,
 };
 
+enum PaletteType
+{
+    SystemPalette = 0,
+    FusionDark = 1,
+    FusionLight = 2,
+};
+
 enum ColHeaders
 {
     CH_Name = 1,
@@ -47,6 +54,8 @@ enum ColHeaders
     CH_Graph,
     CH_Message,
     CH_Timestamp,
+    CH_Commiter,
+    CH_Author,
     CH_SHA,
     CH_Old,
     CH_New,

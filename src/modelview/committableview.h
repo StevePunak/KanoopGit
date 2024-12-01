@@ -20,7 +20,7 @@ public:
     void createModel(GIT::Repository* repo);
 
     QModelIndex findCommit(const GIT::ObjectId& objectId) const;
-    void selectCommit(const GIT::ObjectId& objectId);
+    void selectCommit(const GIT::ObjectId& objectId, bool ensureVisible = true);
     void selectWorkInProgress();
 
     GIT::Stash currentSelectedStash() const;
