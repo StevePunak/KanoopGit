@@ -11,7 +11,7 @@ public:
         _credentials(credentials) {}
 
     CredentialSet credentials() const { return _credentials; }
-    void setCredentials(CredentialSet value) { _credentials = value; }
+    void setCredentials(const CredentialSet& value) { _credentials = value; }
 
 public:
     virtual QString getUsername() const override { return _credentials.username(); }

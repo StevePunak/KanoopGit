@@ -188,7 +188,12 @@ void RepositoryWidget::initializeCredentials()
         _config.setCredentials(Settings::instance()->defaultCredentials());
         Settings::instance()->saveRepoConfig(_config);
     }
-    _credentialResolver.setCredentials(_config.credentials());
+    if(_config.credentials().isValid()) {
+        _credentialResolver.setCredentials(_config.credentials());
+    }
+    else {
+        _credentialResolver.setCredentials(Settings::instance()->defaultCredentials());
+    }
     _repo->setCredentialResolver(&_credentialResolver);
 }
 
@@ -1293,6 +1298,13 @@ void RepositoryWidget::pushToRemote()
                 throw CommonException(_repo->errorText());
             }
         }
+        else if(branch.isTracking() == false) {
+            QString remoteBranchName = _parent->getRemoteTrackingBranch(_repo, _repo->currentBranch());
+            if(remoteBranchName.isEmpty()) {
+                throw CommonException("No tracking branch specified");
+            }
+            _repo->setUpstream(_repo->currentBranch().reference(), remoteBranchName);
+        }
         else if(_repo->push(_repo->currentBranch()) == false) {
             throw CommonException(_repo->errorText());
         }
@@ -1300,7 +1312,7 @@ void RepositoryWidget::pushToRemote()
     }
     catch(const CommonException& e)
     {
-        QMessageBox::warning(this, "Push Failed", e.message());
+        _toastManager->errorMessage(e.message());
     }
     refreshWidgets(RefreshLeftSidebar);
     QApplication::restoreOverrideCursor();
