@@ -9,6 +9,7 @@
 #include <Kanoop/gui/widgets/buttonlabel.h>
 #include <Kanoop/gui/widgets/label.h>
 
+#include <Kanoop/gui/palette.h>
 #include <Kanoop/gui/resources.h>
 
 using namespace GIT;
@@ -51,6 +52,8 @@ void RepositoryPathWidget::createLayout()
 
     QGridLayout* newLayout = new QGridLayout(this);
     newLayout->setContentsMargins(0, 0, 0, 0);
+    Palette labelPalette = palette();
+    Palette::debugDumpPalette(labelPalette);
     for(int col = 0;col < _pathParts.count();col++) {
         PathPart pathPart = _pathParts[col];
         switch(pathPart.type()) {
@@ -58,7 +61,9 @@ void RepositoryPathWidget::createLayout()
         {
             Label* titleLabel = new Label("Repository", this);
             titleLabel->setFontPointSize(SmallTextSize);
+            titleLabel->setPalette(labelPalette);
             Label* nameLabel = new Label(pathPart.text(), this);
+            nameLabel->setBackgroundColor(labelPalette.color(QPalette::Button));
             newLayout->addWidget(titleLabel, 0, col);
             newLayout->addWidget(nameLabel, 1, col);
             break;

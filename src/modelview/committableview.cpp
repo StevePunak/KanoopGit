@@ -332,7 +332,7 @@ QPixmap GitCommitGraphStyledItemDelegate::createArc(int width, int height, GIT::
 QPixmap GitCommitGraphStyledItemDelegate::createCommitPixmap(const GIT::GraphedCommit& commit, const Size& size, bool isRepoHead, const QStyleOptionViewItem& option) const
 {
     QPixmap pixmap(size.toSize());
-    pixmap.fill(option.palette.color(QPalette::Window));
+    pixmap.fill(option.palette.color(QPalette::Base));
 
     if(option.state & QStyle::State_Selected) {
         pixmap.fill(option.palette.color(QPalette::Highlight));
